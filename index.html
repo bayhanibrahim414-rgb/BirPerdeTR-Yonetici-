@@ -193,7 +193,7 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-[95] flex flex-col gap-2 max-w-xs w-[calc(100%-2rem)] pointer-events-none"></div>
 
   <!-- ===================================================================== -->
-  <!-- YÖNETİCİ DÜZENLEYİCİ ANA EKRANI (DOĞRUDAN AÇILIR)                       -->
+  <!-- YÖNETİCİ DÜZENLEYİCİ ANA EKRANI                                       -->
   <!-- ===================================================================== -->
   <div id="admin-app" class="min-h-screen flex flex-col">
 
@@ -278,7 +278,7 @@
               TR Dublaj
             </button>
             <button type="button" data-lang-btn="sub" onclick="switchLangFilter('sub')" class="lang-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition">
-              TR Altyazı
+              TR Altyazılı
             </button>
           </div>
         </div>
@@ -293,7 +293,7 @@
 
     <!-- ALT BİLGİ -->
     <footer class="bg-bpWhite border-t border-bpSkyBorder mt-8 py-4 px-3 sm:px-5 text-center text-[11px] text-slate-600">
-      Yönetici Düzenleyici — Ortak Bulut Film, Dizi ve Video Yönetim Paneli
+      Yönetici Düzenleyici — Film, Dizi ve Video Yönetim Paneli
     </footer>
   </div>
 
@@ -343,7 +343,75 @@
     let fbStorage = null;
 
     /* =========================================================================
-       2. YATAY KAYDIRMA VE EKRAN YAKINLAŞTIRMA ENGELLEYİCİ
+       2. CİHAZ GALERİ VİDEO/AFİŞ DEPOLAMA YARDIMCISI (INDEXEDDB + BLOB URL)
+       Bulut yüklemesi beklerken veya kural/bağlantı engeli olursa asla takılmaz!
+    ========================================================================= */
+    const IDB_NAME = 'YoneticiDuzenleyiciMediaDB';
+    const IDB_STORE = 'media_blobs';
+    const activeObjectUrls = new Map();
+
+    function openLocalMediaDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveBlobToLocalDB(key, fileBlob) {
+      const db = await openLocalMediaDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(fileBlob, key);
+        tx.oncomplete = () => resolve(key);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function getBlobUrlFromLocalDB(idbUri) {
+      if (!idbUri || !idbUri.startsWith('idb://')) return idbUri;
+      if (activeObjectUrls.has(idbUri)) return activeObjectUrls.get(idbUri);
+
+      const key = idbUri.replace('idb://', '');
+      const db = await openLocalMediaDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => {
+          if (req.result) {
+            const objUrl = URL.createObjectURL(req.result);
+            activeObjectUrls.set(idbUri, objUrl);
+            resolve(objUrl);
+          } else {
+            resolve('');
+          }
+        };
+        req.onerror = () => resolve('');
+      });
+    }
+
+    async function deleteFromLocalDB(idbUri) {
+      if (!idbUri || !idbUri.startsWith('idb://')) return;
+      const key = idbUri.replace('idb://', '');
+      if (activeObjectUrls.has(idbUri)) {
+        try { URL.revokeObjectURL(activeObjectUrls.get(idbUri)); } catch (e) {}
+        activeObjectUrls.delete(idbUri);
+      }
+      try {
+        const db = await openLocalMediaDB();
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).delete(key);
+      } catch (e) {}
+    }
+
+    /* =========================================================================
+       3. YATAY KAYDIRMA VE EKRAN YAKINLAŞTIRMA ENGELLEYİCİ
     ========================================================================= */
     (function lockViewportZoomAndHorizontalScroll() {
       ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
@@ -367,9 +435,9 @@
     })();
 
     /* =========================================================================
-       3. FIRESTORE VE FIREBASE STORAGE BAĞLANTISI
+       4. FIRESTORE VE FIREBASE STORAGE BAĞLANTISI
     ========================================================================= */
-    const LOCAL_CATALOG_CACHE = 'yonetici_duzenleyici_catalog_cache_v1';
+    const LOCAL_CATALOG_CACHE = 'yonetici_duzenleyici_catalog_cache_v2';
 
     function readLocalCache() {
       try {
@@ -393,17 +461,24 @@
         fbAuth = getAuth(fbApp);
         fbDb = getFirestore(fbApp);
         fbStorage = getStorage(fbApp);
+        fbStorage.maxUploadRetryTime = 15000;
+        fbStorage.maxOperationRetryTime = 15000;
 
         try {
           await signInAnonymously(fbAuth);
         } catch (authErr) {}
 
         onSnapshot(collection(fbDb, 'birperde_catalog'), (snap) => {
-          const list = [];
-          snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-          list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          state.catalog = list;
-          writeLocalCache(list);
+          const cloudList = [];
+          snap.forEach(d => cloudList.push({ id: d.id, ...d.data() }));
+
+          // Yerel önbellekte olup henüz buluta yazılmamış kayıtları koru
+          const localOnly = readLocalCache().filter(loc => loc.localOnly && !cloudList.some(c => c.id === loc.id));
+          const merged = [...localOnly, ...cloudList];
+          merged.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+          state.catalog = merged;
+          writeLocalCache(merged);
 
           if (state.player.media) {
             const updatedMedia = state.catalog.find(m => m.id === state.player.media.id);
@@ -415,8 +490,11 @@
             }
           }
           renderMainView();
-        }, (err) => {
-          showToast('Firestore okuma hatası: ' + (err.message || ''), 'error');
+        }, () => {
+          if (statusPill) {
+            statusPill.textContent = 'Yerel Mod';
+            statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-bpYellow/30 text-bpBrown';
+          }
         });
 
         if (statusPill) {
@@ -425,8 +503,8 @@
         }
       } catch (err) {
         if (statusPill) {
-          statusPill.textContent = 'Bağlantı Hatası';
-          statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-bpRed/15 text-bpRed';
+          statusPill.textContent = 'Yerel Mod';
+          statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-bpYellow/30 text-bpBrown';
         }
       }
     }
@@ -438,14 +516,27 @@
       writeLocalCache(state.catalog);
 
       if (!fbDb) return;
-      await setDoc(doc(fbDb, 'birperde_catalog', itemObj.id), itemObj, { merge: true });
+      try {
+        await setDoc(doc(fbDb, 'birperde_catalog', itemObj.id), itemObj, { merge: true });
+      } catch (e) {
+        itemObj.localOnly = true;
+        writeLocalCache(state.catalog);
+      }
     }
 
-    async function deleteStoragePaths(paths) {
-      if (!fbStorage || !Array.isArray(paths)) return;
-      for (const p of paths) {
-        if (p) {
-          try { await deleteObject(storageRef(fbStorage, p)); } catch (e) {}
+    async function deleteMediaFiles(paths, urls) {
+      if (fbStorage && Array.isArray(paths)) {
+        for (const p of paths) {
+          if (p) {
+            try { await deleteObject(storageRef(fbStorage, p)); } catch (e) {}
+          }
+        }
+      }
+      if (Array.isArray(urls)) {
+        for (const u of urls) {
+          if (u && u.startsWith('idb://')) {
+            await deleteFromLocalDB(u);
+          }
         }
       }
     }
@@ -455,45 +546,104 @@
       writeLocalCache(state.catalog);
 
       const paths = [];
+      const urls = [];
       if (itemObj.posterStoragePath) paths.push(itemObj.posterStoragePath);
-      (itemObj.sources || []).forEach(s => { if (s.storagePath) paths.push(s.storagePath); });
+      if (itemObj.posterUrl) urls.push(itemObj.posterUrl);
+
+      (itemObj.sources || []).forEach(s => {
+        if (s.storagePath) paths.push(s.storagePath);
+        if (s.url) urls.push(s.url);
+      });
       (itemObj.episodes || []).forEach(ep => {
-        (ep.sources || []).forEach(s => { if (s.storagePath) paths.push(s.storagePath); });
+        (ep.sources || []).forEach(s => {
+          if (s.storagePath) paths.push(s.storagePath);
+          if (s.url) urls.push(s.url);
+        });
       });
 
-      await deleteStoragePaths(paths);
+      await deleteMediaFiles(paths, urls);
 
       if (fbDb) {
-        await deleteDoc(doc(fbDb, 'birperde_catalog', itemObj.id));
+        try { await deleteDoc(doc(fbDb, 'birperde_catalog', itemObj.id)); } catch (e) {}
       }
     }
 
-    function uploadFileToFirebaseStorage(file, folder, onProgress) {
-      return new Promise((resolve, reject) => {
+    /* =========================================================================
+       5. GALERİDEN / CİHAZDAN YÜKLEME MOTORU (ASLA TAKILMAYAN ÇİFT KATMANLI YAPI)
+    ========================================================================= */
+    function formatFileSizeMB(bytes) {
+      if (!bytes || bytes <= 0) return '0 MB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function uploadFileReliably(file, folder, onProgress) {
+      return new Promise(async (resolve) => {
+        const safeName = (file.name || 'video.mp4').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const uniqueKey = `${folder}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${safeName}`;
+        const mimeType = file.type || (folder.includes('poster') ? 'image/jpeg' : 'video/mp4');
+
+        // 1. Önce cihazın IndexedDB deposuna anında kopyala (asla veri kaybı veya takılma olmaz)
+        const idbUri = `idb://${uniqueKey}`;
+        try {
+          await saveBlobToLocalDB(uniqueKey, file);
+          const objUrl = URL.createObjectURL(file);
+          activeObjectUrls.set(idbUri, objUrl);
+        } catch (idbErr) {}
+
         if (!fbStorage) {
-          reject(new Error('Firebase Storage başlatılamadı.'));
+          if (typeof onProgress === 'function') onProgress(100, 'Cihaz Deposuna Kaydedildi');
+          resolve({ url: idbUri, storagePath: '' });
           return;
         }
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${safeName}`;
-        const fileRef = storageRef(fbStorage, path);
-        const task = uploadBytesResumable(fileRef, file);
+
+        // 2. Firebase Storage'a yüklemeyi başlat + takılma koruması (8 sn boyunca 0 byte giderse kilidi aç)
+        const cloudPath = `${folder}/${uniqueKey}`;
+        const fileRef = storageRef(fbStorage, cloudPath);
+        const task = uploadBytesResumable(fileRef, file, { contentType: mimeType });
+
+        let settled = false;
+        let bytesMoved = false;
+
+        const finishWithLocalFallback = () => {
+          if (settled) return;
+          settled = true;
+          try { task.cancel(); } catch (e) {}
+          if (typeof onProgress === 'function') onProgress(100, 'Cihaz Galerisinden Hazırlandı');
+          resolve({ url: idbUri, storagePath: '' });
+        };
+
+        const stallWatchdog = setTimeout(() => {
+          if (!bytesMoved && !settled) {
+            finishWithLocalFallback();
+          }
+        }, 8000);
 
         task.on(
           'state_changed',
           (snapshot) => {
+            if (snapshot.bytesTransferred > 0) {
+              bytesMoved = true;
+              clearTimeout(stallWatchdog);
+            }
             if (snapshot.totalBytes > 0 && typeof onProgress === 'function') {
               const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-              onProgress(pct);
+              const detail = `${formatFileSizeMB(snapshot.bytesTransferred)} / ${formatFileSizeMB(snapshot.totalBytes)}`;
+              onProgress(pct, detail);
             }
           },
-          (error) => reject(error),
+          () => {
+            clearTimeout(stallWatchdog);
+            finishWithLocalFallback();
+          },
           async () => {
+            clearTimeout(stallWatchdog);
+            if (settled) return;
             try {
-              const url = await getDownloadURL(task.snapshot.ref);
-              resolve({ url, storagePath: path });
-            } catch (err) {
-              reject(err);
+              const cloudUrl = await getDownloadURL(task.snapshot.ref);
+              settled = true;
+              resolve({ url: cloudUrl, storagePath: cloudPath });
+            } catch (e) {
+              finishWithLocalFallback();
             }
           }
         );
@@ -501,14 +651,14 @@
     }
 
     /* =========================================================================
-       4. UYGULAMA DURUMU
+       6. UYGULAMA DURUMU VE BAŞLATMA
     ========================================================================= */
     const CINEMA_FALLBACK_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/35mm_movie_film.jpg/500px-35mm_movie_film.jpg';
 
     let state = {
       catalog: readLocalCache(),
-      navTab: 'all',      // 'all' | 'movies' | 'series'
-      langFilter: 'all',  // 'all' | 'dub' | 'sub'
+      navTab: 'all',
+      langFilter: 'all',
       searchQuery: '',
 
       player: {
@@ -516,8 +666,8 @@
         season: 1,
         episode: 1,
         channels: [],
-        activeChannelId: 'kanal-1',
-        audioMode: 'dub',
+        activeChannelId: 'sub',
+        audioMode: 'sub',
         isPlaying: false,
         isMuted: false,
         isLoading: true,
@@ -531,6 +681,7 @@
       document.getElementById('header-brand-logo').innerHTML = getAdminLogoSvg(34);
       refreshNavTabsUI();
       renderMainView();
+      await hydrateLocalPosterImages();
       await initCloudBackend();
 
       document.addEventListener('keydown', e => {
@@ -540,11 +691,26 @@
       });
     }
 
+    async function hydrateLocalPosterImages() {
+      const imgs = document.querySelectorAll('img[data-idb-src]');
+      for (const img of imgs) {
+        const idbSrc = img.getAttribute('data-idb-src');
+        if (idbSrc && idbSrc.startsWith('idb://')) {
+          const resolved = await getBlobUrlFromLocalDB(idbSrc);
+          if (resolved) img.src = resolved;
+        }
+      }
+    }
+
     function renderRealPosterImg(item, imgClass = 'w-full h-full object-cover') {
-      const src = item && item.posterUrl ? item.posterUrl : CINEMA_FALLBACK_PHOTO;
+      const rawSrc = item && item.posterUrl ? item.posterUrl : CINEMA_FALLBACK_PHOTO;
+      const isIdb = rawSrc.startsWith('idb://');
+      const initialSrc = isIdb ? (activeObjectUrls.get(rawSrc) || CINEMA_FALLBACK_PHOTO) : rawSrc;
+
       return `
         <img
-          src="${escapeAttr(src)}"
+          src="${escapeAttr(initialSrc)}"
+          ${isIdb ? `data-idb-src="${escapeAttr(rawSrc)}"` : ''}
           alt="${escapeAttr(item ? item.title : 'Afiş')}"
           referrerpolicy="no-referrer"
           loading="lazy"
@@ -556,16 +722,8 @@
 
     function buildChannelsForMedia(media, season = 1, episode = 1) {
       const isSeries = media.type === 'series';
-      const slug = String(media.title || 'yapim')
-        .toLowerCase()
-        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
-        .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_|_$/g, '');
-
-      const suffix = isSeries ? `${slug}_S${season}_B${episode}` : `${slug}_${media.year || 'HD'}`;
-
       let sourceList = [];
+
       if (isSeries) {
         const epList = Array.isArray(media.episodes) ? media.episodes : [];
         const epObj = epList.find(e => Number(e.season) === Number(season) && Number(e.number) === Number(episode)) || epList[0];
@@ -580,28 +738,28 @@
 
       if (sourceList.length === 0) {
         return [{
-          id: 'kanal-1',
-          label: 'Kanal 1',
-          defaultMode: media.hasDub ? 'dub' : 'sub',
-          fileName: `${suffix}_Kanal_1.mp4`,
+          id: 'sub',
+          label: 'TR Altyazılı',
+          defaultMode: 'sub',
+          fileName: 'video.mp4',
           streamUrl: ''
         }];
       }
 
       return sourceList.map((src, idx) => {
-        const chNum = idx + 1;
+        const mode = src.defaultMode || (src.label && src.label.toLowerCase().includes('dublaj') ? 'dub' : 'sub');
         return {
-          id: `kanal-${chNum}`,
-          label: src.label || `Kanal ${chNum}`,
-          defaultMode: src.defaultMode || (media.hasDub ? 'dub' : 'sub'),
-          fileName: src.fileName || `${suffix}_Kanal_${chNum}.mp4`,
+          id: src.id || `${mode}-${idx + 1}`,
+          label: src.label || (mode === 'dub' ? 'TR Dublaj' : 'TR Altyazılı'),
+          defaultMode: mode,
+          fileName: src.fileName || 'video.mp4',
           streamUrl: src.url || ''
         };
       });
     }
 
     /* =========================================================================
-       5. FİLM, DİZİ, BÖLÜM EKLEME VE KALICI SİLME İŞLEMLERİ
+       7. ALTYAZILI & DUBLAJ SEÇENEKLİ YÜKLEME MODALI
     ========================================================================= */
     let addModalTab = 'movie';
     let preselectedSeriesId = '';
@@ -613,6 +771,38 @@
       renderAddContentModal();
     }
 
+    function onGalleryFilePicked(inputEl, badgeId, checkboxId = null) {
+      const badge = document.getElementById(badgeId);
+      const file = inputEl && inputEl.files && inputEl.files[0];
+      if (file) {
+        if (badge) {
+          badge.textContent = `Seçildi: ${file.name} (${formatFileSizeMB(file.size)})`;
+          badge.classList.remove('hidden');
+        }
+        if (checkboxId) {
+          const cb = document.getElementById(checkboxId);
+          if (cb && !cb.checked) {
+            cb.checked = true;
+            toggleTrackUploadBox(checkboxId, checkboxId + '-box');
+          }
+        }
+      } else if (badge) {
+        badge.textContent = '';
+        badge.classList.add('hidden');
+      }
+    }
+
+    function toggleTrackUploadBox(checkboxId, boxId) {
+      const cb = document.getElementById(checkboxId);
+      const box = document.getElementById(boxId);
+      if (!cb || !box) return;
+      if (cb.checked) {
+        box.classList.remove('opacity-50');
+      } else {
+        box.classList.add('opacity-50');
+      }
+    }
+
     function updateModalUploadProgress(pct, labelText) {
       const box = document.getElementById('cloud-upload-progress-box');
       const bar = document.getElementById('cloud-upload-progress-bar');
@@ -621,6 +811,80 @@
       box.classList.remove('hidden');
       if (bar) bar.style.width = `${pct}%`;
       if (txt) txt.textContent = `${labelText} (%${pct})`;
+    }
+
+    function renderSubAndDubUploadSections(prefix) {
+      return `
+        <!-- 1. ALTYAZILI SEÇENEĞİ VE ALTINA VİDEO YÜKLEME ALANI -->
+        <div class="p-3 rounded-xl bg-sky-50/90 border-2 border-bpRoyal/40 space-y-2">
+          <label class="flex items-center justify-between cursor-pointer select-none">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="${prefix}-sub-check" checked onchange="toggleTrackUploadBox('${prefix}-sub-check', '${prefix}-sub-check-box')" class="accent-bpRoyal w-4 h-4" />
+              <span class="text-xs font-extrabold text-bpRoyal">Altyazılı Seçeneği (TR Altyazılı Video)</span>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-bpRoyal text-white text-[10px] font-extrabold">ALTYAZILI</span>
+          </label>
+
+          <div id="${prefix}-sub-check-box" class="space-y-2 pt-1 border-t border-bpSkyBorder transition">
+            <div class="relative w-full">
+              <div class="w-full py-2.5 px-3 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-xs transition">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Cihazdan / Galeriden Altyazılı Video Seç</span>
+              </div>
+              <input
+                type="file"
+                id="${prefix}-sub-file"
+                accept="video/*,video/mp4,video/quicktime,video/x-m4v,.mp4,.mov,.mkv,.webm"
+                onchange="onGalleryFilePicked(this, '${prefix}-sub-file-info', '${prefix}-sub-check')"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+            </div>
+            <div id="${prefix}-sub-file-info" class="hidden px-2.5 py-1.5 rounded-lg bg-white border border-bpRoyal/30 text-[11px] font-extrabold text-bpRoyal truncate"></div>
+            <input
+              type="url"
+              id="${prefix}-sub-url"
+              oninput="if(this.value.trim()){document.getElementById('${prefix}-sub-check').checked=true;}"
+              placeholder="veya Altyazılı video linki yapıştırın (https://...)"
+              class="w-full px-3 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-medium"
+            />
+          </div>
+        </div>
+
+        <!-- 2. DUBLAJ SEÇENEĞİ VE ALTINA VİDEO YÜKLEME ALANI -->
+        <div class="p-3 rounded-xl bg-emerald-50/90 border-2 border-bpEmerald/40 space-y-2">
+          <label class="flex items-center justify-between cursor-pointer select-none">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="${prefix}-dub-check" checked onchange="toggleTrackUploadBox('${prefix}-dub-check', '${prefix}-dub-check-box')" class="accent-bpEmerald w-4 h-4" />
+              <span class="text-xs font-extrabold text-bpEmerald">Dublaj Seçeneği (TR Dublaj Video)</span>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-bpEmerald text-white text-[10px] font-extrabold">DUBLAJ</span>
+          </label>
+
+          <div id="${prefix}-dub-check-box" class="space-y-2 pt-1 border-t border-emerald-200 transition">
+            <div class="relative w-full">
+              <div class="w-full py-2.5 px-3 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-xs transition">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Cihazdan / Galeriden Dublaj Video Seç</span>
+              </div>
+              <input
+                type="file"
+                id="${prefix}-dub-file"
+                accept="video/*,video/mp4,video/quicktime,video/x-m4v,.mp4,.mov,.mkv,.webm"
+                onchange="onGalleryFilePicked(this, '${prefix}-dub-file-info', '${prefix}-dub-check')"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+            </div>
+            <div id="${prefix}-dub-file-info" class="hidden px-2.5 py-1.5 rounded-lg bg-white border border-bpEmerald/30 text-[11px] font-extrabold text-bpEmerald truncate"></div>
+            <input
+              type="url"
+              id="${prefix}-dub-url"
+              oninput="if(this.value.trim()){document.getElementById('${prefix}-dub-check').checked=true;}"
+              placeholder="veya Dublaj video linki yapıştırın (https://...)"
+              class="w-full px-3 py-1.5 rounded-lg bg-white border border-emerald-200 text-xs font-medium"
+            />
+          </div>
+        </div>
+      `;
     }
 
     function renderAddContentModal() {
@@ -647,62 +911,30 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Tür</label>
-                <input type="text" id="add-movie-genre" placeholder="Aksiyon, Bilim Kurgu..." class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-semibold focus:outline-none focus:border-bpRoyal" />
-              </div>
-              <div class="flex items-end gap-3 pb-1">
-                <label class="flex items-center gap-1.5 text-xs font-extrabold text-bpGreen cursor-pointer">
-                  <input type="checkbox" id="add-movie-dub" checked class="accent-bpGreen w-4 h-4" />
-                  <span>TR Dublaj</span>
-                </label>
-                <label class="flex items-center gap-1.5 text-xs font-extrabold text-bpRoyal cursor-pointer">
-                  <input type="checkbox" id="add-movie-sub" checked class="accent-bpRoyal w-4 h-4" />
-                  <span>TR Altyazı</span>
-                </label>
-              </div>
+            <div>
+              <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Tür</label>
+              <input type="text" id="add-movie-genre" placeholder="Aksiyon, Bilim Kurgu..." class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-semibold focus:outline-none focus:border-bpRoyal" />
             </div>
 
             <!-- Afiş -->
             <div class="p-2.5 rounded-xl bg-bpSky/45 border border-bpSkyBorder space-y-2">
-              <div class="text-[11px] font-extrabold text-bpNavy">Film Afişi (Link veya Cihazdan Seç)</div>
+              <div class="text-[11px] font-extrabold text-bpNavy">Film Afişi (Galeriden Seç veya Link Gir)</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input type="url" id="add-movie-poster-url" placeholder="Afiş resim linki (https://...)" class="w-full px-3 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs" />
-                <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-bpNavy text-white text-xs font-extrabold flex items-center justify-center gap-1.5 truncate">
-                  <span id="add-movie-poster-file-label" class="truncate">Cihazdan Afiş Seç</span>
-                  <input type="file" id="add-movie-poster-file" accept="image/*" onchange="document.getElementById('add-movie-poster-file-label').textContent = this.files[0] ? this.files[0].name : 'Cihazdan Afiş Seç'" class="hidden" />
-                </label>
+                <div class="relative">
+                  <div class="w-full px-3 py-2 rounded-lg bg-bpNavy text-white text-xs font-extrabold flex items-center justify-center">
+                    <span>Galeriden Afiş Seç</span>
+                  </div>
+                  <input type="file" id="add-movie-poster-file" accept="image/*" onchange="onGalleryFilePicked(this, 'add-movie-poster-info')" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                </div>
+                <input type="url" id="add-movie-poster-url" placeholder="veya Afiş linki (https://...)" class="w-full px-3 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs" />
               </div>
+              <div id="add-movie-poster-info" class="hidden text-[11px] font-extrabold text-bpNavy truncate"></div>
             </div>
 
-            <!-- Video Kaynağı (Kanal 1) -->
-            <div class="p-3 rounded-xl bg-bpNavy/5 border-2 border-bpRoyal/30 space-y-2">
-              <div class="text-[11px] font-extrabold text-bpNavy">Video Kaynağı (Link Girin veya Video Yükleyin) *</div>
-              <input type="url" id="add-movie-video-url" placeholder="Video linki (.mp4, .m3u8 vb.)" class="w-full px-3 py-2 rounded-lg bg-white border border-bpSkyBorder text-xs font-medium" />
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-[10px] font-bold text-slate-600">veya cihazınızdan video yükleyin:</span>
-                <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-bpRed hover:bg-red-700 text-white text-xs font-extrabold shrink-0 max-w-[180px] truncate">
-                  <span id="add-movie-video-file-label">Video Yükle</span>
-                  <input type="file" id="add-movie-video-file" accept="video/*" onchange="document.getElementById('add-movie-video-file-label').textContent = this.files[0] ? this.files[0].name : 'Video Yükle'" class="hidden" />
-                </label>
-              </div>
-            </div>
-
-            <!-- Kanal 2 (İsteğe Bağlı) -->
-            <div class="p-2.5 rounded-xl bg-bpSky/35 border border-bpSkyBorder space-y-1.5">
-              <div class="text-[11px] font-extrabold text-slate-700">Kanal 2 (İsteğe Bağlı Yedek Link / Video)</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input type="url" id="add-movie-video2-url" placeholder="Kanal 2 linki (isteğe bağlı)" class="w-full px-3 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs" />
-                <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-bpRoyal text-white text-xs font-extrabold flex items-center justify-center truncate">
-                  <span id="add-movie-video2-file-label" class="truncate">Kanal 2 Video Seç</span>
-                  <input type="file" id="add-movie-video2-file" accept="video/*" onchange="document.getElementById('add-movie-video2-file-label').textContent = this.files[0] ? this.files[0].name : 'Kanal 2 Video Seç'" class="hidden" />
-                </label>
-              </div>
-            </div>
+            ${renderSubAndDubUploadSections('movie')}
 
             <div id="cloud-upload-progress-box" class="hidden p-2.5 rounded-xl bg-bpNavy text-white space-y-1.5">
-              <div id="cloud-upload-progress-text" class="text-[11px] font-extrabold text-bpYellow">Buluta Yükleniyor (%0)</div>
+              <div id="cloud-upload-progress-text" class="text-[11px] font-extrabold text-bpYellow">Yükleniyor (%0)</div>
               <div class="w-full h-2 rounded-full bg-white/20 overflow-hidden">
                 <div id="cloud-upload-progress-bar" class="h-full bg-bpGreen transition-all duration-150" style="width: 0%"></div>
               </div>
@@ -710,7 +942,7 @@
 
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-bpSky text-bpNavy text-xs font-extrabold">Vazgeç</button>
-              <button type="submit" id="submit-movie-btn" class="px-5 py-2 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow">Filmi Kaydet</button>
+              <button type="submit" id="submit-movie-btn" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow">Filmi Yükle &amp; Kaydet</button>
             </div>
           </form>
         `;
@@ -734,42 +966,25 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-4">
-              <label class="flex items-center gap-1.5 text-xs font-extrabold text-bpGreen cursor-pointer">
-                <input type="checkbox" id="add-series-dub" checked class="accent-bpGreen w-4 h-4" />
-                <span>TR Dublaj</span>
-              </label>
-              <label class="flex items-center gap-1.5 text-xs font-extrabold text-bpRoyal cursor-pointer">
-                <input type="checkbox" id="add-series-sub" checked class="accent-bpRoyal w-4 h-4" />
-                <span>TR Altyazı</span>
-              </label>
-            </div>
-
             <div class="p-2.5 rounded-xl bg-bpSky/45 border border-bpSkyBorder space-y-2">
-              <div class="text-[11px] font-extrabold text-bpEmerald">Dizi Afişi (Link veya Cihazdan Seç)</div>
+              <div class="text-[11px] font-extrabold text-bpEmerald">Dizi Afişi (Galeriden Seç veya Link Gir)</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input type="url" id="add-series-poster-url" placeholder="Afiş resim linki (https://...)" class="w-full px-3 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs" />
-                <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-bpEmerald text-white text-xs font-extrabold flex items-center justify-center truncate">
-                  <span id="add-series-poster-file-label" class="truncate">Cihazdan Afiş Seç</span>
-                  <input type="file" id="add-series-poster-file" accept="image/*" onchange="document.getElementById('add-series-poster-file-label').textContent = this.files[0] ? this.files[0].name : 'Cihazdan Afiş Seç'" class="hidden" />
-                </label>
+                <div class="relative">
+                  <div class="w-full px-3 py-2 rounded-lg bg-bpEmerald text-white text-xs font-extrabold flex items-center justify-center">
+                    <span>Galeriden Afiş Seç</span>
+                  </div>
+                  <input type="file" id="add-series-poster-file" accept="image/*" onchange="onGalleryFilePicked(this, 'add-series-poster-info')" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                </div>
+                <input type="url" id="add-series-poster-url" placeholder="veya Afiş linki (https://...)" class="w-full px-3 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs" />
               </div>
+              <div id="add-series-poster-info" class="hidden text-[11px] font-extrabold text-bpEmerald truncate"></div>
             </div>
 
-            <div class="p-3 rounded-xl bg-emerald-50/70 border-2 border-bpEmerald/40 space-y-2">
-              <div class="text-[11px] font-extrabold text-bpEmerald">1. Sezon 1. Bölüm Videosu (Link veya Video Yükle) *</div>
-              <input type="url" id="add-series-ep1-url" placeholder="1. Bölüm video linki (.mp4, .m3u8 vb.)" class="w-full px-3 py-2 rounded-lg bg-white border border-bpSkyBorder text-xs" />
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-[10px] font-bold text-slate-600">veya cihazınızdan bölüm videosu yükleyin:</span>
-                <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-bpRed hover:bg-red-700 text-white text-xs font-extrabold shrink-0 max-w-[180px] truncate">
-                  <span id="add-series-ep1-file-label">Video Yükle</span>
-                  <input type="file" id="add-series-ep1-file" accept="video/*" onchange="document.getElementById('add-series-ep1-file-label').textContent = this.files[0] ? this.files[0].name : 'Video Yükle'" class="hidden" />
-                </label>
-              </div>
-            </div>
+            <div class="text-[11px] font-extrabold text-bpBlack pt-1">1. Sezon 1. Bölüm Videoları:</div>
+            ${renderSubAndDubUploadSections('series')}
 
             <div id="cloud-upload-progress-box" class="hidden p-2.5 rounded-xl bg-bpNavy text-white space-y-1.5">
-              <div id="cloud-upload-progress-text" class="text-[11px] font-extrabold text-bpYellow">Buluta Yükleniyor (%0)</div>
+              <div id="cloud-upload-progress-text" class="text-[11px] font-extrabold text-bpYellow">Yükleniyor (%0)</div>
               <div class="w-full h-2 rounded-full bg-white/20 overflow-hidden">
                 <div id="cloud-upload-progress-bar" class="h-full bg-bpGreen transition-all duration-150" style="width: 0%"></div>
               </div>
@@ -777,7 +992,7 @@
 
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-bpSky text-bpNavy text-xs font-extrabold">Vazgeç</button>
-              <button type="submit" id="submit-series-btn" class="px-5 py-2 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shadow">Diziyi Kaydet</button>
+              <button type="submit" id="submit-series-btn" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shadow">Diziyi Yükle &amp; Kaydet</button>
             </div>
           </form>
         `;
@@ -817,20 +1032,10 @@
                 </div>
               </div>
 
-              <div class="p-3 rounded-xl bg-emerald-50/70 border-2 border-bpEmerald/40 space-y-2">
-                <div class="text-[11px] font-extrabold text-bpEmerald">Bölüm Videosu (Link Girin veya Video Yükleyin) *</div>
-                <input type="url" id="add-ep-video-url" placeholder="Video linki (.mp4, .m3u8 vb.)" class="w-full px-3 py-2 rounded-lg bg-white border border-bpSkyBorder text-xs" />
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-[10px] font-bold text-slate-600">veya cihazınızdan video yükleyin:</span>
-                  <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-bpRed hover:bg-red-700 text-white text-xs font-extrabold shrink-0 max-w-[180px] truncate">
-                    <span id="add-ep-video-file-label">Video Yükle</span>
-                    <input type="file" id="add-ep-video-file" accept="video/*" onchange="document.getElementById('add-ep-video-file-label').textContent = this.files[0] ? this.files[0].name : 'Video Yükle'" class="hidden" />
-                  </label>
-                </div>
-              </div>
+              ${renderSubAndDubUploadSections('ep')}
 
               <div id="cloud-upload-progress-box" class="hidden p-2.5 rounded-xl bg-bpNavy text-white space-y-1.5">
-                <div id="cloud-upload-progress-text" class="text-[11px] font-extrabold text-bpYellow">Buluta Yükleniyor (%0)</div>
+                <div id="cloud-upload-progress-text" class="text-[11px] font-extrabold text-bpYellow">Yükleniyor (%0)</div>
                 <div class="w-full h-2 rounded-full bg-white/20 overflow-hidden">
                   <div id="cloud-upload-progress-bar" class="h-full bg-bpGreen transition-all duration-150" style="width: 0%"></div>
                 </div>
@@ -838,7 +1043,7 @@
 
               <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-bpSky text-bpNavy text-xs font-extrabold">Vazgeç</button>
-                <button type="submit" id="submit-ep-btn" class="px-5 py-2 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shadow">Bölümü Kaydet</button>
+                <button type="submit" id="submit-ep-btn" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shadow">Bölümü Yükle &amp; Kaydet</button>
               </div>
             </form>
           `}
@@ -847,11 +1052,11 @@
 
       openModal(`
         <div class="birperde-ribbon"></div>
-        <div class="p-4 sm:p-5 space-y-4">
+        <div class="p-4 sm:p-5 space-y-3.5">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-base font-extrabold text-bpNavy">Yönetici Düzenleyici — İçerik Yükle</h3>
-              <p class="text-[11px] text-slate-600">Yüklenen tüm içerikler ortak bulut veritabanına kaydedilir.</p>
+              <p class="text-[11px] text-slate-600">Altyazılı ve Dublaj videolarını cihazınızdan veya linkle yükleyin.</p>
             </div>
             <button type="button" onclick="closeModal()" class="px-2.5 py-1 rounded-lg bg-bpSky hover:bg-bpRed hover:text-white text-xs font-extrabold">Kapat</button>
           </div>
@@ -873,6 +1078,70 @@
       `);
     }
 
+    async function collectSubAndDubSources(prefix, baseSlug) {
+      const subChecked = document.getElementById(`${prefix}-sub-check`).checked;
+      const subFile = document.getElementById(`${prefix}-sub-file`).files[0];
+      const subUrl = document.getElementById(`${prefix}-sub-url`).value.trim();
+
+      const dubChecked = document.getElementById(`${prefix}-dub-check`).checked;
+      const dubFile = document.getElementById(`${prefix}-dub-file`).files[0];
+      const dubUrl = document.getElementById(`${prefix}-dub-url`).value.trim();
+
+      const sources = [];
+
+      if ((subChecked || subFile || subUrl) && (subFile || subUrl)) {
+        if (subFile) {
+          const upSub = await uploadFileReliably(subFile, 'birperde_videos', (pct, detail) => {
+            updateModalUploadProgress(pct, `Altyazılı Video (${detail})`);
+          });
+          sources.push({
+            id: 'sub',
+            label: 'TR Altyazılı',
+            defaultMode: 'sub',
+            url: upSub.url,
+            storagePath: upSub.storagePath,
+            fileName: subFile.name
+          });
+        } else if (subUrl) {
+          sources.push({
+            id: 'sub',
+            label: 'TR Altyazılı',
+            defaultMode: 'sub',
+            url: subUrl,
+            storagePath: '',
+            fileName: `${baseSlug}_Altyazili.mp4`
+          });
+        }
+      }
+
+      if ((dubChecked || dubFile || dubUrl) && (dubFile || dubUrl)) {
+        if (dubFile) {
+          const upDub = await uploadFileReliably(dubFile, 'birperde_videos', (pct, detail) => {
+            updateModalUploadProgress(pct, `Dublaj Video (${detail})`);
+          });
+          sources.push({
+            id: 'dub',
+            label: 'TR Dublaj',
+            defaultMode: 'dub',
+            url: upDub.url,
+            storagePath: upDub.storagePath,
+            fileName: dubFile.name
+          });
+        } else if (dubUrl) {
+          sources.push({
+            id: 'dub',
+            label: 'TR Dublaj',
+            defaultMode: 'dub',
+            url: dubUrl,
+            storagePath: '',
+            fileName: `${baseSlug}_Dublaj.mp4`
+          });
+        }
+      }
+
+      return sources;
+    }
+
     async function handleAddMovieSubmit(event) {
       event.preventDefault();
       if (isUploadingMedia) return;
@@ -881,80 +1150,41 @@
       const year = Number(document.getElementById('add-movie-year').value) || 2026;
       const duration = document.getElementById('add-movie-duration').value.trim() || 'Sinema';
       const genre = document.getElementById('add-movie-genre').value.trim() || 'Sinema';
-      const hasDub = document.getElementById('add-movie-dub').checked;
-      const hasSub = document.getElementById('add-movie-sub').checked;
 
       const posterUrlInput = document.getElementById('add-movie-poster-url').value.trim();
       const posterFile = document.getElementById('add-movie-poster-file').files[0];
 
-      const video1Url = document.getElementById('add-movie-video-url').value.trim();
-      const video1File = document.getElementById('add-movie-video-file').files[0];
+      const subFile = document.getElementById('movie-sub-file').files[0];
+      const subUrl = document.getElementById('movie-sub-url').value.trim();
+      const dubFile = document.getElementById('movie-dub-file').files[0];
+      const dubUrl = document.getElementById('movie-dub-url').value.trim();
 
-      const video2Url = document.getElementById('add-movie-video2-url').value.trim();
-      const video2File = document.getElementById('add-movie-video2-file').files[0];
-
-      if (!video1Url && !video1File) {
-        showToast('Lütfen en az 1 video linki girin veya cihazınızdan video yükleyin.', 'error');
+      if (!subFile && !subUrl && !dubFile && !dubUrl) {
+        showToast('Lütfen Altyazılı veya Dublaj seçeneklerinin altına en az bir video seçin ya da link girin.', 'error');
         return;
       }
 
       isUploadingMedia = true;
       const submitBtn = document.getElementById('submit-movie-btn');
-      if (submitBtn) submitBtn.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Yükleniyor...';
+      }
 
       try {
         let finalPosterUrl = posterUrlInput;
         let posterStoragePath = '';
         if (posterFile) {
-          const upPoster = await uploadFileToFirebaseStorage(posterFile, 'birperde_posters', pct => {
-            updateModalUploadProgress(pct, 'Afiş Yükleniyor');
+          const upPoster = await uploadFileReliably(posterFile, 'birperde_posters', (pct, detail) => {
+            updateModalUploadProgress(pct, `Afiş Yükleniyor (${detail})`);
           });
           finalPosterUrl = upPoster.url;
           posterStoragePath = upPoster.storagePath;
         }
 
-        const sources = [];
-        if (video1File) {
-          const upVid1 = await uploadFileToFirebaseStorage(video1File, 'birperde_videos', pct => {
-            updateModalUploadProgress(pct, 'Kanal 1 Video Yükleniyor');
-          });
-          sources.push({
-            label: 'Kanal 1',
-            url: upVid1.url,
-            storagePath: upVid1.storagePath,
-            fileName: video1File.name,
-            defaultMode: hasDub ? 'dub' : 'sub'
-          });
-        } else if (video1Url) {
-          sources.push({
-            label: 'Kanal 1',
-            url: video1Url,
-            storagePath: '',
-            fileName: `${title}_Kanal_1.mp4`,
-            defaultMode: hasDub ? 'dub' : 'sub'
-          });
-        }
-
-        if (video2File) {
-          const upVid2 = await uploadFileToFirebaseStorage(video2File, 'birperde_videos', pct => {
-            updateModalUploadProgress(pct, 'Kanal 2 Video Yükleniyor');
-          });
-          sources.push({
-            label: 'Kanal 2',
-            url: upVid2.url,
-            storagePath: upVid2.storagePath,
-            fileName: video2File.name,
-            defaultMode: hasSub ? 'sub' : 'dub'
-          });
-        } else if (video2Url) {
-          sources.push({
-            label: 'Kanal 2',
-            url: video2Url,
-            storagePath: '',
-            fileName: `${title}_Kanal_2.mp4`,
-            defaultMode: hasSub ? 'sub' : 'dub'
-          });
-        }
+        const sources = await collectSubAndDubSources('movie', title);
+        const hasSub = sources.some(s => s.defaultMode === 'sub');
+        const hasDub = sources.some(s => s.defaultMode === 'dub');
 
         const newMovie = {
           id: 'mov-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
@@ -975,12 +1205,16 @@
         await saveCatalogItemToCloud(newMovie);
         closeModal();
         renderMainView();
+        await hydrateLocalPosterImages();
         showToast(`"${title}" filmi başarıyla yüklendi.`, 'success');
       } catch (err) {
-        showToast('Yükleme hatası: ' + (err.message || 'Firebase kurallarını kontrol edin.'), 'error');
+        showToast('Yükleme sırasında hata oluştu: ' + (err.message || ''), 'error');
       } finally {
         isUploadingMedia = false;
-        if (submitBtn) submitBtn.disabled = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Filmi Yükle & Kaydet';
+        }
       }
     }
 
@@ -991,56 +1225,41 @@
       const title = document.getElementById('add-series-title').value.trim();
       const year = Number(document.getElementById('add-series-year').value) || 2026;
       const genre = document.getElementById('add-series-genre').value.trim() || 'Dizi';
-      const hasDub = document.getElementById('add-series-dub').checked;
-      const hasSub = document.getElementById('add-series-sub').checked;
 
       const posterUrlInput = document.getElementById('add-series-poster-url').value.trim();
       const posterFile = document.getElementById('add-series-poster-file').files[0];
 
-      const ep1Url = document.getElementById('add-series-ep1-url').value.trim();
-      const ep1File = document.getElementById('add-series-ep1-file').files[0];
+      const subFile = document.getElementById('series-sub-file').files[0];
+      const subUrl = document.getElementById('series-sub-url').value.trim();
+      const dubFile = document.getElementById('series-dub-file').files[0];
+      const dubUrl = document.getElementById('series-dub-url').value.trim();
 
-      if (!ep1Url && !ep1File) {
-        showToast('Lütfen 1. bölüm için video linki girin veya cihazınızdan video yükleyin.', 'error');
+      if (!subFile && !subUrl && !dubFile && !dubUrl) {
+        showToast('Lütfen 1. Bölüm için Altyazılı veya Dublaj video seçin ya da link girin.', 'error');
         return;
       }
 
       isUploadingMedia = true;
       const submitBtn = document.getElementById('submit-series-btn');
-      if (submitBtn) submitBtn.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Yükleniyor...';
+      }
 
       try {
         let finalPosterUrl = posterUrlInput;
         let posterStoragePath = '';
         if (posterFile) {
-          const upPoster = await uploadFileToFirebaseStorage(posterFile, 'birperde_posters', pct => {
-            updateModalUploadProgress(pct, 'Dizi Afişi Yükleniyor');
+          const upPoster = await uploadFileReliably(posterFile, 'birperde_posters', (pct, detail) => {
+            updateModalUploadProgress(pct, `Dizi Afişi (${detail})`);
           });
           finalPosterUrl = upPoster.url;
           posterStoragePath = upPoster.storagePath;
         }
 
-        const ep1Sources = [];
-        if (ep1File) {
-          const upEp1 = await uploadFileToFirebaseStorage(ep1File, 'birperde_videos', pct => {
-            updateModalUploadProgress(pct, '1. Bölüm Videosu Yükleniyor');
-          });
-          ep1Sources.push({
-            label: 'Kanal 1',
-            url: upEp1.url,
-            storagePath: upEp1.storagePath,
-            fileName: ep1File.name,
-            defaultMode: hasDub ? 'dub' : 'sub'
-          });
-        } else {
-          ep1Sources.push({
-            label: 'Kanal 1',
-            url: ep1Url,
-            storagePath: '',
-            fileName: `${title}_S1_B1.mp4`,
-            defaultMode: hasDub ? 'dub' : 'sub'
-          });
-        }
+        const ep1Sources = await collectSubAndDubSources('series', `${title}_S1_B1`);
+        const hasSub = ep1Sources.some(s => s.defaultMode === 'sub');
+        const hasDub = ep1Sources.some(s => s.defaultMode === 'dub');
 
         const newSeries = {
           id: 'ser-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
@@ -1068,12 +1287,16 @@
         await saveCatalogItemToCloud(newSeries);
         closeModal();
         renderMainView();
+        await hydrateLocalPosterImages();
         showToast(`"${title}" dizisi başarıyla yüklendi.`, 'success');
       } catch (err) {
-        showToast('Yükleme hatası: ' + (err.message || 'Firebase kurallarını kontrol edin.'), 'error');
+        showToast('Yükleme hatası: ' + (err.message || ''), 'error');
       } finally {
         isUploadingMedia = false;
-        if (submitBtn) submitBtn.disabled = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Diziyi Yükle & Kaydet';
+        }
       }
     }
 
@@ -1086,49 +1309,35 @@
       const number = Math.max(1, Number(document.getElementById('add-ep-number').value) || 1);
       const name = document.getElementById('add-ep-name').value.trim() || `${number}. Bölüm`;
 
-      const vidUrl = document.getElementById('add-ep-video-url').value.trim();
-      const vidFile = document.getElementById('add-ep-video-file').files[0];
+      const subFile = document.getElementById('ep-sub-file').files[0];
+      const subUrl = document.getElementById('ep-sub-url').value.trim();
+      const dubFile = document.getElementById('ep-dub-file').files[0];
+      const dubUrl = document.getElementById('ep-dub-url').value.trim();
 
       const series = state.catalog.find(s => s.id === seriesId && s.type === 'series');
       if (!series) return;
 
-      if (!vidUrl && !vidFile) {
-        showToast('Lütfen bölüm için video linki girin veya video yükleyin.', 'error');
+      if (!subFile && !subUrl && !dubFile && !dubUrl) {
+        showToast('Lütfen bölüm için Altyazılı veya Dublaj video seçin ya da link girin.', 'error');
         return;
       }
 
       isUploadingMedia = true;
       const submitBtn = document.getElementById('submit-ep-btn');
-      if (submitBtn) submitBtn.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Yükleniyor...';
+      }
 
       try {
-        const sources = [];
-        if (vidFile) {
-          const upVid = await uploadFileToFirebaseStorage(vidFile, 'birperde_videos', pct => {
-            updateModalUploadProgress(pct, `Sezon ${season} Bölüm ${number} Yükleniyor`);
-          });
-          sources.push({
-            label: 'Kanal 1',
-            url: upVid.url,
-            storagePath: upVid.storagePath,
-            fileName: vidFile.name,
-            defaultMode: series.hasDub ? 'dub' : 'sub'
-          });
-        } else {
-          sources.push({
-            label: 'Kanal 1',
-            url: vidUrl,
-            storagePath: '',
-            fileName: `${series.title}_S${season}_B${number}.mp4`,
-            defaultMode: series.hasDub ? 'dub' : 'sub'
-          });
-        }
+        const sources = await collectSubAndDubSources('ep', `${series.title}_S${season}_B${number}`);
 
         if (!Array.isArray(series.episodes)) series.episodes = [];
         const existingIdx = series.episodes.findIndex(e => Number(e.season) === season && Number(e.number) === number);
         if (existingIdx >= 0) {
           const oldPaths = (series.episodes[existingIdx].sources || []).map(s => s.storagePath).filter(Boolean);
-          await deleteStoragePaths(oldPaths);
+          const oldUrls = (series.episodes[existingIdx].sources || []).map(s => s.url).filter(Boolean);
+          await deleteMediaFiles(oldPaths, oldUrls);
           series.episodes[existingIdx] = { season, number, name, sources };
         } else {
           series.episodes.push({ season, number, name, sources });
@@ -1136,9 +1345,13 @@
 
         series.episodes.sort((a, b) => (Number(a.season) - Number(b.season)) || (Number(a.number) - Number(b.number)));
         series.seasons = Math.max(...series.episodes.map(e => Number(e.season)));
+        series.hasSub = series.episodes.some(ep => (ep.sources || []).some(s => s.defaultMode === 'sub'));
+        series.hasDub = series.episodes.some(ep => (ep.sources || []).some(s => s.defaultMode === 'dub'));
+
         await saveCatalogItemToCloud(series);
         closeModal();
         renderMainView();
+        await hydrateLocalPosterImages();
         if (state.player.media && state.player.media.id === series.id) {
           openPlayerForMedia(series.id, season, number);
         }
@@ -1147,7 +1360,10 @@
         showToast('Bölüm yükleme hatası: ' + (err.message || ''), 'error');
       } finally {
         isUploadingMedia = false;
-        if (submitBtn) submitBtn.disabled = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Bölümü Yükle & Kaydet';
+        }
       }
     }
 
@@ -1178,26 +1394,29 @@
           <div class="space-y-2 max-h-72 overflow-y-auto">
             ${eps.length === 0 ? `
               <div class="p-4 rounded-xl bg-bpSky/60 text-center text-xs text-slate-700">Bu diziye henüz bölüm eklenmemiş.</div>
-            ` : eps.map(ep => `
-              <div class="p-2.5 rounded-xl bg-bpSky/55 border border-bpSkyBorder flex items-center justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="text-xs font-extrabold text-bpBlack truncate">
-                    Sezon ${ep.season} • Bölüm ${ep.number} — ${escapeHtml(ep.name || `${ep.number}. Bölüm`)}
+            ` : eps.map(ep => {
+              const labels = (ep.sources || []).map(s => s.label).join(' + ') || 'Video';
+              return `
+                <div class="p-2.5 rounded-xl bg-bpSky/55 border border-bpSkyBorder flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-xs font-extrabold text-bpBlack truncate">
+                      Sezon ${ep.season} • Bölüm ${ep.number} — ${escapeHtml(ep.name || `${ep.number}. Bölüm`)}
+                    </div>
+                    <div class="text-[10px] font-bold text-bpRoyal truncate">
+                      ${escapeHtml(labels)}
+                    </div>
                   </div>
-                  <div class="text-[10px] text-slate-500 truncate">
-                    ${(ep.sources && ep.sources[0] && ep.sources[0].fileName) ? escapeHtml(ep.sources[0].fileName) : 'Video Kaynağı'}
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" onclick="closeModal(); openPlayerForMedia('${escapeAttr(series.id)}', ${ep.season}, ${ep.number})" class="px-2.5 py-1.5 rounded-lg bg-bpNavy text-white text-[11px] font-extrabold">
+                      Ön İzle
+                    </button>
+                    <button type="button" onclick="deleteSingleEpisode('${escapeAttr(series.id)}', ${ep.season}, ${ep.number})" class="px-2.5 py-1.5 rounded-lg bg-bpRed text-white text-[11px] font-extrabold">
+                      Bölümü Sil
+                    </button>
                   </div>
                 </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <button type="button" onclick="closeModal(); openPlayerForMedia('${escapeAttr(series.id)}', ${ep.season}, ${ep.number})" class="px-2.5 py-1.5 rounded-lg bg-bpNavy text-white text-[11px] font-extrabold">
-                    Ön İzle
-                  </button>
-                  <button type="button" onclick="deleteSingleEpisode('${escapeAttr(series.id)}', ${ep.season}, ${ep.number})" class="px-2.5 py-1.5 rounded-lg bg-bpRed text-white text-[11px] font-extrabold">
-                    Bölümü Sil
-                  </button>
-                </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </div>
       `);
@@ -1211,13 +1430,17 @@
       if (!targetEp) return;
 
       const storagePaths = (targetEp.sources || []).map(s => s.storagePath).filter(Boolean);
-      await deleteStoragePaths(storagePaths);
+      const urls = (targetEp.sources || []).map(s => s.url).filter(Boolean);
+      await deleteMediaFiles(storagePaths, urls);
 
       series.episodes = series.episodes.filter(e => !(Number(e.season) === Number(season) && Number(e.number) === Number(episodeNum)));
       series.seasons = series.episodes.length > 0 ? Math.max(...series.episodes.map(e => Number(e.season))) : 1;
+      series.hasSub = series.episodes.some(ep => (ep.sources || []).some(s => s.defaultMode === 'sub'));
+      series.hasDub = series.episodes.some(ep => (ep.sources || []).some(s => s.defaultMode === 'dub'));
 
       await saveCatalogItemToCloud(series);
       renderMainView();
+      await hydrateLocalPosterImages();
       openSeriesEpisodesModal(series.id);
       showToast(`Sezon ${season} Bölüm ${episodeNum} silindi.`, 'info');
     }
@@ -1232,7 +1455,7 @@
         <div class="p-5 space-y-4">
           <h3 class="text-base font-extrabold text-bpRed">İçeriği Kalıcı Olarak Sil</h3>
           <p class="text-xs text-slate-700 leading-relaxed">
-            <strong>"${escapeHtml(item.title)}"</strong> yapımını ve varsa yüklenen video/afiş dosyalarını kalıcı olarak silmek istediğinize emin misiniz?
+            <strong>"${escapeHtml(item.title)}"</strong> yapımını ve yüklenen tüm video/afiş dosyalarını kalıcı olarak silmek istediğinize emin misiniz?
           </p>
           <div class="flex justify-end gap-2">
             <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-bpSky text-bpNavy text-xs font-extrabold">Vazgeç</button>
@@ -1253,17 +1476,19 @@
       }
       closeModal();
       renderMainView();
+      await hydrateLocalPosterImages();
       showToast(`"${item.title}" kalıcı olarak silindi.`, 'info');
     }
 
     /* =========================================================================
-       6. ARAMA, FİLTRE VE LİSTELEME
+       8. ARAMA, FİLTRE VE LİSTELEME
     ========================================================================= */
     function handleSearchInput(val) {
       state.searchQuery = val.trim();
       const clearBtn = document.getElementById('search-clear-btn');
       if (clearBtn) clearBtn.classList.toggle('hidden', !state.searchQuery);
       renderMainView();
+      hydrateLocalPosterImages();
     }
 
     function resetSearchInput() {
@@ -1300,12 +1525,14 @@
       state.navTab = tab;
       refreshNavTabsUI();
       renderMainView();
+      hydrateLocalPosterImages();
     }
 
     function switchLangFilter(lang) {
       state.langFilter = lang;
       refreshNavTabsUI();
       renderMainView();
+      hydrateLocalPosterImages();
     }
 
     function filterItemsByCriteria(list) {
@@ -1344,7 +1571,7 @@
           ${movies.length === 0 ? `
             <div class="bg-bpWhite rounded-2xl p-6 border border-bpSkyBorder text-center space-y-2.5">
               <div class="text-sm font-extrabold text-bpNavy">Henüz Film Yüklenmedi</div>
-              <p class="text-xs text-slate-600">Film Ekle butonuna basarak video linki girebilir veya cihazınızdan film yükleyebilirsiniz.</p>
+              <p class="text-xs text-slate-600">Film Ekle butonuna basarak Altyazılı veya Dublaj videolarını galeriden seçebilirsiniz.</p>
               <button type="button" onclick="openAddContentModal('movie')" class="px-4 py-2 rounded-xl bg-bpNavy text-white text-xs font-extrabold">+ İlk Filmi Ekle</button>
             </div>
           ` : `
@@ -1384,7 +1611,6 @@
         return;
       }
 
-      // TÜM ARŞİV GÖRÜNÜMÜ
       container.innerHTML = `
         <!-- FİLMLER BÖLÜMÜ -->
         <section class="space-y-2.5">
@@ -1464,7 +1690,7 @@
               </h3>
               <div class="flex items-center gap-1 mt-1 flex-wrap">
                 ${item.hasDub ? '<span class="px-1.5 py-0.2 rounded bg-bpGreen/15 text-bpGreen text-[9px] font-extrabold">Dublaj</span>' : ''}
-                ${item.hasSub ? '<span class="px-1.5 py-0.2 rounded bg-bpSky text-bpNavy text-[9px] font-extrabold">Altyazı</span>' : ''}
+                ${item.hasSub ? '<span class="px-1.5 py-0.2 rounded bg-bpSky text-bpRoyal text-[9px] font-extrabold">Altyazılı</span>' : ''}
               </div>
             </div>
 
@@ -1496,7 +1722,7 @@
     }
 
     /* =========================================================================
-       7. VİDEO ÖN İZLEME OYNATICISI
+       9. VİDEO ÖN İZLEME OYNATICISI (ALTYAZILI / DUBLAJ GEÇİŞLİ)
     ========================================================================= */
     let activeHlsInstance = null;
 
@@ -1595,7 +1821,7 @@
       updateCustomControlsDOM();
     }
 
-    function wireMediaPlayer() {
+    async function wireMediaPlayer() {
       stopMediaEngines();
       const vid = document.getElementById('birperde-video-player');
       const loader = document.getElementById('bp-player-loader');
@@ -1616,11 +1842,16 @@
 
       const activeCh = getActiveChannel();
       if (!activeCh || !activeCh.streamUrl) {
-        if (loader) loader.innerHTML = '<span>Video Linki Bulunamadı</span>';
+        if (loader) loader.innerHTML = '<span>Video Bulunamadı</span>';
         return;
       }
 
-      const resolvedUrl = activeCh.streamUrl;
+      // Yerel IndexedDB kaydıysa anında Blob URL'ye çevir
+      let resolvedUrl = activeCh.streamUrl;
+      if (resolvedUrl.startsWith('idb://')) {
+        resolvedUrl = await getBlobUrlFromLocalDB(resolvedUrl);
+      }
+
       const isHls = /\.m3u8(\?|$)/i.test(resolvedUrl) || resolvedUrl.toLowerCase().includes('m3u8');
       if (isHls && window.Hls && window.Hls.isSupported()) {
         const hls = new window.Hls({ enableWorker: true, lowLatencyMode: true });
@@ -1700,7 +1931,6 @@
       }
 
       const media = p.media;
-      const activeCh = getActiveChannel();
 
       let episodeButtonsHtml = '';
       if (media.type === 'series') {
@@ -1771,26 +2001,25 @@
 
           ${episodeButtonsHtml}
 
-          <!-- YAYIN KANALLARI -->
-          ${p.channels.length > 1 ? `
-            <div class="px-4 py-2 bg-slate-900/95 border-b border-white/10 flex items-center gap-1.5 flex-wrap">
-              ${p.channels.map(ch => {
-                const selected = ch.id === p.activeChannelId;
-                return `
-                  <button type="button" onclick="selectStreamingChannel('${ch.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold border transition ${selected ? 'bg-bpRoyal border-bpYellow text-white shadow' : 'bg-white/5 hover:bg-white/15 border-white/15 text-slate-200'}">
-                    ${escapeHtml(ch.label)}
-                  </button>
-                `;
-              }).join('')}
-            </div>
-          ` : ''}
+          <!-- ALTYAZILI / DUBLAJ VİDEO SEÇİM SEKMELERİ -->
+          <div class="px-4 py-2 bg-slate-900/95 border-b border-white/10 flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] font-bold text-slate-400">Ses / Sürüm Seçimi:</span>
+            ${p.channels.map(ch => {
+              const selected = ch.id === p.activeChannelId;
+              const isDub = ch.defaultMode === 'dub';
+              return `
+                <button type="button" onclick="selectStreamingChannel('${escapeAttr(ch.id)}')" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border transition ${selected ? (isDub ? 'bg-bpEmerald border-bpYellow text-white shadow' : 'bg-bpRoyal border-bpYellow text-white shadow') : 'bg-white/5 hover:bg-white/15 border-white/15 text-slate-200'}">
+                  ${escapeHtml(ch.label)}
+                </button>
+              `;
+            }).join('')}
+          </div>
 
           <!-- VİDEO OYNATICI -->
           <div class="p-3 sm:p-4 ${p.isCustomFullscreen ? 'flex-1 flex flex-col' : ''}">
             <div class="relative ${p.isCustomFullscreen ? 'flex-1 min-h-[260px]' : 'aspect-video'} rounded-xl overflow-hidden bg-bpNavy border border-white/20">
               <video
                 id="birperde-video-player"
-                poster="${escapeAttr(media.posterUrl ? media.posterUrl : CINEMA_FALLBACK_PHOTO)}"
                 preload="auto"
                 playsinline
                 onclick="toggleVideoPlayPause()"
@@ -1840,7 +2069,7 @@
     }
 
     /* =========================================================================
-       8. YARDIMCI FONKSİYONLAR VE YÖNETİCİ DÜZENLEYİCİ LOGOSU
+       10. YARDIMCI FONKSİYONLAR VE YÖNETİCİ DÜZENLEYİCİ LOGOSU
     ========================================================================= */
     function getAdminLogoSvg(size = 34) {
       return `
@@ -1904,6 +2133,8 @@
 
     Object.assign(window, {
       openAddContentModal,
+      onGalleryFilePicked,
+      toggleTrackUploadBox,
       handleAddMovieSubmit,
       handleAddSeriesSubmit,
       handleAddEpisodeSubmit,
