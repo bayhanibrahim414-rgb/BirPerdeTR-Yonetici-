@@ -58,6 +58,64 @@
       overflow-x: clip;
     }
 
+    /* Animated Intro Splash */
+    #intro-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 35%, #173663 0%, #091629 65%, #040912 100%);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    #intro-splash.splash-exit {
+      opacity: 0;
+      transform: scale(1.04);
+      pointer-events: none;
+    }
+
+    .intro-shimmer-ring {
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      border-radius: 9999px;
+      background: conic-gradient(from 0deg, rgba(234, 179, 8, 0.0), rgba(234, 179, 8, 0.55), rgba(56, 189, 248, 0.45), rgba(234, 179, 8, 0.0));
+      filter: blur(18px);
+      animation: introSpin 4.5s linear infinite;
+    }
+
+    @keyframes introSpin {
+      0% { transform: rotate(0deg) scale(0.95); }
+      50% { transform: rotate(180deg) scale(1.08); }
+      100% { transform: rotate(360deg) scale(0.95); }
+    }
+
+    @keyframes introPop {
+      0% { opacity: 0; transform: translateY(18px) scale(0.84); }
+      65% { opacity: 1; transform: translateY(-4px) scale(1.03); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .intro-brand-pop {
+      animation: introPop 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes titleShine {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .intro-shine-text {
+      background: linear-gradient(90deg, #EAF4FF 0%, #FDE047 35%, #FFFFFF 50%, #38BDF8 70%, #EAF4FF 100%);
+      background-size: 220% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: titleShine 2.6s linear infinite;
+    }
+
     .bg-pattern-sky {
       background-color: #EAF4FF;
       background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%231D4ED8' stroke-opacity='0.07' stroke-width='1'%3E%3Cpath d='M32 0L64 32L32 64L0 32Z'/%3E%3Crect x='20' y='20' width='24' height='24' rx='4'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/g%3E%3C/svg%3E");
@@ -93,7 +151,8 @@
       );
     }
 
-    .grid-three-cards {
+    /* Responsive Catalog Grid: 3 cols on Mobile, 4 cols on Tablet, 5 cols on Desktop */
+    .catalog-responsive-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
@@ -101,8 +160,16 @@
     }
 
     @media (min-width: 640px) {
-      .grid-three-cards {
+      .catalog-responsive-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 14px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .catalog-responsive-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
       }
     }
 
@@ -144,7 +211,8 @@
       box-shadow: 0 10px 20px -6px rgba(4, 120, 87, 0.22);
     }
 
-    .bp-fullscreen-landscape-rotated {
+    /* Fullscreen containers: Mobile portrait rotates cleanly; Tablet/Desktop uses full viewport */
+    .bp-fs-rot-cw {
       position: fixed !important;
       top: 0 !important;
       left: 100vw !important;
@@ -163,8 +231,27 @@
       touch-action: manipulation !important;
     }
 
+    .bp-fs-rot-ccw {
+      position: fixed !important;
+      top: 100vh !important;
+      left: 0 !important;
+      width: 100dvh !important;
+      height: 100vw !important;
+      max-width: none !important;
+      transform: rotate(-90deg) !important;
+      transform-origin: top left !important;
+      z-index: 9999 !important;
+      background: #000000 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      touch-action: manipulation !important;
+    }
+
     @supports not (width: 100dvh) {
-      .bp-fullscreen-landscape-rotated {
+      .bp-fs-rot-cw, .bp-fs-rot-ccw {
         width: 100vh !important;
       }
     }
@@ -185,7 +272,8 @@
       touch-action: manipulation !important;
     }
 
-    .bp-fullscreen-landscape-rotated video,
+    .bp-fs-rot-cw video,
+    .bp-fs-rot-ccw video,
     .bp-fullscreen-landscape-native video {
       width: 100% !important;
       height: 100% !important;
@@ -195,26 +283,42 @@
       background: #000000 !important;
     }
 
-    .fs-glass-btn {
-      background: rgba(255, 255, 255, 0.14);
+    .fs-icon-btn {
+      background: rgba(15, 23, 42, 0.56);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      color: #FFFFFF;
-      transition: background-color 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      color: rgba(255, 255, 255, 0.94);
+      transition: background-color 0.15s ease, transform 0.15s ease;
     }
 
-    .fs-glass-btn:hover,
-    .fs-glass-btn:active {
+    .fs-icon-btn:active {
+      transform: scale(0.95);
       background: rgba(255, 255, 255, 0.26);
-      border-color: rgba(234, 179, 8, 0.75);
     }
 
-    .fs-glass-active {
-      background: rgba(29, 78, 216, 0.48);
+    .fs-icon-active {
+      background: rgba(148, 163, 184, 0.36);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(234, 179, 8, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      color: #FFFFFF;
+    }
+
+    .watch-soft-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #E2E8F0;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .watch-soft-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .watch-soft-active {
+      background: rgba(51, 65, 85, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.55);
       color: #FFFFFF;
     }
 
@@ -228,7 +332,7 @@
     input[type="range"].bp-scrubber::-webkit-slider-runnable-track {
       height: 5px;
       border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.24);
     }
 
     input[type="range"].bp-scrubber::-webkit-slider-thumb {
@@ -237,8 +341,8 @@
       width: 15px;
       height: 15px;
       border-radius: 9999px;
-      background: rgba(234, 179, 8, 0.92);
-      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      background: rgba(226, 232, 240, 0.95);
+      border: 1.5px solid rgba(15, 23, 42, 0.65);
       margin-top: -5px;
     }
 
@@ -275,6 +379,20 @@
 </head>
 <body class="bg-pattern-sky min-h-screen">
 
+  <!-- ANIMATED INTRO SPLASH SCREEN WITH SOUND -->
+  <div id="intro-splash" onclick="dismissIntroSplashNow()" class="cursor-pointer select-none px-6 text-center">
+    <div class="relative flex flex-col items-center justify-center">
+      <div class="intro-shimmer-ring"></div>
+      <div id="intro-logo-mount" class="intro-brand-pop relative z-10 mb-5 drop-shadow-[0_0_28px_rgba(234,179,8,0.35)]"></div>
+      <h1 class="intro-brand-pop relative z-10 text-4xl sm:text-6xl font-extrabold tracking-tight intro-shine-text">
+        BirPerdeTR
+      </h1>
+      <p class="intro-brand-pop relative z-10 mt-2 text-xs sm:text-sm font-semibold tracking-widest uppercase text-sky-200/80">
+        Film &amp; Dizi Arşivi
+      </p>
+    </div>
+  </div>
+
   <!-- Top Signature Ribbon -->
   <div class="birperde-ribbon w-full sticky top-0 z-50"></div>
 
@@ -290,7 +408,7 @@
 
         <!-- Left: Brand Title & YÖNETİCİ Badge -->
         <div class="flex items-center gap-2.5 shrink-0 min-w-0">
-          <div id="header-brand-logo"></div>
+          <div id="header-brand-logo" onclick="replayIntroSplash()" class="cursor-pointer" title="Giriş Ekranını Tekrar Göster"></div>
           <div class="min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-base sm:text-xl font-extrabold tracking-tight text-bpNavy">BirPerdeTR</span>
@@ -388,8 +506,8 @@
       </div>
     </div>
 
-    <!-- WATCH STUDIO -->
-    <section id="watch-studio-wrapper" class="hidden max-w-6xl w-full mx-auto px-3 sm:px-5 pt-4"></section>
+    <!-- WATCH STUDIO (Compact Theater Frame on Tablet & Desktop, Full-width on Phone) -->
+    <section id="watch-studio-wrapper" class="hidden max-w-4xl w-full mx-auto px-3 sm:px-5 pt-4"></section>
 
     <!-- MAIN CATALOG AREA -->
     <main id="main-content-area" class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-5 py-4 space-y-5"></main>
@@ -425,7 +543,83 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     /* =====================================================================
-       1. FIREBASE CONFIGURATION & CONSTANTS (NO UNREQUESTED STARTER ITEMS)
+       1. INTRO SPLASH + WEB AUDIO ENGINE UNLOCK
+    ===================================================================== */
+    let splashDismissTimer = null;
+    let audioCtxGain = null;
+    let audioGainNode = null;
+    let wiredGainVideo = null;
+
+    function unlockAudioEngine() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioCtxGain) {
+          audioCtxGain = new AudioCtx();
+        }
+        if (audioCtxGain.state === 'suspended') {
+          audioCtxGain.resume().catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    ['touchstart', 'pointerdown', 'click'].forEach(evtName => {
+      document.addEventListener(evtName, unlockAudioEngine, { passive: true });
+    });
+
+    function playIntroChime() {
+      try {
+        unlockAudioEngine();
+        if (!audioCtxGain) return;
+        const now = audioCtxGain.currentTime;
+        const notes = [261.63, 329.63, 392.00, 523.25];
+        notes.forEach((freq, idx) => {
+          const osc = audioCtxGain.createOscillator();
+          const gain = audioCtxGain.createGain();
+          osc.type = idx === notes.length - 1 ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.11);
+
+          gain.gain.setValueAtTime(0.0001, now + idx * 0.11);
+          gain.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.11 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.11 + 0.75);
+
+          osc.connect(gain);
+          gain.connect(audioCtxGain.destination);
+          osc.start(now + idx * 0.11);
+          osc.stop(now + idx * 0.11 + 0.8);
+        });
+      } catch (e) {}
+    }
+
+    function dismissIntroSplashNow() {
+      unlockAudioEngine();
+      clearTimeout(splashDismissTimer);
+      const splash = document.getElementById('intro-splash');
+      if (!splash) return;
+      splash.classList.add('splash-exit');
+      setTimeout(() => {
+        splash.classList.add('hidden');
+      }, 560);
+    }
+
+    function replayIntroSplash() {
+      clearTimeout(splashDismissTimer);
+      const splash = document.getElementById('intro-splash');
+      if (!splash) return;
+      splash.classList.remove('hidden', 'splash-exit');
+      playIntroChime();
+      splashDismissTimer = setTimeout(dismissIntroSplashNow, 2100);
+    }
+
+    function startInitialIntro() {
+      const logoMount = document.getElementById('intro-logo-mount');
+      if (logoMount) logoMount.innerHTML = getBrandSvg(124);
+      playIntroChime();
+      splashDismissTimer = setTimeout(dismissIntroSplashNow, 2150);
+    }
+
+    /* =====================================================================
+       2. FIREBASE CONFIGURATION & DUAL PERSISTENCE
     ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyB1eT555N2stbzj6x6zkmxHKtMolvCJmeY",
@@ -452,9 +646,6 @@
       'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
     ];
 
-    /* =====================================================================
-       2. DUAL PERSISTENCE (LOCALSTORAGE + INDEXEDDB BACKUP FOR PWA/IPHONE)
-    ===================================================================== */
     const LOCAL_BLOB_URLS = new Map();
     const IDB_NAME = 'birperdetr_media_idb_v2';
     const IDB_VIDEO_STORE = 'videos';
@@ -463,6 +654,21 @@
     let idbReadyPromise = null;
     let cloudUnsubscribe = null;
     let deletedIdsSession = new Set();
+
+    const PENDING_SELECTED_FILES = new Map();
+
+    function setPendingFile(slotKey, file) {
+      if (file) PENDING_SELECTED_FILES.set(slotKey, file);
+      else PENDING_SELECTED_FILES.delete(slotKey);
+    }
+
+    function getPendingFile(slotKey) {
+      return PENDING_SELECTED_FILES.get(slotKey) || null;
+    }
+
+    function clearAllPendingFiles() {
+      PENDING_SELECTED_FILES.clear();
+    }
 
     function isValidItem(item) {
       if (!item || !item.id || !item.title || !item.type) return false;
@@ -625,21 +831,23 @@
         channels: [],
         activeChannelId: 'sub',
         playbackRate: 1,
+        volume: 1,
+        lastNonZeroVolume: 1,
+        volumePopoverOpen: false,
         isPlaying: false,
-        isMuted: false,
         isFullscreen: false
       }
     };
 
     function persistAndRenderCatalog() {
-      state.catalog = (state.catalog || []).filter(isValidItem && (x => !deletedIdsSession.has(x.id)));
+      state.catalog = (state.catalog || []).filter(item => isValidItem(item) && !deletedIdsSession.has(item.id));
       state.catalog.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       writeCatalogToStorage(state.catalog);
       renderMainView();
     }
 
     /* =====================================================================
-       4. BACKGROUND CLOUD SYNC (PRESERVES LOCAL ITEMS ACROSS PWA & TABS)
+       4. BACKGROUND CLOUD SYNC
     ===================================================================== */
     function initBackgroundFirebase() {
       try {
@@ -668,7 +876,6 @@
                 syncItemToFirestore(localItem);
               } else {
                 const cloudItem = cloudMap.get(localItem.id);
-                // Keep local blob keys if cloud hasn't finished uploading yet
                 if (!cloudItem.posterUrl && localItem.posterUrl) cloudItem.posterUrl = localItem.posterUrl;
                 if ((localItem.sources || []).length > 0) {
                   cloudItem.sources = (localItem.sources || []).map(ls => {
@@ -812,7 +1019,7 @@
     }
 
     /* =====================================================================
-       5. METADATA AUTO-LOOKUP (YEAR + MONTH + DAY + EPISODE + SERIES MATCH)
+       5. METADATA AUTO-LOOKUP (YEAR + MONTH + GENRE + DURATION + POSTER)
     ===================================================================== */
     const GENRE_MAP = {
       'action': 'Aksiyon',
@@ -842,8 +1049,8 @@
       'sports': 'Spor'
     };
 
-    function toTurkishGenre(raw) {
-      if (!raw) return '';
+    function toTurkishGenre(raw, fallbackType = 'movie') {
+      if (!raw) return fallbackType === 'series' ? 'Dizi' : 'Sinema';
       const parts = String(raw).split(/[,/&]+/).map(s => s.trim()).filter(Boolean);
       const translated = parts.map(p => {
         const lower = p.toLowerCase();
@@ -853,7 +1060,7 @@
         }
         return p;
       });
-      return Array.from(new Set(translated)).slice(0, 3).join(', ');
+      return Array.from(new Set(translated)).slice(0, 3).join(', ') || (fallbackType === 'series' ? 'Dizi' : 'Sinema');
     }
 
     function parseDateParts(isoOrStr) {
@@ -882,16 +1089,6 @@
         return { year: Number(yOnly[1]), month: null, day: null, fullDate: String(yOnly[1]) };
       }
       return { year: null, month: null, day: null, fullDate: '' };
-    }
-
-    function formatReleaseDateLabel(metaObj) {
-      const y = Number(metaObj?.year) || '';
-      const m = Number(metaObj?.month) || 0;
-      const d = Number(metaObj?.day) || 0;
-      if (y && m && d) return `${d} ${MONTHS_TR[m - 1]} ${y}`;
-      if (y && m) return `${MONTHS_TR[m - 1]} ${y}`;
-      if (y) return `${y}`;
-      return '';
     }
 
     function formatDurationFromSeconds(sec) {
@@ -961,13 +1158,12 @@
       if (cleanQuery.length < 2) return [];
 
       const results = [];
-      const entity = mediaType === 'series' ? 'tvShow' : 'movie';
       const targetS = seasonNum || epParsed.season || 1;
       const targetE = epNum || epParsed.episode || null;
 
-      const checkItunes = async (country) => {
+      const checkItunes = async (country, mediaParam) => {
         try {
-          const url = `https://itunes.apple.com/search?term=${encodeURIComponent(cleanQuery)}&country=${country}&media=${entity}&limit=5`;
+          const url = `https://itunes.apple.com/search?term=${encodeURIComponent(cleanQuery)}&country=${country}&media=${mediaParam}&limit=6`;
           const resp = await fetch(url);
           if (!resp.ok) return;
           const data = await resp.json();
@@ -977,15 +1173,15 @@
             const posterUrl = item.artworkUrl100
               ? item.artworkUrl100.replace(/100x100bb\.(jpg|png)/i, '600x600bb.$1')
               : '';
-            const genre = toTurkishGenre(item.primaryGenreName || '') || (mediaType === 'series' ? 'Dizi' : 'Sinema');
+            const genre = toTurkishGenre(item.primaryGenreName || '', mediaType);
             const duration = item.trackTimeMillis ? formatDurationFromMillis(item.trackTimeMillis) : '';
-            if (title && dp.year) {
+            if (title && (dp.year || genre)) {
               results.push({
                 title,
-                year: dp.year,
-                month: dp.month,
-                day: dp.day,
-                releaseDate: dp.fullDate,
+                year: dp.year || new Date().getFullYear(),
+                month: dp.month || 1,
+                day: dp.day || null,
+                releaseDate: dp.fullDate || '',
                 posterUrl,
                 genre,
                 duration,
@@ -1000,7 +1196,6 @@
       };
 
       const checkTvMaze = async () => {
-        if (mediaType !== 'series') return;
         try {
           const resp = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(cleanQuery)}&embed=episodes`);
           if (resp.ok) {
@@ -1021,29 +1216,27 @@
                 }
               }
 
-              const finalYear = epDate.year || showDate.year;
-              const finalMonth = epDate.month || showDate.month;
-              const finalDay = epDate.day || showDate.day;
-              const finalDate = epDate.fullDate || showDate.fullDate;
+              const finalYear = epDate.year || showDate.year || new Date().getFullYear();
+              const finalMonth = epDate.month || showDate.month || 1;
+              const finalDay = epDate.day || showDate.day || null;
+              const finalDate = epDate.fullDate || showDate.fullDate || '';
 
-              if (finalYear) {
-                results.push({
-                  title: show.name,
-                  year: finalYear,
-                  month: finalMonth,
-                  day: finalDay,
-                  releaseDate: finalDate,
-                  posterUrl: (show.image && (show.image.original || show.image.medium)) || '',
-                  genre: Array.isArray(show.genres) && show.genres.length > 0
-                    ? toTurkishGenre(show.genres.join(', '))
-                    : 'Dizi',
-                  duration: epRuntime || (show.averageRuntime ? `${show.averageRuntime} dk` : ''),
-                  season: targetS,
-                  episode: targetE,
-                  epTitle: epName,
-                  fromTr: false
-                });
-              }
+              results.push({
+                title: show.name,
+                year: finalYear,
+                month: finalMonth,
+                day: finalDay,
+                releaseDate: finalDate,
+                posterUrl: (show.image && (show.image.original || show.image.medium)) || '',
+                genre: Array.isArray(show.genres) && show.genres.length > 0
+                  ? toTurkishGenre(show.genres.join(', '), mediaType)
+                  : (mediaType === 'series' ? 'Dizi' : 'Sinema'),
+                duration: epRuntime || (show.averageRuntime ? `${show.averageRuntime} dk` : ''),
+                season: targetS,
+                episode: targetE,
+                epTitle: epName,
+                fromTr: false
+              });
             }
           }
 
@@ -1054,48 +1247,54 @@
               const sh = entry.show;
               if (!sh || !sh.name) continue;
               const dp = parseDateParts(sh.premiered || '');
-              if (dp.year) {
-                results.push({
-                  title: sh.name,
-                  year: dp.year,
-                  month: dp.month,
-                  day: dp.day,
-                  releaseDate: dp.fullDate,
-                  posterUrl: (sh.image && (sh.image.original || sh.image.medium)) || '',
-                  genre: Array.isArray(sh.genres) && sh.genres.length > 0
-                    ? toTurkishGenre(sh.genres.join(', '))
-                    : 'Dizi',
-                  duration: sh.averageRuntime ? `${sh.averageRuntime} dk` : '',
-                  season: targetS,
-                  episode: targetE,
-                  epTitle: '',
-                  fromTr: false
-                });
-              }
+              results.push({
+                title: sh.name,
+                year: dp.year || new Date().getFullYear(),
+                month: dp.month || 1,
+                day: dp.day || null,
+                releaseDate: dp.fullDate || '',
+                posterUrl: (sh.image && (sh.image.original || sh.image.medium)) || '',
+                genre: Array.isArray(sh.genres) && sh.genres.length > 0
+                  ? toTurkishGenre(sh.genres.join(', '), mediaType)
+                  : (mediaType === 'series' ? 'Dizi' : 'Sinema'),
+                duration: sh.averageRuntime ? `${sh.averageRuntime} dk` : '',
+                season: targetS,
+                episode: targetE,
+                epTitle: '',
+                fromTr: false
+              });
             }
           }
         } catch (e) {}
       };
 
-      await Promise.all([checkItunes('tr'), checkItunes('us'), checkTvMaze()]);
+      const primaryMedia = mediaType === 'series' ? 'tvShow' : 'movie';
+      const secondaryMedia = mediaType === 'series' ? 'movie' : 'tvShow';
+
+      await Promise.all([
+        checkItunes('tr', primaryMedia),
+        checkItunes('us', primaryMedia),
+        checkItunes('tr', secondaryMedia),
+        checkTvMaze()
+      ]);
 
       const qLower = cleanQuery.toLowerCase();
       results.sort((a, b) => {
-        const aExact = a.title.toLowerCase() === qLower ? 25 : (a.title.toLowerCase().includes(qLower) ? 12 : 0);
-        const bExact = b.title.toLowerCase() === qLower ? 25 : (b.title.toLowerCase().includes(qLower) ? 12 : 0);
-        const aDateBonus = (a.day ? 4 : 0) + (a.month ? 3 : 0);
-        const bDateBonus = (b.day ? 4 : 0) + (b.month ? 3 : 0);
-        const aScore = aExact + aDateBonus + (a.fromTr ? 5 : 0) + (a.posterUrl ? 4 : 0);
-        const bScore = bExact + bDateBonus + (b.fromTr ? 5 : 0) + (b.posterUrl ? 4 : 0);
+        const aExact = a.title.toLowerCase() === qLower ? 28 : (a.title.toLowerCase().includes(qLower) ? 14 : 0);
+        const bExact = b.title.toLowerCase() === qLower ? 28 : (b.title.toLowerCase().includes(qLower) ? 14 : 0);
+        const aMonthBonus = a.month ? 5 : 0;
+        const bMonthBonus = b.month ? 5 : 0;
+        const aScore = aExact + aMonthBonus + (a.fromTr ? 6 : 0) + (a.posterUrl ? 4 : 0);
+        const bScore = bExact + bMonthBonus + (b.fromTr ? 6 : 0) + (b.posterUrl ? 4 : 0);
         return bScore - aScore;
       });
 
       const dedup = new Map();
       for (const r of results) {
-        const key = `${r.title.toLowerCase()}_${r.year}_${r.episode || 0}`;
+        const key = `${r.title.toLowerCase()}_${r.year}_${r.month || 0}_${r.episode || 0}`;
         if (!dedup.has(key)) dedup.set(key, r);
       }
-      return Array.from(dedup.values()).slice(0, 5);
+      return Array.from(dedup.values()).slice(0, 6);
     }
 
     function quickInspectVideoMetadata(file) {
@@ -1162,7 +1361,6 @@
     let preselectedSeriesId = '';
     let lookupDebounce = null;
     let foundCandidates = [];
-    let modalSavedHtml = '';
     let cutterObjectUrl = '';
 
     let formDraft = {
@@ -1185,6 +1383,7 @@
     function resetFormDraft(defaultGenre) {
       const now = new Date();
       foundCandidates = [];
+      clearAllPendingFiles();
       formDraft = {
         year: now.getFullYear(),
         month: now.getMonth() + 1,
@@ -1218,7 +1417,7 @@
       const genreEl = document.getElementById('draft-genre-input');
       const posterUrlEl = document.getElementById('draft-poster-url-input');
       const previewImg = document.getElementById('draft-poster-preview');
-      const hasFilePoster = document.getElementById('draft-poster-file-input')?.files?.[0];
+      const hasFilePoster = getPendingFile('poster');
 
       if (yearEl && !formDraft.yearLockedByUser && formDraft.year) {
         yearEl.value = formDraft.year;
@@ -1243,6 +1442,26 @@
       }
     }
 
+    function restorePendingFileBadges() {
+      const prefixes = ['movie', 'series', 'ep'];
+      prefixes.forEach(p => {
+        ['sub', 'dub'].forEach(lang => {
+          const f = getPendingFile(`${p}_${lang}`);
+          const badge = document.getElementById(`${p}-${lang}-badge`);
+          if (f && badge) {
+            const mb = (f.size / 1048576).toFixed(1);
+            badge.textContent = `Seçildi: ${f.name} (${mb} MB)`;
+            badge.classList.remove('hidden');
+          }
+        });
+      });
+      const posterFile = getPendingFile('poster');
+      const previewImg = document.getElementById('draft-poster-preview');
+      if (posterFile && previewImg) {
+        previewImg.src = URL.createObjectURL(posterFile);
+      }
+    }
+
     function renderCandidateList(titleInputId) {
       const box = document.getElementById('draft-candidates-box');
       if (!box) return;
@@ -1260,7 +1479,8 @@
         </div>
         <div class="divide-y divide-bpSkyBorder max-h-40 overflow-y-auto bg-white">
           ${foundCandidates.map((c, idx) => {
-            const dateStr = formatReleaseDateLabel(c) || c.year;
+            const monthName = c.month ? MONTHS_TR[c.month - 1] : '';
+            const dateStr = monthName ? `${monthName} ${c.year}` : `${c.year}`;
             return `
               <button type="button" onclick="selectSearchCandidate(${idx}, '${escapeAttr(titleInputId)}')" class="w-full p-2 flex items-center gap-2.5 text-left hover:bg-bpSky/60 transition cursor-pointer">
                 <img src="${escapeAttr(c.posterUrl || CINEMA_FALLBACK_PHOTO)}" onerror="this.src='${CINEMA_FALLBACK_PHOTO}'" class="w-8 h-11 rounded object-cover bg-bpNavy shrink-0" />
@@ -1299,10 +1519,6 @@
         const eEl = document.getElementById('add-series-episode') || document.getElementById('add-ep-number');
         if (eEl) eEl.value = c.episode;
       }
-      if (c.epTitle) {
-        const nEl = document.getElementById('add-ep-name');
-        if (nEl && !nEl.value.trim()) nEl.value = c.epTitle;
-      }
 
       refreshDraftInputsInModal();
     }
@@ -1322,61 +1538,13 @@
       const box = document.getElementById('draft-candidates-box');
       if (box) box.classList.add('hidden');
       const statusEl = document.getElementById('draft-lookup-status');
-      const dLabel = formatReleaseDateLabel(c) || c.year;
-      if (statusEl) statusEl.textContent = `${c.title} (${dLabel}) seçildi — Dilediğiniz alanı elle değiştirebilirsiniz.`;
-    }
-
-    function matchExistingCatalogForEpisode(rawText) {
-      const parsed = extractSeasonEpisodeFromText(rawText || '');
-      const clean = (parsed.seriesName || rawText || '').toLowerCase().trim();
-      if (!clean) return null;
-      const existingSeries = state.catalog.filter(item => item.type === 'series');
-      const matched = existingSeries.find(s => s.title.toLowerCase().includes(clean) || clean.includes(s.title.toLowerCase()));
-      if (!matched) return null;
-
-      const sNum = parsed.season || 1;
-      const eNum = parsed.episode || ((matched.episodes || []).length + 1);
-      const epObj = (matched.episodes || []).find(ep => Number(ep.season) === Number(sNum) && Number(ep.number) === Number(eNum));
-      const dp = parseDateParts(epObj?.releaseDate || matched.releaseDate || `${matched.year}-${matched.month || ''}-${matched.day || ''}`);
-
-      return {
-        series: matched,
-        season: sNum,
-        episode: eNum,
-        epTitle: epObj?.name || `${eNum}. Bölüm`,
-        year: dp.year || matched.year,
-        month: dp.month || matched.month || null,
-        day: dp.day || matched.day || null,
-        genre: matched.genre || 'Dizi',
-        duration: epObj?.duration || matched.duration || '',
-        posterUrl: matched.posterUrl || ''
-      };
+      const mText = c.month ? `${MONTHS_TR[c.month - 1]} ${c.year}` : `${c.year}`;
+      if (statusEl) statusEl.textContent = `${c.title} • ${mText} • ${c.genre}`;
     }
 
     async function runMetadataLookupNow(rawTitle, mediaType, titleInputId) {
       const statusEl = document.getElementById('draft-lookup-status');
       const epParsed = extractSeasonEpisodeFromText(rawTitle || '');
-      const localMatch = matchExistingCatalogForEpisode(rawTitle || '');
-
-      if (localMatch) {
-        if (!formDraft.yearLockedByUser && localMatch.year) formDraft.year = localMatch.year;
-        if (!formDraft.monthLockedByUser && localMatch.month) formDraft.month = localMatch.month;
-        if (!formDraft.dayLockedByUser && localMatch.day) formDraft.day = localMatch.day;
-        if (!formDraft.genreLockedByUser && localMatch.genre) formDraft.genre = localMatch.genre;
-        if (!formDraft.durationLockedByUser && localMatch.duration) formDraft.duration = localMatch.duration;
-        if (!formDraft.posterLockedByUser && localMatch.posterUrl) formDraft.posterUrl = localMatch.posterUrl;
-        refreshDraftInputsInModal();
-      }
-
-      if (epParsed.season && !formDraft.seasonLockedByUser) {
-        const sInp = document.getElementById('add-series-season') || document.getElementById('add-ep-season');
-        if (sInp) sInp.value = epParsed.season;
-      }
-      if (epParsed.episode && !formDraft.episodeLockedByUser) {
-        const eInp = document.getElementById('add-series-episode') || document.getElementById('add-ep-number');
-        if (eInp) eInp.value = epParsed.episode;
-      }
-
       const cleaned = (epParsed.seriesName || rawTitle || '').replace(/\b(19\d{2}|20\d{2})\b/g, '').trim();
       if (cleaned.length < 2) {
         foundCandidates = [];
@@ -1384,7 +1552,7 @@
         return;
       }
 
-      if (statusEl) statusEl.textContent = 'Yapım yılı, ay, gün ve bölüm bilgisi aranıyor...';
+      if (statusEl) statusEl.textContent = 'Yıl, ay ve tür aranıyor...';
       const list = await queryExternalMediaMetadata(rawTitle, mediaType, epParsed.season, epParsed.episode);
       foundCandidates = list;
       renderCandidateList(titleInputId);
@@ -1393,12 +1561,11 @@
         const best = list[0];
         applyCandidateToForm(best, titleInputId);
         if (statusEl) {
-          const dLabel = formatReleaseDateLabel(best) || best.year;
-          const epInfo = best.episode ? ` • S${best.season || 1} B${best.episode}` : '';
-          statusEl.textContent = `Bulundu: ${best.title} (${dLabel})${epInfo} — Tüm alanları değiştirebilirsiniz.`;
+          const mText = best.month ? `${MONTHS_TR[best.month - 1]} ${best.year}` : `${best.year}`;
+          statusEl.textContent = `Bulundu: ${best.title} • ${mText} • ${best.genre}`;
         }
       } else if (statusEl) {
-        statusEl.textContent = 'Otomatik sonuç bulunamadı — Yıl, ay, gün ve diğer alanları elle girin.';
+        statusEl.textContent = 'Otomatik sonuç bulunamadı, yıl/ay/tür alanlarını elle girebilirsiniz.';
       }
     }
 
@@ -1422,12 +1589,16 @@
       refreshDraftInputsInModal();
       lookupDebounce = setTimeout(() => {
         runMetadataLookupNow(val, mediaType, titleInputId);
-      }, 250);
+      }, 220);
     }
 
-    async function handleVideoPickerChange(inputEl, badgeId, titleInputId, mediaType) {
+    async function handleVideoPickerChange(inputEl, slotKey, badgeId, titleInputId, mediaType) {
       const badge = document.getElementById(badgeId);
-      const file = inputEl && inputEl.files && inputEl.files[0];
+      const file = (inputEl && inputEl.files && inputEl.files[0]) || getPendingFile(slotKey);
+      if (inputEl && inputEl.files && inputEl.files[0]) {
+        setPendingFile(slotKey, inputEl.files[0]);
+      }
+
       if (!file) {
         if (badge) {
           badge.textContent = '';
@@ -1467,10 +1638,11 @@
 
     function handlePosterFileChosen(inputEl) {
       const file = inputEl && inputEl.files && inputEl.files[0];
-      const img = document.getElementById('draft-poster-preview');
-      if (file && img) {
+      if (file) {
+        setPendingFile('poster', file);
         formDraft.posterLockedByUser = true;
-        img.src = URL.createObjectURL(file);
+        const img = document.getElementById('draft-poster-preview');
+        if (img) img.src = URL.createObjectURL(file);
       }
     }
 
@@ -1479,7 +1651,7 @@
       const clean = (val || '').trim();
       formDraft.posterUrl = clean;
       const img = document.getElementById('draft-poster-preview');
-      if (img) {
+      if (img && !getPendingFile('poster')) {
         img.src = clean || formDraft.autoFrameUrl || CINEMA_FALLBACK_PHOTO;
       }
     }
@@ -1487,9 +1659,9 @@
     function findActiveVideoSourceForCutter() {
       const prefixes = activeAddTab === 'series' ? ['series', 'movie', 'ep'] : ['movie', 'series', 'ep'];
       for (const p of prefixes) {
-        const fSub = document.getElementById(`${p}-sub-file`)?.files?.[0];
+        const fSub = getPendingFile(`${p}_sub`) || document.getElementById(`${p}-sub-file`)?.files?.[0];
         if (fSub) return { url: URL.createObjectURL(fSub), revoke: true };
-        const fDub = document.getElementById(`${p}-dub-file`)?.files?.[0];
+        const fDub = getPendingFile(`${p}_dub`) || document.getElementById(`${p}-dub-file`)?.files?.[0];
         if (fDub) return { url: URL.createObjectURL(fDub), revoke: true };
       }
       for (const p of prefixes) {
@@ -1504,12 +1676,9 @@
     function openCoverFrameCutter() {
       const picked = findActiveVideoSourceForCutter();
       if (!picked || !picked.url) {
-        showToast('Önce bir video dosyası seçin veya video bağlantısı girin.', 'error');
+        showToast('Önce bir video dosyası seçin veya bağlantı girin.', 'error');
         return;
       }
-
-      const card = document.getElementById('modal-card');
-      if (card) modalSavedHtml = card.innerHTML;
 
       if (cutterObjectUrl) {
         try { URL.revokeObjectURL(cutterObjectUrl); } catch (e) {}
@@ -1628,13 +1797,12 @@
         formDraft.posterUrl = frameData;
         formDraft.autoFrameUrl = frameData;
         formDraft.posterLockedByUser = true;
+        setPendingFile('poster', null);
 
         closeCoverFrameCutter();
-        const urlInp = document.getElementById('draft-poster-url-input');
-        if (urlInp) urlInp.value = '';
-        showToast('Seçilen video karesi kapak fotoğrafı olarak ayarlandı.', 'success');
+        showToast('Seçilen kare kapak fotoğrafı yapıldı.', 'success');
       } catch (e) {
-        showToast('Bu kare alınamadı, cihazdan video seçip veya başka saniyeye alıp tekrar deneyin.', 'error');
+        showToast('Bu kare alınamadı, farklı bir saniyeye gelip tekrar deneyin.', 'error');
       }
     }
 
@@ -1643,12 +1811,7 @@
         try { URL.revokeObjectURL(cutterObjectUrl); } catch (e) {}
         cutterObjectUrl = '';
       }
-      if (modalSavedHtml) {
-        openModal(modalSavedHtml);
-        refreshDraftInputsInModal();
-      } else {
-        renderAddModal();
-      }
+      renderAddModal();
     }
 
     function renderVideoSourcesBlock(prefix, titleInputId, mediaType) {
@@ -1660,7 +1823,7 @@
           </div>
           <label class="block w-full py-2.5 px-3 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold text-center cursor-pointer transition">
             <span>Cihazdan Video Seç</span>
-            <input type="file" id="${prefix}-sub-file" accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleVideoPickerChange(this, '${prefix}-sub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'}, '${mediaType}')" class="hidden" />
+            <input type="file" id="${prefix}-sub-file" accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleVideoPickerChange(this, '${prefix}_sub', '${prefix}-sub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'}, '${mediaType}')" class="hidden" />
           </label>
           <div id="${prefix}-sub-badge" class="hidden px-2.5 py-1.5 rounded-lg bg-white border border-bpRoyal/30 text-[11px] font-extrabold text-bpRoyal truncate"></div>
           <input type="url" id="${prefix}-sub-url" placeholder="Veya video bağlantısı (.mp4 / .m3u8) girin..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-[11px] font-medium focus:outline-none focus:border-bpRoyal" />
@@ -1673,7 +1836,7 @@
           </div>
           <label class="block w-full py-2.5 px-3 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold text-center cursor-pointer transition">
             <span>Cihazdan Video Seç</span>
-            <input type="file" id="${prefix}-dub-file" accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleVideoPickerChange(this, '${prefix}-dub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'}, '${mediaType}')" class="hidden" />
+            <input type="file" id="${prefix}-dub-file" accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleVideoPickerChange(this, '${prefix}_dub', '${prefix}-dub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'}, '${mediaType}')" class="hidden" />
           </label>
           <div id="${prefix}-dub-badge" class="hidden px-2.5 py-1.5 rounded-lg bg-white border border-bpEmerald/30 text-[11px] font-extrabold text-bpEmerald truncate"></div>
           <input type="url" id="${prefix}-dub-url" placeholder="Veya video bağlantısı (.mp4 / .m3u8) girin..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-[11px] font-medium focus:outline-none focus:border-bpEmerald" />
@@ -1685,7 +1848,7 @@
       return `
         <div class="p-3 rounded-xl bg-bpSky/70 border border-bpSkyBorder space-y-2.5">
           <div id="draft-lookup-status" class="text-[10px] font-extrabold text-bpRoyal">
-            Ad veya bölüm yazınca yıl, ay ve gün otomatik bulunur; tüm alanları elle değiştirebilirsiniz.
+            Ad yazınca yıl, ay ve tür otomatik bulunur; isterseniz elle değiştirebilirsiniz.
           </div>
           <div class="flex items-start gap-3">
             <div class="w-24 shrink-0 space-y-1.5">
@@ -1716,18 +1879,30 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Ay (1-12)</label>
-                  <input
-                    type="number"
+                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Ay</label>
+                  <select
                     id="draft-month-input"
-                    min="1"
-                    max="12"
-                    value="${formDraft.month || ''}"
-                    placeholder="Ay"
-                    oninput="formDraft.monthLockedByUser = true; formDraft.month = Number(this.value) || null;"
-                    class="w-full px-2 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-mono font-extrabold text-bpBlack focus:outline-none focus:border-bpRoyal"
+                    onchange="formDraft.monthLockedByUser = true; formDraft.month = Number(this.value) || null;"
+                    class="w-full px-1.5 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-bold text-bpBlack focus:outline-none focus:border-bpRoyal"
+                  >
+                    <option value="">Seç</option>
+                    ${MONTHS_TR.map((mName, idx) => `<option value="${idx + 1}" ${formDraft.month === idx + 1 ? 'selected' : ''}>${mName}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Tür</label>
+                  <input
+                    type="text"
+                    id="draft-genre-input"
+                    value="${escapeAttr(formDraft.genre)}"
+                    oninput="formDraft.genreLockedByUser = true; formDraft.genre = this.value;"
+                    placeholder="Tür"
+                    class="w-full px-2 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-bold text-bpBlack focus:outline-none focus:border-bpRoyal"
                   />
                 </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Gün (1-31)</label>
                   <input
@@ -1738,12 +1913,9 @@
                     value="${formDraft.day || ''}"
                     placeholder="Gün"
                     oninput="formDraft.dayLockedByUser = true; formDraft.day = Number(this.value) || null;"
-                    class="w-full px-2 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-mono font-extrabold text-bpBlack focus:outline-none focus:border-bpRoyal"
+                    class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-mono font-extrabold text-bpBlack focus:outline-none focus:border-bpRoyal"
                   />
                 </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Süre</label>
                   <input
@@ -1752,17 +1924,6 @@
                     value="${escapeAttr(formDraft.duration)}"
                     oninput="formDraft.durationLockedByUser = true; formDraft.duration = this.value;"
                     placeholder="Örn: 2 sa 15 dk"
-                    class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-bold text-bpBlack focus:outline-none focus:border-bpRoyal"
-                  />
-                </div>
-                <div>
-                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Tür / Özellik</label>
-                  <input
-                    type="text"
-                    id="draft-genre-input"
-                    value="${escapeAttr(formDraft.genre)}"
-                    oninput="formDraft.genreLockedByUser = true; formDraft.genre = this.value;"
-                    placeholder="Örn: Bilim Kurgu, Dram"
                     class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-bpSkyBorder text-xs font-bold text-bpBlack focus:outline-none focus:border-bpRoyal"
                   />
                 </div>
@@ -1801,7 +1962,8 @@
                   required
                   autocomplete="off"
                   oninput="handleDraftTitleChange(this.value, 'movie', 'add-movie-title')"
-                  placeholder="Film adını yazın (örn: Başlangıç, Interstellar)..."
+                  onblur="runMetadataLookupNow(this.value, 'movie', 'add-movie-title')"
+                  placeholder="Film adını yazın..."
                   class="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpRoyal"
                 />
                 <button type="button" onclick="runMetadataLookupNow(document.getElementById('add-movie-title').value, 'movie', 'add-movie-title')" class="px-3 py-2 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold shrink-0 cursor-pointer">
@@ -1824,7 +1986,7 @@
         body = `
           <form onsubmit="submitNewSeries(event)" class="space-y-3">
             <div>
-              <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Dizi Adı veya Bölüm *</label>
+              <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Dizi Adı *</label>
               <div class="flex gap-1.5">
                 <input
                   type="text"
@@ -1832,7 +1994,8 @@
                   required
                   autocomplete="off"
                   oninput="handleDraftTitleChange(this.value, 'series', 'add-series-title')"
-                  placeholder="Dizi veya bölüm yazın (örn: Dark S01E01, Breaking Bad)..."
+                  onblur="runMetadataLookupNow(this.value, 'series', 'add-series-title')"
+                  placeholder="Dizi adını yazın..."
                   class="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpEmerald"
                 />
                 <button type="button" onclick="runMetadataLookupNow(document.getElementById('add-series-title').value, 'series', 'add-series-title')" class="px-3 py-2 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shrink-0 cursor-pointer">
@@ -1874,36 +2037,28 @@
         ` : `
           <form onsubmit="submitNewEpisode(event)" class="space-y-3">
             <div>
-              <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Dizi Seçin veya Adını Yazın *</label>
-              <div class="flex gap-1.5">
-                <select id="add-ep-series" onchange="onEpisodeSeriesChanged(this.value)" class="flex-1 min-w-0 px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-extrabold text-bpBlack">
-                  ${seriesList.map(s => `<option value="${escapeAttr(s.id)}" ${selSeries && s.id === selSeries.id ? 'selected' : ''}>${escapeHtml(s.title)} (${s.year})</option>`).join('')}
-                </select>
-                <button type="button" onclick="lookupEpisodeAirDate()" class="px-3 py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold shrink-0 cursor-pointer">Bölüm Tarihi Bul</button>
-              </div>
+              <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Dizi Seçin *</label>
+              <select id="add-ep-series" onchange="onEpisodeSeriesChanged(this.value)" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-extrabold text-bpBlack">
+                ${seriesList.map(s => `<option value="${escapeAttr(s.id)}" ${selSeries && s.id === selSeries.id ? 'selected' : ''}>${escapeHtml(s.title)} (${s.year})</option>`).join('')}
+              </select>
             </div>
 
             <div class="grid grid-cols-3 gap-2">
               <div>
                 <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Sezon No *</label>
-                <input type="number" id="add-ep-season" min="1" value="1" required onchange="lookupEpisodeAirDate()" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-extrabold" />
+                <input type="number" id="add-ep-season" min="1" value="1" required class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-extrabold" />
               </div>
               <div>
                 <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Bölüm No *</label>
-                <input type="number" id="add-ep-number" min="1" value="${nextNum}" required onchange="lookupEpisodeAirDate()" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-extrabold" />
+                <input type="number" id="add-ep-number" min="1" value="${nextNum}" required class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-extrabold" />
               </div>
               <div>
                 <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Bölüm Adı</label>
-                <input type="text" id="add-ep-name" oninput="handleDraftTitleChange(this.value, 'series', 'add-ep-name')" placeholder="${nextNum}. Bölüm" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-semibold" />
+                <input type="text" id="add-ep-name" placeholder="${nextNum}. Bölüm" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-semibold" />
               </div>
             </div>
 
-            <div id="ep-date-badge" class="px-3 py-2 rounded-xl bg-bpSky/65 border border-bpSkyBorder flex items-center justify-between text-[11px] font-extrabold text-bpNavy">
-              <span>Bölüm Yayın Tarihi: <strong id="ep-airdate-val">${escapeHtml(formatReleaseDateLabel(selSeries) || String(selSeries?.year || ''))}</strong></span>
-              <span class="text-[10px] text-bpRoyal">Otomatik eşleşir</span>
-            </div>
-
-            ${renderVideoSourcesBlock('ep', 'add-ep-name', 'series')}
+            ${renderVideoSourcesBlock('ep', null, 'series')}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-bpSky text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
               <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shadow cursor-pointer">Bölümü Yayınla</button>
@@ -1918,7 +2073,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-base font-extrabold text-bpNavy">İçerik Ekle</h3>
-              <p class="text-[11px] text-slate-600">Yıl, ay, gün ve bölüm bilgisi otomatik bulunur; dilediğiniz gibi değiştirebilirsiniz.</p>
+              <p class="text-[11px] text-slate-600">Yıl, ay ve tür otomatik bulunur; dilediğiniz gibi değiştirebilirsiniz.</p>
             </div>
             <button type="button" onclick="closeModal()" class="px-2.5 py-1 rounded-lg bg-bpSky hover:bg-bpRed hover:text-white text-xs font-extrabold cursor-pointer">Kapat</button>
           </div>
@@ -1931,9 +2086,8 @@
         </div>
       `);
 
-      if (activeAddTab === 'episode' && seriesList.length > 0) {
-        lookupEpisodeAirDate();
-      }
+      restorePendingFileBadges();
+      refreshDraftInputsInModal();
     }
 
     function onEpisodeSeriesChanged(seriesId) {
@@ -1941,39 +2095,11 @@
       const nextNum = ser && Array.isArray(ser.episodes) ? ser.episodes.length + 1 : 1;
       const epInp = document.getElementById('add-ep-number');
       if (epInp) epInp.value = nextNum;
-      lookupEpisodeAirDate();
-    }
-
-    async function lookupEpisodeAirDate() {
-      const seriesId = document.getElementById('add-ep-series')?.value;
-      const sNum = Number(document.getElementById('add-ep-season')?.value) || 1;
-      const eNum = Number(document.getElementById('add-ep-number')?.value) || 1;
-      const ser = state.catalog.find(s => s.id === seriesId);
-      const badgeEl = document.getElementById('ep-airdate-val');
-      if (!ser || !badgeEl) return;
-
-      const list = await queryExternalMediaMetadata(ser.title, 'series', sNum, eNum);
-      if (list.length > 0) {
-        const best = list[0];
-        formDraft.year = best.year || ser.year;
-        formDraft.month = best.month || null;
-        formDraft.day = best.day || null;
-        formDraft.releaseDate = best.releaseDate || '';
-        if (best.duration) formDraft.duration = best.duration;
-        const dLabel = formatReleaseDateLabel(best) || String(best.year || ser.year);
-        badgeEl.textContent = best.epTitle ? `${dLabel} (${best.epTitle})` : dLabel;
-        const nameInp = document.getElementById('add-ep-name');
-        if (nameInp && !nameInp.value.trim() && best.epTitle) {
-          nameInp.value = best.epTitle;
-        }
-      } else {
-        badgeEl.textContent = formatReleaseDateLabel(ser) || String(ser.year);
-      }
     }
 
     async function buildSourcesAndBackgroundTasks(prefix, title, season = null, episode = null) {
-      const subFile = document.getElementById(`${prefix}-sub-file`)?.files?.[0];
-      const dubFile = document.getElementById(`${prefix}-dub-file`)?.files?.[0];
+      const subFile = getPendingFile(`${prefix}_sub`) || document.getElementById(`${prefix}-sub-file`)?.files?.[0];
+      const dubFile = getPendingFile(`${prefix}_dub`) || document.getElementById(`${prefix}-dub-file`)?.files?.[0];
       const subUrl = document.getElementById(`${prefix}-sub-url`)?.value?.trim() || '';
       const dubUrl = document.getElementById(`${prefix}-dub-url`)?.value?.trim() || '';
 
@@ -2062,7 +2188,7 @@
       const duration = document.getElementById('draft-duration-input')?.value?.trim() || '';
       const genre = document.getElementById('draft-genre-input')?.value?.trim() || defaultGenre;
       const manualUrl = document.getElementById('draft-poster-url-input')?.value?.trim() || '';
-      const posterFile = document.getElementById('draft-poster-file-input')?.files?.[0];
+      const posterFile = getPendingFile('poster') || document.getElementById('draft-poster-file-input')?.files?.[0];
 
       let posterUrl = CINEMA_FALLBACK_PHOTO;
       if (posterFile) {
@@ -2114,10 +2240,11 @@
         createdAt: Date.now()
       };
 
+      clearAllPendingFiles();
       state.catalog.unshift(newMovie);
       persistAndRenderCatalog();
       closeModal();
-      showToast(`"${title}" (${formatReleaseDateLabel(meta) || meta.year}) eklendi.`, 'success');
+      showToast(`"${title}" eklendi.`, 'success');
 
       syncItemToFirestore(newMovie);
       if (bgTasks.length > 0) runBackgroundUploadQueue(id, bgTasks);
@@ -2172,10 +2299,11 @@
         createdAt: Date.now()
       };
 
+      clearAllPendingFiles();
       state.catalog.unshift(newSeries);
       persistAndRenderCatalog();
       closeModal();
-      showToast(`"${title}" (${formatReleaseDateLabel(meta) || meta.year}) dizisi eklendi.`, 'success');
+      showToast(`"${title}" dizisi eklendi.`, 'success');
 
       syncItemToFirestore(newSeries);
       if (bgTasks.length > 0) runBackgroundUploadQueue(id, bgTasks);
@@ -2216,6 +2344,7 @@
       series.hasSub = series.episodes.some(ep => (ep.sources || []).some(s => s.defaultMode === 'sub'));
       series.hasDub = series.episodes.some(ep => (ep.sources || []).some(s => s.defaultMode === 'dub'));
 
+      clearAllPendingFiles();
       persistAndRenderCatalog();
       closeModal();
       if (state.player.media && state.player.media.id === series.id) {
@@ -2228,7 +2357,7 @@
     }
 
     /* =====================================================================
-       7. EDIT EXISTING ITEM MODAL (WITH MONTH & DAY SUPPORT)
+       7. EDIT EXISTING ITEM MODAL
     ===================================================================== */
     function openEditItemModal(itemId) {
       const item = state.catalog.find(m => m.id === itemId);
@@ -2240,7 +2369,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-base font-extrabold text-bpNavy">İçeriği Düzenle</h3>
-              <p class="text-[11px] text-slate-600">Ad, yıl, ay, gün, süre, tür ve kapak bilgilerini değiştirebilirsiniz.</p>
+              <p class="text-[11px] text-slate-600">Ad, yıl, ay, tür ve kapak bilgilerini değiştirebilirsiniz.</p>
             </div>
             <button type="button" onclick="closeModal()" class="px-2.5 py-1 rounded-lg bg-bpSky hover:bg-bpRed hover:text-white text-xs font-extrabold cursor-pointer">Kapat</button>
           </div>
@@ -2260,23 +2389,26 @@
                 <input type="number" id="edit-year-inp" min="1900" max="2035" required value="${item.year}" class="w-full px-2.5 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-mono font-extrabold" />
               </div>
               <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Ay (1-12)</label>
-                <input type="number" id="edit-month-inp" min="1" max="12" value="${item.month || ''}" class="w-full px-2.5 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-mono font-extrabold" />
+                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Ay</label>
+                <select id="edit-month-inp" class="w-full px-2 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-bold">
+                  <option value="">Seç</option>
+                  ${MONTHS_TR.map((mName, idx) => `<option value="${idx + 1}" ${Number(item.month) === idx + 1 ? 'selected' : ''}>${mName}</option>`).join('')}
+                </select>
               </div>
               <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Gün (1-31)</label>
-                <input type="number" id="edit-day-inp" min="1" max="31" value="${item.day || ''}" class="w-full px-2.5 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-mono font-extrabold" />
+                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Tür</label>
+                <input type="text" id="edit-genre-inp" value="${escapeAttr(item.genre || '')}" placeholder="Tür" class="w-full px-2.5 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-bold" />
               </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Süre</label>
-                <input type="text" id="edit-duration-inp" value="${escapeAttr(item.duration || '')}" placeholder="Örn: 2 sa 10 dk" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-bold" />
+                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Gün (1-31)</label>
+                <input type="number" id="edit-day-inp" min="1" max="31" value="${item.day || ''}" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-mono font-extrabold" />
               </div>
               <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Tür / Özellik</label>
-                <input type="text" id="edit-genre-inp" value="${escapeAttr(item.genre || '')}" placeholder="Örn: Aksiyon, Bilim Kurgu" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-bold" />
+                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Süre</label>
+                <input type="text" id="edit-duration-inp" value="${escapeAttr(item.duration || '')}" placeholder="Örn: 2 sa 10 dk" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-bold" />
               </div>
             </div>
 
@@ -2316,7 +2448,7 @@
           document.getElementById('edit-poster-url-inp').value = best.posterUrl;
           document.getElementById('edit-poster-img').src = best.posterUrl;
         }
-        showToast(`"${best.title}" (${formatReleaseDateLabel(best) || best.year}) bilgileri getirildi.`, 'success');
+        showToast(`"${best.title}" bilgileri getirildi.`, 'success');
       } else {
         showToast('Eşleşme bulunamadı, alanları elle girebilirsiniz.', 'error');
       }
@@ -2369,7 +2501,7 @@
     }
 
     /* =====================================================================
-       8. BACKUP / RESTORE MODAL (FIXES ANA EKRANA EKLE / PWA STORAGE)
+       8. BACKUP / RESTORE MODAL
     ===================================================================== */
     function openBackupModal() {
       const jsonStr = JSON.stringify(state.catalog || [], null, 2);
@@ -2447,7 +2579,7 @@
     }
 
     /* =====================================================================
-       9. EPISODES, DELETE, SEARCH, FILTERS & 3-COLUMN GRID
+       9. EPISODES, DELETE, SEARCH, FILTERS & RESPONSIVE CATALOG GRID
     ===================================================================== */
     function openEpisodesModal(seriesId) {
       const series = state.catalog.find(s => s.id === seriesId && s.type === 'series');
@@ -2475,12 +2607,11 @@
               <div class="p-4 rounded-xl bg-bpSky/60 text-center text-xs text-slate-700">Henüz bölüm eklenmemiş.</div>
             ` : eps.map(ep => {
               const labels = (ep.sources || []).map(s => s.label).join(' + ') || 'Video';
-              const dateBadge = ep.releaseDate ? ` • ${ep.releaseDate}` : '';
               return `
                 <div class="p-2.5 rounded-xl bg-bpSky/55 border border-bpSkyBorder flex items-center justify-between gap-2">
                   <div class="min-w-0">
                     <div class="text-xs font-extrabold text-bpBlack truncate">Sezon ${ep.season} • Bölüm ${ep.number} — ${escapeHtml(ep.name || `${ep.number}. Bölüm`)}</div>
-                    <div class="text-[10px] font-bold text-bpRoyal truncate">${escapeHtml(labels)}${escapeHtml(dateBadge)}</div>
+                    <div class="text-[10px] font-bold text-bpRoyal truncate">${escapeHtml(labels)}</div>
                   </div>
                   <div class="flex items-center gap-1.5 shrink-0">
                     <button type="button" onclick="closeModal(); openPlayer('${escapeAttr(series.id)}', ${ep.season}, ${ep.number})" class="px-2.5 py-1.5 rounded-lg bg-bpNavy text-white text-[11px] font-extrabold cursor-pointer">İzle</button>
@@ -2613,7 +2744,8 @@
       const cardClass = isMovie ? 'card-movie-frame' : 'card-series-frame';
       const epCount = Array.isArray(item.episodes) ? item.episodes.length : 1;
       const posterSrc = item.posterUrl || CINEMA_FALLBACK_PHOTO;
-      const dateCompact = formatReleaseDateLabel(item) || String(item.year);
+      const monthShort = item.month ? `${MONTHS_TR[item.month - 1].slice(0, 3)} ` : '';
+      const dateCompact = `${monthShort}${item.year}`;
 
       return `
         <article class="${cardClass}">
@@ -2709,7 +2841,7 @@
             <button type="button" onclick="openAddContentModal('movie')" class="px-3 py-1.5 rounded-xl bg-bpRed text-white text-xs font-extrabold shrink-0 cursor-pointer">+ Film Ekle</button>
           </div>
           ${movies.length === 0 ? renderEmptyArchiveBox('movie') : `
-            <div class="grid-three-cards">${movies.map(renderCard).join('')}</div>
+            <div class="catalog-responsive-grid">${movies.map(renderCard).join('')}</div>
           `}
         `;
         return;
@@ -2725,7 +2857,7 @@
             </div>
           </div>
           ${series.length === 0 ? renderEmptyArchiveBox('series') : `
-            <div class="grid-three-cards">${series.map(renderCard).join('')}</div>
+            <div class="catalog-responsive-grid">${series.map(renderCard).join('')}</div>
           `}
         `;
         return;
@@ -2738,7 +2870,7 @@
             <button type="button" onclick="openAddContentModal('movie')" class="px-3 py-1.5 rounded-xl bg-bpRed text-white text-xs font-extrabold shrink-0 cursor-pointer">+ Film Ekle</button>
           </div>
           ${movies.length === 0 ? renderEmptyArchiveBox('movie') : `
-            <div class="grid-three-cards">${movies.map(renderCard).join('')}</div>
+            <div class="catalog-responsive-grid">${movies.map(renderCard).join('')}</div>
           `}
         </section>
 
@@ -2751,19 +2883,22 @@
             </div>
           </div>
           ${series.length === 0 ? renderEmptyArchiveBox('series') : `
-            <div class="grid-three-cards">${series.map(renderCard).join('')}</div>
+            <div class="catalog-responsive-grid">${series.map(renderCard).join('')}</div>
           `}
         </section>
       `;
     }
 
     /* =====================================================================
-       10. WATCH STUDIO (GLASS FULLSCREEN BUTTONS + SINGLE BOTTOM-RIGHT EXIT)
+       10. WATCH STUDIO (ON-DEMAND POPUP VOLUME LINE + REAL IOS GAIN ENGINE)
     ===================================================================== */
     let hlsController = null;
     let singleTapTimer = null;
     let lastTapTs = 0;
     let hudVisibleInFullscreen = false;
+    let volumePopoverHideTimer = null;
+    let isDraggingVerticalVol = false;
+    let autoplayFallbackMuted = false;
 
     function getCurrentProgressKey() {
       const m = state.player.media;
@@ -2796,15 +2931,259 @@
       }));
     }
 
+    function canAttachWebAudioGain(url) {
+      if (!url) return false;
+      if (url.startsWith('blob:') || url.startsWith('data:')) return true;
+      try {
+        const parsed = new URL(url, window.location.href);
+        return parsed.origin === window.location.origin;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setupVideoGainPipeline(vid, playableUrl = '') {
+      if (!vid || wiredGainVideo === vid) return;
+      if (!canAttachWebAudioGain(playableUrl || vid.currentSrc || vid.src)) return;
+      try {
+        unlockAudioEngine();
+        if (!audioCtxGain) return;
+        const srcNode = audioCtxGain.createMediaElementSource(vid);
+        audioGainNode = audioCtxGain.createGain();
+        audioGainNode.gain.setValueAtTime(state.player.volume ?? 1, audioCtxGain.currentTime);
+        srcNode.connect(audioGainNode);
+        audioGainNode.connect(audioCtxGain.destination);
+        wiredGainVideo = vid;
+      } catch (e) {
+        audioGainNode = null;
+      }
+    }
+
+    function syncMediaSessionMetadata() {
+      try {
+        if (!('mediaSession' in navigator) || !state.player.media) return;
+        const m = state.player.media;
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: m.title,
+          artist: m.type === 'series' ? `${state.player.season}. Sezon ${state.player.episode}. Bölüm` : 'BirPerdeTR'
+        });
+        navigator.mediaSession.playbackState = state.player.isPlaying ? 'playing' : 'paused';
+      } catch (e) {}
+    }
+
+    function openVolumePopover(autoHideMs = 2200) {
+      const dock = document.getElementById('bp-vertical-vol-dock');
+      if (!dock) return;
+      state.player.volumePopoverOpen = true;
+      dock.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+      dock.classList.add('opacity-100', 'scale-100');
+      clearTimeout(volumePopoverHideTimer);
+      if (autoHideMs > 0 && !isDraggingVerticalVol) {
+        volumePopoverHideTimer = setTimeout(() => {
+          closeVolumePopover();
+        }, autoHideMs);
+      }
+    }
+
+    function closeVolumePopover() {
+      const dock = document.getElementById('bp-vertical-vol-dock');
+      state.player.volumePopoverOpen = false;
+      if (!dock) return;
+      dock.classList.remove('opacity-100', 'scale-100');
+      dock.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+    }
+
+    function toggleVolumePopoverByButton(ev) {
+      if (ev) ev.stopPropagation();
+      unlockAudioEngine();
+      if (state.player.volumePopoverOpen) {
+        closeVolumePopover();
+      } else {
+        openVolumePopover(2600);
+      }
+    }
+
+    function applyVolumeLevel(newVol, syncToNativeElement = true, revealPopover = true) {
+      unlockAudioEngine();
+      const clamped = Math.max(0, Math.min(1, Number(Number(newVol).toFixed(2))));
+      state.player.volume = clamped;
+      if (clamped > 0.02) {
+        state.player.lastNonZeroVolume = clamped;
+      }
+
+      const vid = document.getElementById('birperde-video');
+      if (vid) {
+        if (clamped > 0.005) {
+          autoplayFallbackMuted = false;
+          vid.muted = false;
+        } else {
+          vid.muted = true;
+        }
+
+        if (audioGainNode && wiredGainVideo === vid && audioCtxGain) {
+          if (audioCtxGain.state === 'suspended') {
+            audioCtxGain.resume().catch(() => {});
+          }
+          try {
+            vid.volume = 1;
+            audioGainNode.gain.cancelScheduledValues(audioCtxGain.currentTime);
+            audioGainNode.gain.setTargetAtTime(clamped, audioCtxGain.currentTime, 0.015);
+          } catch (e) {
+            audioGainNode.gain.value = clamped;
+          }
+        } else if (syncToNativeElement) {
+          try {
+            vid.volume = clamped;
+          } catch (e) {}
+        }
+      }
+
+      renderVerticalVolumeVisuals();
+      if (revealPopover) {
+        openVolumePopover(isDraggingVerticalVol ? 0 : 2100);
+      }
+    }
+
+    function adjustVolumeStep(delta, revealPopover = true) {
+      applyVolumeLevel((state.player.volume ?? 1) + delta, true, revealPopover);
+    }
+
+    function toggleMuteVerticalVolume(ev) {
+      if (ev) ev.stopPropagation();
+      if ((state.player.volume ?? 1) > 0.01) {
+        applyVolumeLevel(0, true, true);
+      } else {
+        applyVolumeLevel(state.player.lastNonZeroVolume || 1, true, true);
+      }
+    }
+
+    function setVerticalVolumeFromPointer(ev, trackEl) {
+      if (!trackEl) return;
+      const pt = (ev.touches && ev.touches[0]) || ev;
+      const rect = trackEl.getBoundingClientRect();
+      const isRotated = state.player.isFullscreen && isMobilePortraitViewport();
+      const angle = getOrientationAngle();
+
+      let ratio = 1 - ((pt.clientY - rect.top) / Math.max(1, rect.height));
+      if (isRotated) {
+        ratio = angle === 270
+          ? 1 - ((pt.clientX - rect.left) / Math.max(1, rect.width))
+          : (pt.clientX - rect.left) / Math.max(1, rect.width);
+      }
+      applyVolumeLevel(ratio, true, true);
+    }
+
+    function onVerticalVolPointerDown(ev, trackEl) {
+      ev.stopPropagation();
+      unlockAudioEngine();
+      isDraggingVerticalVol = true;
+      clearTimeout(volumePopoverHideTimer);
+      try { trackEl.setPointerCapture(ev.pointerId); } catch (e) {}
+      setVerticalVolumeFromPointer(ev, trackEl);
+    }
+
+    function onVerticalVolPointerMove(ev, trackEl) {
+      if (!isDraggingVerticalVol) return;
+      ev.stopPropagation();
+      setVerticalVolumeFromPointer(ev, trackEl);
+    }
+
+    function onVerticalVolPointerUp(ev, trackEl) {
+      if (!isDraggingVerticalVol) return;
+      ev.stopPropagation();
+      isDraggingVerticalVol = false;
+      try { trackEl.releasePointerCapture(ev.pointerId); } catch (e) {}
+      openVolumePopover(1800);
+    }
+
+    function onVerticalVolWheel(ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const step = ev.deltaY < 0 ? 0.08 : -0.08;
+      adjustVolumeStep(step, true);
+    }
+
+    function renderVerticalVolumeVisuals() {
+      const vol = Math.max(0, Math.min(1, state.player.volume ?? 1));
+      const pct = Math.round(vol * 100);
+
+      const lineFill = document.getElementById('bp-vvol-fill');
+      if (lineFill) lineFill.style.height = `${pct}%`;
+
+      const thumbDot = document.getElementById('bp-vvol-thumb');
+      if (thumbDot) thumbDot.style.bottom = `calc(${pct}% - 5px)`;
+
+      const pctLabel = document.getElementById('bp-vvol-pct');
+      if (pctLabel) pctLabel.textContent = `${pct}`;
+
+      const speakerSvg = pct === 0
+        ? `<svg class="w-4 h-4 text-rose-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>`
+        : pct < 50
+          ? `<svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`
+          : `<svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+
+      const iconBox = document.getElementById('bp-vvol-icon');
+      if (iconBox) iconBox.innerHTML = speakerSvg;
+
+      const triggerBtn = document.getElementById('bp-vol-trigger-btn');
+      if (triggerBtn) triggerBtn.innerHTML = speakerSvg;
+    }
+
+    function buildVerticalVolumeLineWidget(isFullscreenMode) {
+      const pct = Math.round(Math.max(0, Math.min(1, state.player.volume ?? 1)) * 100);
+      const posCls = isFullscreenMode
+        ? 'right-14 sm:right-16 bottom-16 z-30'
+        : 'right-11 bottom-12 z-20';
+      const shellCls = isFullscreenMode
+        ? 'fs-icon-btn'
+        : 'bg-slate-950/88 backdrop-blur-md border border-white/25';
+
+      return `
+        <div
+          id="bp-vertical-vol-dock"
+          onclick="event.stopPropagation()"
+          onwheel="onVerticalVolWheel(event)"
+          class="absolute ${posCls} w-8 py-2 rounded-full ${shellCls} flex flex-col items-center gap-1 select-none shadow-xl opacity-0 scale-95 pointer-events-none transition-all duration-150"
+        >
+          <span id="bp-vvol-pct" class="font-mono text-[9px] font-extrabold text-white/90 leading-none">${pct}</span>
+
+          <div
+            onpointerdown="onVerticalVolPointerDown(event, this)"
+            onpointermove="onVerticalVolPointerMove(event, this)"
+            onpointerup="onVerticalVolPointerUp(event, this)"
+            onpointercancel="onVerticalVolPointerUp(event, this)"
+            style="touch-action: none;"
+            role="slider"
+            aria-label="Ses Seviyesi"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="${pct}"
+            class="relative w-7 h-24 flex items-center justify-center cursor-pointer"
+          >
+            <div class="relative w-1 h-20 rounded-full bg-white/25 overflow-visible">
+              <div id="bp-vvol-fill" style="height: ${pct}%" class="absolute bottom-0 inset-x-0 rounded-full bg-white transition-[height] duration-75"></div>
+              <span id="bp-vvol-thumb" style="bottom: calc(${pct}% - 5px)" class="absolute left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow"></span>
+            </div>
+          </div>
+
+          <button type="button" id="bp-vvol-icon" onclick="toggleMuteVerticalVolume(event)" aria-label="Sesi Kapat veya Aç" class="w-5 h-5 flex items-center justify-center cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </button>
+        </div>
+      `;
+    }
+
     function cleanupPlayerTimers() {
       if (hlsController) {
         try { hlsController.destroy(); } catch (e) {}
         hlsController = null;
       }
       clearTimeout(singleTapTimer);
+      clearTimeout(volumePopoverHideTimer);
     }
 
     function openPlayer(itemId, season = null, episode = null) {
+      unlockAudioEngine();
       const media = state.catalog.find(m => m.id === itemId);
       if (!media) return;
 
@@ -2823,6 +3202,7 @@
       state.player.activeChannelId = channels[0].id;
       state.player.isFullscreen = false;
       state.player.isPlaying = true;
+      state.player.volumePopoverOpen = false;
       hudVisibleInFullscreen = false;
 
       const progKey = media.type === 'series' ? `${media.id}_s${s}_e${ep}` : `${media.id}_movie`;
@@ -2835,6 +3215,7 @@
     }
 
     function switchPlayerChannel(channelId) {
+      unlockAudioEngine();
       const vid = document.getElementById('birperde-video');
       const resume = vid ? vid.currentTime : 0;
       const playing = vid ? !vid.paused : true;
@@ -2854,14 +3235,30 @@
       if (vid) vid.playbackRate = numRate;
     }
 
+    function getOrientationAngle() {
+      const scrAngle = (screen.orientation && typeof screen.orientation.angle === 'number')
+        ? screen.orientation.angle
+        : (typeof window.orientation === 'number' ? window.orientation : 0);
+      return ((scrAngle % 360) + 360) % 360;
+    }
+
+    function isMobilePortraitViewport() {
+      return window.innerWidth < 768 && window.innerHeight > window.innerWidth;
+    }
+
     function syncFullscreenClass() {
       const wrap = document.getElementById('watch-studio-wrapper');
       if (!wrap || !state.player.isFullscreen) return;
-      const isPortrait = window.innerHeight > window.innerWidth;
-      wrap.className = isPortrait ? 'bp-fullscreen-landscape-rotated' : 'bp-fullscreen-landscape-native';
+      if (!isMobilePortraitViewport()) {
+        wrap.className = 'bp-fullscreen-landscape-native';
+        return;
+      }
+      const angle = getOrientationAngle();
+      wrap.className = angle === 270 ? 'bp-fs-rot-ccw' : 'bp-fs-rot-cw';
     }
 
     async function enterFullscreenMode() {
+      unlockAudioEngine();
       const vid = document.getElementById('birperde-video');
       const resume = vid ? vid.currentTime : 0;
       const playing = vid ? !vid.paused : true;
@@ -2871,12 +3268,15 @@
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
 
-      if (screen.orientation && screen.orientation.lock) {
-        try { await screen.orientation.lock('landscape'); } catch (e) {}
-      }
-
       renderWatchStudio(resume, playing);
       setFullscreenHudVisibility(true);
+
+      const wrap = document.getElementById('watch-studio-wrapper');
+      if (!isMobilePortraitViewport() && wrap && wrap.requestFullscreen) {
+        try { await wrap.requestFullscreen(); } catch (e) {}
+      } else if (screen.orientation && screen.orientation.lock) {
+        try { await screen.orientation.lock('landscape'); } catch (e) {}
+      }
     }
 
     async function exitFullscreenMode() {
@@ -2887,6 +3287,7 @@
       cleanupPlayerTimers();
       hudVisibleInFullscreen = false;
       state.player.isFullscreen = false;
+      state.player.volumePopoverOpen = false;
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
 
@@ -2902,18 +3303,24 @@
 
     function setFullscreenHudVisibility(show) {
       const hud = document.getElementById('fs-hud');
-      if (!hud) return;
       hudVisibleInFullscreen = Boolean(show);
-      if (hudVisibleInFullscreen) {
-        hud.classList.remove('opacity-0', 'pointer-events-none');
-        hud.classList.add('opacity-100');
-      } else {
-        hud.classList.remove('opacity-100');
-        hud.classList.add('opacity-0', 'pointer-events-none');
+      if (hud) {
+        if (hudVisibleInFullscreen) {
+          hud.classList.remove('opacity-0', 'pointer-events-none');
+          hud.classList.add('opacity-100');
+        } else {
+          hud.classList.remove('opacity-100');
+          hud.classList.add('opacity-0', 'pointer-events-none');
+          closeVolumePopover();
+        }
       }
     }
 
     function toggleFullscreenHudByTap() {
+      if (state.player.volumePopoverOpen) {
+        closeVolumePopover();
+        return;
+      }
       setFullscreenHudVisibility(!hudVisibleInFullscreen);
     }
 
@@ -2934,11 +3341,15 @@
       const dur = isFinite(vid.duration) && vid.duration > 0 ? vid.duration : (vid.currentTime + Math.abs(sec) + 10);
       vid.currentTime = Math.max(0, Math.min(dur, (vid.currentTime || 0) + sec));
       syncPlayerControls();
-      flashSeekBadge(sec < 0 ? 'left' : 'right', sec < 0 ? '« 10 sn Geri' : '10 sn İleri »');
+      flashSeekBadge(sec < 0 ? 'left' : 'right', sec < 0 ? '« 10s' : '10s »');
     }
 
     function handleFullscreenTap(ev) {
       if (!state.player.isFullscreen) {
+        if (state.player.volumePopoverOpen) {
+          closeVolumePopover();
+          return;
+        }
         togglePlayPause();
         return;
       }
@@ -2946,10 +3357,15 @@
       if (!surface) return;
       const pt = (ev.changedTouches && ev.changedTouches[0]) || ev;
       const rect = surface.getBoundingClientRect();
-      const rotatedPortrait = window.innerHeight > window.innerWidth;
-      const ratioX = rotatedPortrait
-        ? (pt.clientY - rect.top) / Math.max(1, rect.height)
-        : (pt.clientX - rect.left) / Math.max(1, rect.width);
+      const rotated = isMobilePortraitViewport();
+      const angle = getOrientationAngle();
+
+      let ratioX = (pt.clientX - rect.left) / Math.max(1, rect.width);
+      if (rotated) {
+        ratioX = angle === 270
+          ? 1 - ((pt.clientY - rect.top) / Math.max(1, rect.height))
+          : (pt.clientY - rect.top) / Math.max(1, rect.height);
+      }
 
       const now = Date.now();
       if (now - lastTapTs <= 280) {
@@ -2977,6 +3393,7 @@
       }
       state.player.media = null;
       state.player.isFullscreen = false;
+      state.player.volumePopoverOpen = false;
       hudVisibleInFullscreen = false;
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
@@ -2986,17 +3403,16 @@
     }
 
     function togglePlayPause() {
+      unlockAudioEngine();
       const vid = document.getElementById('birperde-video');
       if (!vid) return;
+      if (autoplayFallbackMuted || ((state.player.volume ?? 1) > 0.005 && vid.muted)) {
+        autoplayFallbackMuted = false;
+        vid.muted = false;
+        applyVolumeLevel(state.player.volume || state.player.lastNonZeroVolume || 1, true, false);
+      }
       if (vid.paused) vid.play().catch(() => {});
       else vid.pause();
-      syncPlayerControls();
-    }
-
-    function toggleMute() {
-      const vid = document.getElementById('birperde-video');
-      if (!vid) return;
-      vid.muted = !vid.muted;
       syncPlayerControls();
     }
 
@@ -3022,6 +3438,9 @@
       const dur = (vid.duration && isFinite(vid.duration)) ? vid.duration : 0;
       const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
 
+      state.player.isPlaying = !vid.paused;
+      syncMediaSessionMetadata();
+
       if (cur > 3) {
         saveWatchProgress(getCurrentProgressKey(), cur, dur);
       }
@@ -3031,6 +3450,8 @@
 
       const clock = document.getElementById('bp-clock-text');
       if (clock) clock.textContent = `${formatClock(cur)} / ${formatClock(dur)}`;
+
+      renderVerticalVolumeVisuals();
 
       const playIcon = document.getElementById('bp-play-btn');
       if (playIcon) {
@@ -3045,22 +3466,22 @@
           ? `<svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`
           : `<svg class="w-7 h-7 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>`;
       }
-
-      const muteBtn = document.getElementById('bp-mute-btn');
-      if (muteBtn) {
-        muteBtn.innerHTML = vid.muted
-          ? `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>`
-          : `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
-      }
     }
 
     async function attachVideoSource(resumeTime = 0, shouldPlay = true) {
       cleanupPlayerTimers();
+      wiredGainVideo = null;
+      autoplayFallbackMuted = false;
       const vid = document.getElementById('birperde-video');
       const badge = document.getElementById('bp-loading-badge');
       if (!vid) return;
 
+      const ch = state.player.channels.find(c => c.id === state.player.activeChannelId) || state.player.channels[0];
+      const playableUrl = await resolvePlayableUrl(ch);
+
       vid.playbackRate = state.player.playbackRate || 1;
+      vid.muted = (state.player.volume ?? 1) <= 0.005;
+      vid.volume = 1;
 
       const onCanPlay = () => {
         if (badge) badge.classList.add('hidden');
@@ -3073,17 +3494,45 @@
 
       vid.addEventListener('loadeddata', onCanPlay);
       vid.addEventListener('canplay', onCanPlay);
-      vid.addEventListener('playing', onCanPlay);
+      vid.addEventListener('playing', () => {
+        setupVideoGainPipeline(vid, playableUrl);
+        onCanPlay();
+      });
       vid.addEventListener('timeupdate', syncPlayerControls);
       vid.addEventListener('play', syncPlayerControls);
       vid.addEventListener('pause', syncPlayerControls);
-
-      const ch = state.player.channels.find(c => c.id === state.player.activeChannelId) || state.player.channels[0];
-      const playableUrl = await resolvePlayableUrl(ch);
+      vid.addEventListener('volumechange', () => {
+        if (autoplayFallbackMuted) return;
+        const isWebAudioControlled = Boolean(audioGainNode && wiredGainVideo === vid);
+        if (isWebAudioControlled) {
+          if (vid.muted && (state.player.volume ?? 1) > 0.01) {
+            state.player.volume = 0;
+            audioGainNode.gain.value = 0;
+            renderVerticalVolumeVisuals();
+            openVolumePopover(1800);
+          }
+          return;
+        }
+        const nextVol = vid.muted ? 0 : vid.volume;
+        if (Math.abs((state.player.volume ?? 1) - nextVol) > 0.01) {
+          state.player.volume = Number(nextVol.toFixed(2));
+          if (state.player.volume > 0.02) {
+            state.player.lastNonZeroVolume = state.player.volume;
+          }
+          renderVerticalVolumeVisuals();
+          openVolumePopover(1800);
+        }
+      });
 
       if (!playableUrl) {
         if (badge) badge.textContent = 'Video Yok';
         return;
+      }
+
+      if (canAttachWebAudioGain(playableUrl)) {
+        setupVideoGainPipeline(vid, playableUrl);
+      } else {
+        vid.volume = state.player.volume ?? 1;
       }
 
       const isHls = /\.m3u8(\?|$)/i.test(playableUrl);
@@ -3096,6 +3545,7 @@
           vid.playbackRate = state.player.playbackRate || 1;
           if (shouldPlay) {
             vid.play().catch(() => {
+              autoplayFallbackMuted = true;
               vid.muted = true;
               vid.play().catch(() => {});
             });
@@ -3106,11 +3556,13 @@
         vid.load();
         if (shouldPlay) {
           vid.play().catch(() => {
+            autoplayFallbackMuted = true;
             vid.muted = true;
             vid.play().catch(() => {});
           });
         }
       }
+      renderVerticalVolumeVisuals();
     }
 
     function renderWatchStudio(resumeTime = 0, shouldPlay = true) {
@@ -3126,56 +3578,65 @@
             <video id="birperde-video" preload="auto" playsinline class="w-full h-full object-contain bg-black"></video>
             <div id="fs-tap-surface" onclick="handleFullscreenTap(event)" class="absolute inset-0 z-10 cursor-pointer"></div>
 
-            <div id="fs-seek-left" class="hidden pointer-events-none absolute left-8 top-1/2 -translate-y-1/2 z-30 px-4 py-2.5 rounded-2xl fs-glass-active text-sm font-extrabold">« 10 sn Geri</div>
-            <div id="fs-seek-right" class="hidden pointer-events-none absolute right-8 top-1/2 -translate-y-1/2 z-30 px-4 py-2.5 rounded-2xl fs-glass-active text-sm font-extrabold">10 sn İleri »</div>
+            <div id="fs-seek-left" class="hidden pointer-events-none absolute left-8 top-1/2 -translate-y-1/2 z-30 px-3.5 py-2 rounded-2xl fs-icon-active text-xs font-mono font-extrabold">« 10s</div>
+            <div id="fs-seek-right" class="hidden pointer-events-none absolute right-8 top-1/2 -translate-y-1/2 z-30 px-3.5 py-2 rounded-2xl fs-icon-active text-xs font-mono font-extrabold">10s »</div>
 
-            <div id="bp-loading-badge" class="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-xl fs-glass-btn text-xs font-extrabold flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-bpYellow live-indicator"></span>
-              <span>Yükleniyor</span>
+            <div id="bp-loading-badge" class="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-30 px-2.5 py-1 rounded-full fs-icon-btn flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-300 live-indicator"></span>
             </div>
 
-            <div id="fs-hud" onclick="toggleFullscreenHudByTap()" class="absolute inset-0 z-20 flex flex-col justify-between bg-gradient-to-b from-black/45 via-transparent to-black/55 transition-opacity duration-200 ${hudVisibleInFullscreen ? 'opacity-100' : 'opacity-0 pointer-events-none'} p-4">
-              <!-- Top translucent bar: Title + Audio/Version + Speed -->
+            ${buildVerticalVolumeLineWidget(true)}
+
+            <div id="fs-hud" onclick="toggleFullscreenHudByTap()" class="absolute inset-0 z-20 flex flex-col justify-between bg-gradient-to-b from-black/40 via-transparent to-black/55 transition-opacity duration-200 ${hudVisibleInFullscreen ? 'opacity-100' : 'opacity-0 pointer-events-none'} p-3.5 sm:p-5">
+              <!-- Top minimalist bar: Track switcher + Speed -->
               <div onclick="event.stopPropagation()" class="flex items-center justify-between gap-2 min-w-0">
-                <div class="flex items-center gap-2 min-w-0 flex-wrap">
-                  <span class="px-3 py-1 rounded-xl fs-glass-btn text-xs sm:text-sm font-extrabold text-white truncate">${escapeHtml(p.media.title)}</span>
-                  ${p.channels.map(ch => `
-                    <button type="button" onclick="switchPlayerChannel('${escapeAttr(ch.id)}')" class="px-2.5 py-1 rounded-xl text-[11px] font-extrabold shrink-0 cursor-pointer ${ch.id === p.activeChannelId ? 'fs-glass-active' : 'fs-glass-btn'}">${escapeHtml(ch.label)}</button>
-                  `).join('')}
+                <div class="flex items-center gap-1.5 min-w-0">
+                  ${p.channels.map(ch => {
+                    const active = ch.id === p.activeChannelId;
+                    return `
+                      <button type="button" onclick="switchPlayerChannel('${escapeAttr(ch.id)}')" aria-label="${escapeAttr(ch.label)}" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold shrink-0 cursor-pointer ${active ? 'fs-icon-active' : 'fs-icon-btn'}">
+                        ${ch.defaultMode === 'dub' ? 'DUB' : 'ALT'}
+                      </button>
+                    `;
+                  }).join('')}
                 </div>
+
                 <div class="flex items-center gap-1.5 shrink-0">
-                  <select onchange="changePlaybackSpeed(this.value)" aria-label="Oynatma Hızı" class="px-2 py-1 rounded-xl fs-glass-btn text-[11px] font-mono font-extrabold text-white cursor-pointer">
-                    <option value="0.75" class="bg-slate-900 text-white" ${p.playbackRate === 0.75 ? 'selected' : ''}>0.75x</option>
-                    <option value="1" class="bg-slate-900 text-white" ${p.playbackRate === 1 ? 'selected' : ''}>1.0x</option>
-                    <option value="1.25" class="bg-slate-900 text-white" ${p.playbackRate === 1.25 ? 'selected' : ''}>1.25x</option>
-                    <option value="1.5" class="bg-slate-900 text-white" ${p.playbackRate === 1.5 ? 'selected' : ''}>1.5x</option>
-                    <option value="2" class="bg-slate-900 text-white" ${p.playbackRate === 2 ? 'selected' : ''}>2.0x</option>
+                  <select onchange="changePlaybackSpeed(this.value)" aria-label="Hız" class="h-9 px-2 rounded-xl fs-icon-btn text-[11px] font-mono font-extrabold text-white cursor-pointer">
+                    <option value="0.75" class="bg-slate-900" ${p.playbackRate === 0.75 ? 'selected' : ''}>0.75x</option>
+                    <option value="1" class="bg-slate-900" ${p.playbackRate === 1 ? 'selected' : ''}>1.0x</option>
+                    <option value="1.25" class="bg-slate-900" ${p.playbackRate === 1.25 ? 'selected' : ''}>1.25x</option>
+                    <option value="1.5" class="bg-slate-900" ${p.playbackRate === 1.5 ? 'selected' : ''}>1.5x</option>
+                    <option value="2" class="bg-slate-900" ${p.playbackRate === 2 ? 'selected' : ''}>2.0x</option>
                   </select>
                 </div>
               </div>
 
-              <!-- Center translucent transport buttons -->
+              <!-- Center icon-only transport controls -->
               <div onclick="event.stopPropagation()" class="flex items-center justify-center gap-7">
-                <button type="button" onclick="seekRelative(-10)" class="px-3.5 py-2.5 rounded-2xl fs-glass-btn text-xs font-extrabold cursor-pointer">-10 sn</button>
-                <button type="button" id="fs-center-play" onclick="togglePlayPause()" class="w-15 h-15 p-3.5 rounded-full fs-glass-active flex items-center justify-center shadow-lg cursor-pointer">
+                <button type="button" onclick="seekRelative(-10)" aria-label="10 Saniye Geri" class="w-12 h-12 rounded-full fs-icon-btn flex items-center justify-center cursor-pointer">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                </button>
+                <button type="button" id="fs-center-play" onclick="togglePlayPause()" aria-label="Oynat veya Duraklat" class="w-16 h-16 rounded-full fs-icon-active flex items-center justify-center shadow-lg cursor-pointer">
                   <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                 </button>
-                <button type="button" onclick="seekRelative(10)" class="px-3.5 py-2.5 rounded-2xl fs-glass-btn text-xs font-extrabold cursor-pointer">+10 sn</button>
+                <button type="button" onclick="seekRelative(10)" aria-label="10 Saniye İleri" class="w-12 h-12 rounded-full fs-icon-btn flex items-center justify-center cursor-pointer">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 7l5 5-5 5M6 7l5 5-5 5"/></svg>
+                </button>
               </div>
 
-              <!-- Bottom translucent bar: Play + Scrubber + Clock + Mute + SINGLE Bottom-Right Küçük Ekran button -->
-              <div onclick="event.stopPropagation()" class="flex items-center gap-2.5">
-                <button type="button" id="bp-play-btn" onclick="togglePlayPause()" class="w-9 h-9 rounded-xl fs-glass-btn flex items-center justify-center shrink-0 cursor-pointer">
+              <!-- Bottom bar: Play + Scrubber + Clock + Compact Speaker Button + Minimize -->
+              <div onclick="event.stopPropagation()" class="flex items-center gap-2">
+                <button type="button" id="bp-play-btn" onclick="togglePlayPause()" aria-label="Oynat veya Duraklat" class="w-9 h-9 rounded-xl fs-icon-btn flex items-center justify-center shrink-0 cursor-pointer">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                 </button>
                 <input type="range" id="bp-timeline-slider" min="0" max="100" step="0.2" value="0" oninput="scrubPlayer(this.value)" class="bp-scrubber flex-1 min-w-0" />
-                <span id="bp-clock-text" class="px-2 py-1 rounded-lg fs-glass-btn font-mono text-[11px] font-extrabold text-bpYellow shrink-0">00:00 / 00:00</span>
-                <button type="button" id="bp-mute-btn" onclick="toggleMute()" class="w-9 h-9 rounded-xl fs-glass-btn flex items-center justify-center shrink-0 cursor-pointer">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <span id="bp-clock-text" class="px-2 py-1 rounded-lg fs-icon-btn font-mono text-[10px] sm:text-[11px] font-bold shrink-0">00:00 / 00:00</span>
+                <button type="button" id="bp-vol-trigger-btn" onclick="toggleVolumePopoverByButton(event)" aria-label="Ses Seviyesi" class="w-9 h-9 rounded-xl fs-icon-btn flex items-center justify-center shrink-0 cursor-pointer">
+                  <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
                 </button>
-                <button type="button" onclick="exitFullscreenMode()" class="px-3.5 py-2 rounded-xl fs-glass-active text-xs font-extrabold flex items-center gap-1.5 shrink-0 cursor-pointer">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
-                  <span>Küçük Ekran</span>
+                <button type="button" onclick="exitFullscreenMode()" aria-label="Küçük Ekran" class="w-10 h-10 rounded-xl fs-icon-active flex items-center justify-center shrink-0 cursor-pointer">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
                 </button>
               </div>
             </div>
@@ -3185,7 +3646,8 @@
         return;
       }
 
-      wrap.className = 'max-w-6xl w-full mx-auto px-3 sm:px-5 pt-4';
+      // Compact theater container on Tablet/Desktop (max-w-4xl)
+      wrap.className = 'max-w-4xl w-full mx-auto px-3 sm:px-5 pt-4';
 
       let episodeBar = '';
       if (p.media.type === 'series') {
@@ -3196,86 +3658,88 @@
         const curEps = eps.filter(e => Number(e.season) === Number(p.season)).sort((a, b) => Number(a.number) - Number(b.number));
 
         episodeBar = `
-          <div class="px-4 py-2.5 bg-slate-900 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
+          <div class="px-3.5 py-2 bg-slate-950 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-2 min-w-0">
-              <select onchange="switchPlayerEpisode(this.value, 1)" class="px-2.5 py-1.5 rounded-lg bg-bpNavy border border-bpRoyal text-xs font-extrabold text-white">
+              <select onchange="switchPlayerEpisode(this.value, 1)" class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-600 text-xs font-extrabold text-slate-100">
                 ${seasons.map(sn => `<option value="${sn}" ${Number(p.season) === sn ? 'selected' : ''}>${sn}. Sezon</option>`).join('')}
               </select>
               <div class="flex items-center gap-1 flex-wrap">
                 ${curEps.map(ep => `
-                  <button type="button" onclick="switchPlayerEpisode(${p.season}, ${ep.number})" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer ${Number(ep.number) === Number(p.episode) ? 'bg-bpGreen text-white' : 'bg-white/10 hover:bg-white/20 text-slate-200'}">${ep.number}. Bölüm</button>
+                  <button type="button" onclick="switchPlayerEpisode(${p.season}, ${ep.number})" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer ${Number(ep.number) === Number(p.episode) ? 'watch-soft-active' : 'watch-soft-btn'}">${ep.number}. Bölüm</button>
                 `).join('')}
               </div>
             </div>
             <div class="flex items-center gap-1.5">
-              <button type="button" onclick="openAddContentModal('episode', '${escapeAttr(p.media.id)}')" class="px-2.5 py-1 rounded-lg bg-bpYellow text-bpBlack text-[11px] font-extrabold cursor-pointer">+ Bölüm Ekle</button>
-              <button type="button" onclick="openEpisodesModal('${escapeAttr(p.media.id)}')" class="px-2.5 py-1 rounded-lg bg-bpRed text-white text-[11px] font-extrabold cursor-pointer">Bölümler</button>
+              <button type="button" onclick="openAddContentModal('episode', '${escapeAttr(p.media.id)}')" class="px-2.5 py-1 rounded-lg watch-soft-btn text-[11px] font-extrabold cursor-pointer">+ Bölüm</button>
+              <button type="button" onclick="openEpisodesModal('${escapeAttr(p.media.id)}')" class="px-2.5 py-1 rounded-lg watch-soft-btn text-[11px] font-extrabold cursor-pointer">Bölümler</button>
             </div>
           </div>
         `;
       }
 
-      const dateLabel = formatReleaseDateLabel(p.media) || String(p.media.year);
+      const monthText = p.media.month ? `${MONTHS_TR[p.media.month - 1]} ` : '';
+      const dateLabel = `${monthText}${p.media.year}`;
 
       wrap.innerHTML = `
-        <div class="bg-bpBlack text-white rounded-2xl border-2 border-bpRoyal shadow-xl overflow-hidden">
+        <div class="bg-slate-950 text-slate-100 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
           <div class="birperde-ribbon"></div>
-          <div class="px-4 py-3 bg-bpNavy flex flex-wrap items-center justify-between gap-2 border-b border-white/10">
+          <div class="px-3.5 py-2.5 bg-slate-900 flex flex-wrap items-center justify-between gap-2 border-b border-white/10">
             <div class="flex flex-wrap items-center gap-2 min-w-0">
-              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${p.media.type === 'movie' ? 'bg-bpRed' : 'bg-bpEmerald'}">${p.media.type === 'movie' ? 'FİLM' : 'DİZİ'}</span>
-              <h2 class="text-sm sm:text-lg font-extrabold text-white truncate">${escapeHtml(p.media.title)}</h2>
-              <span class="px-2 py-0.5 rounded bg-bpYellow text-bpBlack font-mono text-[11px] font-extrabold">${escapeHtml(dateLabel)}</span>
-              ${p.media.duration ? `<span class="px-2 py-0.5 rounded bg-white/15 text-sky-200 text-[11px] font-bold">${escapeHtml(p.media.duration)}</span>` : ''}
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-slate-800 text-slate-200 border border-slate-600">${p.media.type === 'movie' ? 'FİLM' : 'DİZİ'}</span>
+              <h2 class="text-sm sm:text-base font-extrabold text-white truncate">${escapeHtml(p.media.title)}</h2>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700 font-mono text-[11px] font-bold">${escapeHtml(dateLabel)}</span>
+              ${p.media.genre ? `<span class="px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 text-[11px] font-semibold">${escapeHtml(p.media.genre)}</span>` : ''}
             </div>
             <div class="flex items-center gap-1.5">
-              <select onchange="changePlaybackSpeed(this.value)" aria-label="Oynatma Hızı" class="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white font-mono text-xs font-extrabold cursor-pointer">
+              <select onchange="changePlaybackSpeed(this.value)" aria-label="Oynatma Hızı" class="px-2 py-1 rounded-xl watch-soft-btn font-mono text-xs font-extrabold cursor-pointer">
                 <option value="0.75" class="bg-slate-900" ${p.playbackRate === 0.75 ? 'selected' : ''}>0.75x</option>
                 <option value="1" class="bg-slate-900" ${p.playbackRate === 1 ? 'selected' : ''}>1.0x</option>
                 <option value="1.25" class="bg-slate-900" ${p.playbackRate === 1.25 ? 'selected' : ''}>1.25x</option>
                 <option value="1.5" class="bg-slate-900" ${p.playbackRate === 1.5 ? 'selected' : ''}>1.5x</option>
                 <option value="2" class="bg-slate-900" ${p.playbackRate === 2 ? 'selected' : ''}>2.0x</option>
               </select>
-              <button type="button" onclick="enterFullscreenMode()" class="px-3.5 py-1.5 rounded-xl bg-bpRoyal hover:bg-blue-600 text-white text-xs font-extrabold transition cursor-pointer">Tam Ekran</button>
-              <button type="button" onclick="closePlayer()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-extrabold transition cursor-pointer">Kapat</button>
+              <button type="button" onclick="enterFullscreenMode()" class="px-3 py-1 rounded-xl watch-soft-active text-xs font-extrabold transition cursor-pointer">Tam Ekran</button>
+              <button type="button" onclick="closePlayer()" class="px-2.5 py-1 rounded-xl watch-soft-btn text-xs font-extrabold transition cursor-pointer">Kapat</button>
             </div>
           </div>
 
           ${episodeBar}
 
-          <div class="px-4 py-2 bg-slate-900/95 border-b border-white/10 flex items-center gap-2 flex-wrap">
+          <div class="px-3.5 py-2 bg-slate-900/95 border-b border-white/10 flex items-center gap-2 flex-wrap">
             <span class="text-[11px] font-bold text-slate-400">Ses / Sürüm:</span>
             ${p.channels.map(ch => {
               const active = ch.id === p.activeChannelId;
-              const isDub = ch.defaultMode === 'dub';
               return `
-                <button type="button" onclick="switchPlayerChannel('${escapeAttr(ch.id)}')" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border transition cursor-pointer ${active ? (isDub ? 'bg-bpEmerald border-bpYellow text-white shadow' : 'bg-bpRoyal border-bpYellow text-white shadow') : 'bg-white/5 hover:bg-white/15 border-white/15 text-slate-200'}">${escapeHtml(ch.label)}</button>
+                <button type="button" onclick="switchPlayerChannel('${escapeAttr(ch.id)}')" class="px-3 py-1 rounded-xl text-xs font-extrabold transition cursor-pointer ${active ? 'watch-soft-active' : 'watch-soft-btn'}">${escapeHtml(ch.label)}</button>
               `;
             }).join('')}
           </div>
 
-          <div class="p-3 sm:p-4">
-            <div class="relative aspect-video rounded-xl overflow-hidden bg-bpNavy border border-white/20">
-              <video id="birperde-video" preload="auto" playsinline onclick="togglePlayPause()" class="w-full h-full object-contain bg-bpNavy cursor-pointer"></video>
+          <div class="p-2.5 sm:p-3.5">
+            <div class="relative aspect-video max-h-[380px] lg:max-h-[430px] w-full mx-auto rounded-xl overflow-hidden bg-black border border-slate-800">
+              <video id="birperde-video" preload="auto" playsinline onclick="if(state.player.volumePopoverOpen){closeVolumePopover();}else{togglePlayPause();}" class="w-full h-full object-contain bg-black cursor-pointer"></video>
 
-              <div id="bp-loading-badge" class="pointer-events-none absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-bpRoyal/90 text-white text-[10px] font-extrabold flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-bpYellow live-indicator"></span>
+              <div id="bp-loading-badge" class="pointer-events-none absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-slate-900/85 text-slate-200 border border-slate-700 text-[10px] font-extrabold flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-300 live-indicator"></span>
                 <span>Yükleniyor</span>
               </div>
 
-              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-3 py-2 flex items-center gap-2">
-                <button type="button" id="bp-play-btn" onclick="togglePlayPause()" aria-label="Oynat veya Duraklat" class="w-8 h-8 rounded-lg bg-bpRoyal hover:bg-bpNavy text-white flex items-center justify-center shrink-0 transition cursor-pointer">
+              ${buildVerticalVolumeLineWidget(false)}
+
+              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/75 to-transparent px-2.5 py-2 flex items-center gap-2">
+                <button type="button" id="bp-play-btn" onclick="togglePlayPause()" aria-label="Oynat veya Duraklat" class="w-8 h-8 rounded-lg watch-soft-active text-white flex items-center justify-center shrink-0 transition cursor-pointer">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                 </button>
 
                 <input type="range" id="bp-timeline-slider" min="0" max="100" step="0.5" value="0" oninput="scrubPlayer(this.value)" aria-label="Zaman Çizelgesi" class="bp-scrubber flex-1 min-w-0" />
 
-                <span id="bp-clock-text" class="font-mono text-[10px] sm:text-[11px] font-bold text-sky-200 shrink-0">00:00 / 00:00</span>
+                <span id="bp-clock-text" class="font-mono text-[10px] sm:text-[11px] font-bold text-slate-300 shrink-0">00:00 / 00:00</span>
 
-                <button type="button" id="bp-mute-btn" onclick="toggleMute()" aria-label="Sesi Aç veya Kapat" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shrink-0 transition cursor-pointer">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <button type="button" id="bp-vol-trigger-btn" onclick="toggleVolumePopoverByButton(event)" aria-label="Ses Seviyesi" class="w-8 h-8 rounded-lg watch-soft-btn text-white flex items-center justify-center shrink-0 transition cursor-pointer">
+                  <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
                 </button>
 
-                <button type="button" onclick="enterFullscreenMode()" aria-label="Tam Ekran" class="w-8 h-8 rounded-lg bg-bpYellow text-bpBlack flex items-center justify-center shrink-0 transition cursor-pointer">
+                <button type="button" onclick="enterFullscreenMode()" aria-label="Tam Ekran" class="w-8 h-8 rounded-lg watch-soft-active text-white flex items-center justify-center shrink-0 transition cursor-pointer">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                 </button>
               </div>
@@ -3351,13 +3815,15 @@
     }
 
     Object.assign(window, {
+      state,
       formDraft,
+      dismissIntroSplashNow,
+      replayIntroSplash,
       openAddContentModal,
       handleDraftTitleChange,
       runMetadataLookupNow,
       selectSearchCandidate,
       onEpisodeSeriesChanged,
-      lookupEpisodeAirDate,
       handleVideoPickerChange,
       handlePosterFileChosen,
       handleManualPosterUrlInput,
@@ -3395,9 +3861,16 @@
       handleFullscreenTap,
       toggleFullscreenHudByTap,
       seekRelative,
+      toggleVolumePopoverByButton,
+      closeVolumePopover,
+      adjustVolumeStep,
+      toggleMuteVerticalVolume,
+      onVerticalVolPointerDown,
+      onVerticalVolPointerMove,
+      onVerticalVolPointerUp,
+      onVerticalVolWheel,
       closePlayer,
       togglePlayPause,
-      toggleMute,
       scrubPlayer,
       closeModal,
       handleOverlayClick
@@ -3408,6 +3881,7 @@
       if (logoEl && !logoEl.innerHTML) {
         logoEl.innerHTML = getBrandSvg(34);
       }
+      startInitialIntro();
       updateFilterButtons();
       renderMainView();
       hydrateCatalogFromIDBIfNeeded();
@@ -3422,11 +3896,35 @@
 
     window.addEventListener('resize', syncFullscreenClass);
     window.addEventListener('orientationchange', syncFullscreenClass);
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && state.player.isFullscreen) {
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && state.player.isFullscreen && !isMobilePortraitViewport()) {
         exitFullscreenMode();
       }
     });
+
+    function handleHardwareOrKeyboardVolume(e) {
+      if (!state.player.media) return;
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      const k = e.key || '';
+      const kc = e.keyCode || e.which || 0;
+
+      if (k === 'Escape' && state.player.isFullscreen) {
+        exitFullscreenMode();
+      } else if (k === 'AudioVolumeUp' || k === 'VolumeUp' || kc === 175 || k === 'ArrowUp' || k === '+' || k === '=') {
+        e.preventDefault();
+        adjustVolumeStep(0.1, true);
+      } else if (k === 'AudioVolumeDown' || k === 'VolumeDown' || kc === 174 || k === 'ArrowDown' || k === '-' || k === '_') {
+        e.preventDefault();
+        adjustVolumeStep(-0.1, true);
+      } else if (k === 'AudioVolumeMute' || k === 'VolumeMute' || kc === 173 || k === 'm' || k === 'M') {
+        e.preventDefault();
+        toggleMuteVerticalVolume();
+      }
+    }
+
+    document.addEventListener('keydown', handleHardwareOrKeyboardVolume, { passive: false });
   </script>
 </body>
 </html>
