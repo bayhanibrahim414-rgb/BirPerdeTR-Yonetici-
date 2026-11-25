@@ -80,7 +80,6 @@
       overflow-x: clip;
     }
 
-    /* Cinema Blur Mode: blurs & dims surrounding page and enlarges watch studio */
     body.bp-cinema-blur-active #admin-app > header,
     body.bp-cinema-blur-active #admin-app > main,
     body.bp-cinema-blur-active #admin-app > footer,
@@ -101,7 +100,6 @@
       max-height: 74vh !important;
     }
 
-    /* Animated Intro Splash */
     #intro-splash {
       position: fixed;
       inset: 0;
@@ -253,7 +251,6 @@
       box-shadow: 0 10px 20px -6px rgba(4, 120, 87, 0.22);
     }
 
-    /* Fullscreen containers */
     .bp-fs-rot-cw {
       position: fixed !important;
       top: 0 !important;
@@ -553,7 +550,7 @@
       </div>
     </header>
 
-    <!-- OPTIONAL BACKGROUND CLOUD SYNC STATUS BANNER -->
+    <!-- BACKGROUND CLOUD SYNC STATUS BANNER -->
     <div id="background-sync-banner" class="hidden max-w-6xl w-full mx-auto px-3 sm:px-5 pt-3">
       <div class="px-4 py-2.5 rounded-xl bg-bpNavy text-white border border-bpRoyal flex flex-col gap-1.5 shadow-sm min-w-0">
         <div class="flex items-center justify-between gap-3 min-w-0">
@@ -637,7 +634,7 @@
     }, { passive: false });
 
     /* =====================================================================
-       1. TEXTLESS APP ICON GENERATOR (FAVICON, APPLE-TOUCH-ICON & MANIFEST)
+       1. TEXTLESS APP ICON GENERATOR
     ===================================================================== */
     const MONTHS_TR = [
       'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
@@ -829,7 +826,7 @@
     }
 
     /* =====================================================================
-       3. STORAGE & NON-BLOCKING CLOUD SYNC (RESTORES PREVIOUS MOVIES/SERIES)
+       3. STORAGE & CLOUD SYNC ENGINE (MULTI-DEVICE FIX)
     ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyB1eT555N2stbzj6x6zkmxHKtMolvCJmeY",
@@ -863,6 +860,7 @@
     ];
 
     const LOCAL_BLOB_URLS = new Map();
+    const LOCAL_IDB_KEYS_PRESENT = new Set();
     const IDB_NAME = 'birperdetr_media_idb_v3';
     const LEGACY_IDB_NAMES = [
       'birperdetr_media_idb_v4',
@@ -891,7 +889,6 @@
 
     const PENDING_SELECTED_FILES = new Map();
 
-    // Missing helper functions fixed so startup never crashes
     function getPendingFile(slotKey) {
       return PENDING_SELECTED_FILES.get(slotKey) || null;
     }
@@ -949,8 +946,7 @@
     function isValidSourceEntry(s) {
       if (!s || typeof s !== 'object') return false;
       const urlStr = String(s.url || '').trim();
-      const hasValidUrl = /^(https?:\/\/|blob:|data:video)/i.test(urlStr) && !urlStr.startsWith('blob:');
-      // Note: blob: URLs from previous sessions are dead unless backed by localKey or http URL
+      const hasValidUrl = /^(https?:\/\/|data:video)/i.test(urlStr);
       const hasLiveBlob = urlStr.startsWith('blob:') && Array.from(LOCAL_BLOB_URLS.values()).includes(urlStr);
       return Boolean(s.localKey) || Boolean(s.storagePath) || hasValidUrl || hasLiveBlob;
     }
@@ -984,6 +980,7 @@
           url: String(s.url || s.videoUrl || s.src || '').trim(),
           localKey: String(s.localKey || '').trim(),
           storagePath: String(s.storagePath || '').trim(),
+          cloudStatus: String(s.cloudStatus || ''),
           durationSec: Number(s.durationSec) || 0,
           trimStart: Number(s.trimStart) || 0,
           trimEnd: Number(s.trimEnd) || 0,
@@ -1043,7 +1040,6 @@
         updatedAt: Number(raw.updatedAt) || Number(raw.createdAt) || Date.now()
       };
 
-      // Strictly discard fake/unloaded/unplayable items so broken cards never appear
       if (isFakePlaceholderItem(normalized) || !hasPlayableMedia(normalized)) return null;
       return normalized;
     }
@@ -1122,7 +1118,8 @@
               ...s,
               url: s.url || oldS.url || '',
               localKey: s.localKey || oldS.localKey || '',
-              storagePath: s.storagePath || oldS.storagePath || ''
+              storagePath: s.storagePath || oldS.storagePath || '',
+              cloudStatus: s.cloudStatus || oldS.cloudStatus || ''
             });
           });
           merged.sources = Array.from(sMap.values()).filter(isValidSourceEntry);
@@ -1147,7 +1144,8 @@
                   ...s,
                   url: s.url || os.url || '',
                   localKey: s.localKey || os.localKey || '',
-                  storagePath: s.storagePath || os.storagePath || ''
+                  storagePath: s.storagePath || os.storagePath || '',
+                  cloudStatus: s.cloudStatus || os.cloudStatus || ''
                 });
               });
               epMap.set(k, { ...oldE, ...e, sources: Array.from(esMap.values()).filter(isValidSourceEntry) });
@@ -1252,6 +1250,7 @@
                     if (val instanceof Blob || val instanceof File) {
                       const strKey = String(key || '');
                       if (strKey) {
+                        LOCAL_IDB_KEYS_PRESENT.add(strKey);
                         orphanVideosOut.push({
                           localKey: strKey,
                           fileName: val.name || `Kayıtlı Video (${strKey.slice(-6)})`,
@@ -1308,7 +1307,7 @@
 
         const availableBlobKeys = new Set(storedVideoBlobs.map(v => v.localKey));
 
-        // Verify localKeys actually exist in IndexedDB if no remote url/storagePath exists
+        // Keep items that have a remote URL/storagePath OR exist locally in this device's IndexedDB
         for (const [id, item] of Array.from(map.entries())) {
           if (item.type === 'movie') {
             item.sources = (item.sources || []).filter(s => {
@@ -1418,6 +1417,7 @@
       const key = 'vid_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
       const blobUrl = URL.createObjectURL(file);
       LOCAL_BLOB_URLS.set(key, blobUrl);
+      LOCAL_IDB_KEYS_PRESENT.add(key);
 
       openMediaIDB().then(db => {
         const tx = db.transaction(IDB_VIDEO_STORE, 'readwrite');
@@ -1469,21 +1469,30 @@
     }
 
     async function resolvePlayableUrl(source) {
-      if (!source) return '';
+      if (!source) return { url: '', reason: 'no_source' };
+
+      // 1. Check current session memory Blob URL
       if (source.localKey && LOCAL_BLOB_URLS.has(source.localKey)) {
-        return LOCAL_BLOB_URLS.get(source.localKey);
+        return { url: LOCAL_BLOB_URLS.get(source.localKey), reason: 'local_mem' };
       }
+
+      // 2. Check current browser IndexedDB
       if (source.localKey) {
         const storedFile = await getLocalFileFromIDB(source.localKey);
         if (storedFile) {
           const freshBlobUrl = URL.createObjectURL(storedFile);
           LOCAL_BLOB_URLS.set(source.localKey, freshBlobUrl);
-          return freshBlobUrl;
+          LOCAL_IDB_KEYS_PRESENT.add(source.localKey);
+          return { url: freshBlobUrl, reason: 'local_idb' };
         }
       }
+
+      // 3. Check Cloud Direct HTTPS URL
       if (source.url && /^https?:\/\//i.test(source.url)) {
-        return source.url;
+        return { url: source.url, reason: 'cloud_url' };
       }
+
+      // 4. Resolve via Firebase Storage Path
       if (source.storagePath) {
         try {
           await ensureFirebaseAuth();
@@ -1491,12 +1500,18 @@
             const dlUrl = await getDownloadURL(storageRef(fbStorage, source.storagePath));
             if (dlUrl) {
               source.url = dlUrl;
-              return dlUrl;
+              return { url: dlUrl, reason: 'cloud_storage' };
             }
           }
         } catch (e) {}
       }
-      return source.url || '';
+
+      // 5. If localKey exists but wasn't found here, it means it belongs to another device and cloud upload didn't finish
+      if (source.localKey) {
+        return { url: '', reason: 'other_device_pending_cloud' };
+      }
+
+      return { url: '', reason: 'missing' };
     }
 
     function getItemStatusBadge(item) {
@@ -1509,8 +1524,16 @@
       if (allSources.length === 0) {
         return { text: 'Kaynak Yok', cls: 'bg-bpRed text-white' };
       }
-      if (allSources.some(s => s.localKey || /^https?:\/\//i.test(s.url || '') || s.storagePath)) {
-        return { text: 'Anında Hazır', cls: 'bg-bpEmerald text-white' };
+      const hasCloud = allSources.some(s => /^https?:\/\//i.test(s.url || '') || Boolean(s.storagePath));
+      if (hasCloud) {
+        return { text: 'Bulutta Hazır (Tüm Cihazlar)', cls: 'bg-bpEmerald text-white' };
+      }
+      const hasLocalHere = allSources.some(s => s.localKey && (LOCAL_BLOB_URLS.has(s.localKey) || LOCAL_IDB_KEYS_PRESENT.has(s.localKey)));
+      if (hasLocalHere) {
+        return { text: 'Bu Cihazda Hazır', cls: 'bg-bpRoyal text-white' };
+      }
+      if (allSources.some(s => s.localKey)) {
+        return { text: 'Diğer Cihazda (Bulut Bekliyor)', cls: 'bg-amber-600 text-white' };
       }
       return { text: 'Bekliyor', cls: 'bg-amber-600 text-white' };
     }
@@ -1723,7 +1746,7 @@
           cloudUnsubscribe = null;
         }
         setSyncBanner(false);
-        showToast('Yerel mod aktif: videolar anında cihazda çalışır.', 'success');
+        showToast('Yerel mod aktif: videolar yalnızca bu cihazda çalışır.', 'success');
       }
     }
 
@@ -1751,7 +1774,7 @@
     }
 
     /* =====================================================================
-       5. NON-BLOCKING CLOUD SYNC (RESTORES PREVIOUSLY SAVED ITEMS)
+       5. FIREBASE AUTH, FIRESTORE & STORAGE UPLOAD ENGINE
     ===================================================================== */
     async function ensureFirebaseAuth() {
       if (!state.cloudSyncEnabled) return null;
@@ -1796,15 +1819,14 @@
 
       const addedFromCloud = state.catalog.length - beforeSize;
       if (addedFromCloud > 0) {
-        showToast(`${addedFromCloud} kayıtlı içerik buluttan geri yüklendi.`, 'success');
+        showToast(`${addedFromCloud} kayıtlı içerik buluttan senkronize edildi.`, 'success');
       }
     }
 
     async function fetchRealtimeDbBackupCatalog() {
       const endpoints = [
         `${firebaseConfig.databaseURL}/birperde_catalog.json`,
-        `${firebaseConfig.databaseURL}/catalog.json`,
-        `${firebaseConfig.databaseURL}/.json`
+        `${firebaseConfig.databaseURL}/catalog.json`
       ];
       const collected = [];
       for (const ep of endpoints) {
@@ -1891,7 +1913,7 @@
 
       ensureFirebaseAuth().then(async (user) => {
         try {
-          if (!user || !fbDb || !state.cloudSyncEnabled) return;
+          if (!fbDb || !state.cloudSyncEnabled) return;
           const collectionsToCheck = ['birperde_catalog', 'catalog', 'movies', 'series'];
           for (const colName of collectionsToCheck) {
             try {
@@ -1902,7 +1924,6 @@
             } catch (e) {}
           }
 
-          // Also scan Firebase Storage folders in case videos were uploaded without Firestore doc
           const storageDocs = await discoverOrphanStorageVideos();
           if (storageDocs.length > 0) {
             mergeCloudSnapshotDocs(storageDocs);
@@ -1927,7 +1948,6 @@
     async function syncMetaToFirestoreSilent(item) {
       if (!state.cloudSyncEnabled || !item || deletedIdsSession.has(item.id)) return;
       const payload = sanitizeItemForStorage(item);
-      // Mirror to Realtime Database REST endpoint as backup
       try {
         fetch(`${firebaseConfig.databaseURL}/birperde_catalog/${encodeURIComponent(payload.id)}.json`, {
           method: 'PUT',
@@ -1986,25 +2006,48 @@
       if (barEl) barEl.style.width = `${Math.max(2, Math.min(100, pct))}%`;
     }
 
+    function formatBytesMb(bytes) {
+      return (Number(bytes || 0) / 1048576).toFixed(1) + ' MB';
+    }
+
     async function runOptionalBackgroundUploads(itemId, tasks) {
       if (!state.cloudSyncEnabled || !tasks || tasks.length === 0) return;
       cloudUploadCancelFlag = false;
       activeCloudUploads++;
       try {
+        setSyncBanner(true, 'Bulut bağlantısı kuruluyor...', 1);
         await ensureFirebaseAuth();
-        if (!fbStorage || cloudUploadCancelFlag) return;
+        if (!fbStorage) {
+          setSyncBanner(false);
+          showToast('Firebase Storage başlatılamadı. Video sadece bu cihazda kayıtlı.', 'error');
+          return;
+        }
+        if (cloudUploadCancelFlag) return;
+
         for (const task of tasks) {
           if (cloudUploadCancelFlag || !state.cloudSyncEnabled) break;
-          setSyncBanner(true, `Arka planda buluta aktarılıyor: ${task.title} (${task.label})`, 5);
+          const totalMb = formatBytesMb(task.file.size);
+          setSyncBanner(true, `Buluta yükleniyor: ${task.title} (${task.label}) • 0.0 MB / ${totalMb}`, 1);
+
           const cleanName = (task.file.name || 'media.mp4').replace(/[^a-zA-Z0-9._-]/g, '_');
           const path = `${task.folder}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${cleanName}`;
           const ref = storageRef(fbStorage, path);
-          const uploadTask = uploadBytesResumable(ref, task.file, { contentType: task.file.type || 'video/mp4' });
+          const uploadTask = uploadBytesResumable(ref, task.file, {
+            contentType: task.file.type || 'video/mp4'
+          });
+
+          let stallTimer = setTimeout(() => {
+            showToast('Yükleme başlamadı: Firebase Storage kurallarını (Rules) kontrol edin.', 'error');
+          }, 12000);
 
           await new Promise((resolve) => {
             uploadTask.on(
               'state_changed',
               (snap) => {
+                if (snap.bytesTransferred > 0 && stallTimer) {
+                  clearTimeout(stallTimer);
+                  stallTimer = null;
+                }
                 if (cloudUploadCancelFlag) {
                   try { uploadTask.cancel(); } catch (e) {}
                   resolve();
@@ -2012,11 +2055,26 @@
                 }
                 if (snap.totalBytes > 0) {
                   const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-                  setSyncBanner(true, `Arka planda buluta aktarılıyor: ${task.title} (${task.label})`, pct);
+                  const sentMb = formatBytesMb(snap.bytesTransferred);
+                  setSyncBanner(
+                    true,
+                    `Buluta yükleniyor: ${task.title} (${task.label}) • ${sentMb} / ${totalMb}`,
+                    pct
+                  );
                 }
               },
-              () => resolve(),
+              (err) => {
+                if (stallTimer) clearTimeout(stallTimer);
+                const code = err && err.code ? err.code : '';
+                if (code === 'storage/unauthorized') {
+                  showToast('Firebase Storage yazma izni kapalı (storage/unauthorized). Rules ayarını açın.', 'error');
+                } else if (code !== 'storage/canceled') {
+                  showToast(`Bulut yükleme hatası (${code || 'Ağ hatası'}). Video bu cihazda korunuyor.`, 'error');
+                }
+                resolve();
+              },
               async () => {
+                if (stallTimer) clearTimeout(stallTimer);
                 try {
                   const url = await getDownloadURL(uploadTask.snapshot.ref);
                   const target = state.catalog.find(m => m.id === itemId);
@@ -2029,6 +2087,7 @@
                       if (sObj) {
                         sObj.url = url;
                         sObj.storagePath = path;
+                        sObj.cloudStatus = 'ready';
                       }
                     } else if (task.kind === 'episode_source') {
                       const ep = (target.episodes || []).find(e => Number(e.season) === Number(task.season) && Number(e.number) === Number(task.episode));
@@ -2036,10 +2095,12 @@
                       if (sObj) {
                         sObj.url = url;
                         sObj.storagePath = path;
+                        sObj.cloudStatus = 'ready';
                       }
                     }
                     persistAndRenderCatalog();
-                    syncMetaToFirestoreSilent(target);
+                    await syncMetaToFirestoreSilent(target);
+                    showToast(`"${task.title}" (${task.label}) buluta yüklendi, artık tüm cihazlardan izlenebilir!`, 'success');
                   }
                 } catch (e) {}
                 resolve();
@@ -2056,7 +2117,7 @@
     }
 
     /* =====================================================================
-       6. AUTOMATIC DURATION ENGINE (AFTER VIDEO LOADS)
+       6. AUTOMATIC DURATION ENGINE
     ===================================================================== */
     function formatDurationFromSeconds(sec) {
       const s = Math.max(0, Math.round(Number(sec) || 0));
@@ -2105,7 +2166,6 @@
         vid.preload = 'metadata';
         vid.muted = true;
         vid.playsInline = true;
-        vid.crossOrigin = 'anonymous';
         vid.src = srcUrl;
 
         let settled = false;
@@ -2116,7 +2176,7 @@
           if (objectUrlToRevoke) {
             setTimeout(() => {
               try { URL.revokeObjectURL(objectUrlToRevoke); } catch (e) {}
-            }, 400);
+            }, 300);
           }
           resolve(payload);
         };
@@ -2128,38 +2188,13 @@
             durationLabel: d > 0 ? formatDurationFromSeconds(d) : '',
             frameUrl: ''
           });
-        }, 3500);
+        }, 2500);
 
         vid.onloadedmetadata = () => {
+          clearTimeout(timeout);
           const rawDur = (vid.duration && isFinite(vid.duration) && vid.duration > 0) ? vid.duration : 0;
           const durLabel = rawDur > 0 ? formatDurationFromSeconds(rawDur) : '';
-          try {
-            const seekTarget = rawDur > 3 ? Math.min(rawDur * 0.12, 12) : 0.1;
-            vid.currentTime = seekTarget;
-          } catch (e) {
-            clearTimeout(timeout);
-            finish({ durationSec: rawDur, durationLabel: durLabel, frameUrl: '' });
-          }
-
-          vid.onseeked = () => {
-            clearTimeout(timeout);
-            let frameUrl = '';
-            try {
-              if (vid.videoWidth > 0 && vid.videoHeight > 0) {
-                const canvas = document.createElement('canvas');
-                const w = 420;
-                canvas.width = w;
-                canvas.height = Math.max(236, Math.round(w * (vid.videoHeight / vid.videoWidth)));
-                canvas.getContext('2d').drawImage(vid, 0, 0, canvas.width, canvas.height);
-                frameUrl = canvas.toDataURL('image/jpeg', 0.82);
-              }
-            } catch (e) {}
-            finish({
-              durationSec: rawDur,
-              durationLabel: durLabel,
-              frameUrl
-            });
-          };
+          finish({ durationSec: rawDur, durationLabel: durLabel, frameUrl: '' });
         };
 
         vid.onerror = () => {
@@ -2170,7 +2205,7 @@
     }
 
     /* =====================================================================
-       7. BROAD, UNRESTRICTED MULTI-SOURCE METADATA SEARCH
+       7. BROAD MULTI-SOURCE METADATA SEARCH
     ===================================================================== */
     const GENRE_MAP = {
       'action': 'Aksiyon',
@@ -2480,7 +2515,7 @@
     }
 
     /* =====================================================================
-       8. ADD / EDIT MODAL + AUTO DURATION ON LOAD + BROAD CANDIDATES
+       8. ADD / EDIT MODAL
     ===================================================================== */
     const nowInit = new Date();
     let activeAddTab = 'movie';
@@ -2969,7 +3004,7 @@
       return `
         <div class="p-3 rounded-xl bg-bpSky/70 border border-bpSkyBorder space-y-2.5">
           <div id="draft-lookup-status" class="text-[10px] font-extrabold text-bpRoyal">
-            Video yüklendiğinde süre otomatik çıkar; yazdığınız başlık korunur ve tüm eşleşmeler listelenir.
+            Video yüklendiğinde süre otomatik çıkar; diğer cihazlardan izlenebilmesi için Bulut seçeneği açık kalmalıdır.
           </div>
           <div class="flex items-start gap-3">
             <div class="w-24 shrink-0 space-y-1.5">
@@ -3083,7 +3118,7 @@
                   required
                   autocomplete="off"
                   oninput="handleDraftTitleChange(this.value, 'movie', 'add-movie-title')"
-                  placeholder="Film adını yazın (istediğiniz her şeyi arayabilirsiniz)..."
+                  placeholder="Film adını yazın..."
                   class="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpRoyal"
                 />
                 <button type="button" onclick="fetchBroadSuggestions(document.getElementById('add-movie-title').value, 'movie', 'add-movie-title')" class="px-3 py-2 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold shrink-0 cursor-pointer">
@@ -3114,7 +3149,7 @@
                   required
                   autocomplete="off"
                   oninput="handleDraftTitleChange(this.value, 'series', 'add-series-title')"
-                  placeholder="Dizi adını yazın (istediğiniz her şeyi arayabilirsiniz)..."
+                  placeholder="Dizi adını yazın..."
                   class="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpEmerald"
                 />
                 <button type="button" onclick="fetchBroadSuggestions(document.getElementById('add-series-title').value, 'series', 'add-series-title')" class="px-3 py-2 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shrink-0 cursor-pointer">
@@ -3192,7 +3227,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-base font-extrabold text-bpNavy">İçerik Ekle</h3>
-              <p class="text-[11px] text-slate-600">Yükleme beklemeden anında yerel ve bulut arşivde açılır; süre otomatik hesaplanır.</p>
+              <p class="text-[11px] text-slate-600">Yayınlandıktan sonra arka planda buluta yüklenir; %100 olunca tüm cihazlarda açılır.</p>
             </div>
             <button type="button" onclick="closeModal()" class="px-2.5 py-1 rounded-lg bg-bpSky hover:bg-bpRed hover:text-white text-xs font-extrabold cursor-pointer">Kapat</button>
           </div>
@@ -3224,16 +3259,11 @@
 
       const sources = [];
       const bgTasks = [];
-      let detectedDurLabel = '';
-      let detectedDurSec = 0;
+      let detectedDurLabel = formDraft.duration || '';
+      let detectedDurSec = formDraft.durationSec || 0;
 
       if (subFile) {
         const stored = await saveLocalVideoFileInstant(subFile);
-        const info = await inspectVideoFileOrUrl(subFile);
-        if (info.durationSec > 0) {
-          detectedDurSec = info.durationSec;
-          detectedDurLabel = info.durationLabel;
-        }
         sources.push({
           id: 'sub',
           label: 'TR Altyazılı',
@@ -3241,9 +3271,10 @@
           url: '',
           localKey: stored.localKey,
           storagePath: '',
-          durationSec: info.durationSec || 0,
+          cloudStatus: state.cloudSyncEnabled ? 'uploading' : 'local_only',
+          durationSec: detectedDurSec || 0,
           trimStart: 0,
-          trimEnd: info.durationSec || 0,
+          trimEnd: detectedDurSec || 0,
           fileName: subFile.name
         });
         bgTasks.push({
@@ -3257,11 +3288,6 @@
           folder: 'birperde_videos'
         });
       } else if (subUrl) {
-        const info = await inspectVideoFileOrUrl(subUrl);
-        if (info.durationSec > 0 && !detectedDurSec) {
-          detectedDurSec = info.durationSec;
-          detectedDurLabel = info.durationLabel;
-        }
         sources.push({
           id: 'sub',
           label: 'TR Altyazılı',
@@ -3269,20 +3295,16 @@
           url: subUrl,
           localKey: '',
           storagePath: '',
-          durationSec: info.durationSec || 0,
+          cloudStatus: 'ready',
+          durationSec: detectedDurSec || 0,
           trimStart: 0,
-          trimEnd: info.durationSec || 0,
+          trimEnd: detectedDurSec || 0,
           fileName: 'stream.mp4'
         });
       }
 
       if (dubFile) {
         const stored = await saveLocalVideoFileInstant(dubFile);
-        const info = await inspectVideoFileOrUrl(dubFile);
-        if (info.durationSec > 0 && !detectedDurSec) {
-          detectedDurSec = info.durationSec;
-          detectedDurLabel = info.durationLabel;
-        }
         sources.push({
           id: 'dub',
           label: 'TR Dublaj',
@@ -3290,9 +3312,10 @@
           url: '',
           localKey: stored.localKey,
           storagePath: '',
-          durationSec: info.durationSec || 0,
+          cloudStatus: state.cloudSyncEnabled ? 'uploading' : 'local_only',
+          durationSec: detectedDurSec || 0,
           trimStart: 0,
-          trimEnd: info.durationSec || 0,
+          trimEnd: detectedDurSec || 0,
           fileName: dubFile.name
         });
         bgTasks.push({
@@ -3306,11 +3329,6 @@
           folder: 'birperde_videos'
         });
       } else if (dubUrl) {
-        const info = await inspectVideoFileOrUrl(dubUrl);
-        if (info.durationSec > 0 && !detectedDurSec) {
-          detectedDurSec = info.durationSec;
-          detectedDurLabel = info.durationLabel;
-        }
         sources.push({
           id: 'dub',
           label: 'TR Dublaj',
@@ -3318,9 +3336,10 @@
           url: dubUrl,
           localKey: '',
           storagePath: '',
-          durationSec: info.durationSec || 0,
+          cloudStatus: 'ready',
+          durationSec: detectedDurSec || 0,
           trimStart: 0,
-          trimEnd: info.durationSec || 0,
+          trimEnd: detectedDurSec || 0,
           fileName: 'stream.mp4'
         });
       }
@@ -3400,7 +3419,7 @@
       state.catalog.unshift(newMovie);
       persistAndRenderCatalog();
       closeModal();
-      showToast(`"${title}" anında eklendi (${meta.duration || 'Hazır'}).`, 'success');
+      showToast(`"${title}" eklendi. Bulut aktarımı üst çubukta başladı.`, 'success');
 
       syncMetaToFirestoreSilent(newMovie);
       if (state.cloudSyncEnabled && bgTasks.length > 0) {
@@ -3464,7 +3483,7 @@
       state.catalog.unshift(newSeries);
       persistAndRenderCatalog();
       closeModal();
-      showToast(`"${title}" anında eklendi${meta.duration ? ` (${meta.duration})` : ''}.`, 'success');
+      showToast(`"${title}" eklendi. Bulut aktarımı üst çubukta başladı.`, 'success');
 
       syncMetaToFirestoreSilent(newSeries);
       if (state.cloudSyncEnabled && bgTasks.length > 0) {
@@ -3518,7 +3537,7 @@
       if (state.player.media && state.player.media.id === series.id) {
         openPlayer(series.id, season, number);
       }
-      showToast(`${series.title} — S${season} B${number} anında eklendi.`, 'success');
+      showToast(`${series.title} — S${season} B${number} eklendi.`, 'success');
 
       syncMetaToFirestoreSilent(series);
       if (state.cloudSyncEnabled && bgTasks.length > 0) {
@@ -3527,7 +3546,7 @@
     }
 
     /* =====================================================================
-       9. VIDEO TRIMMING / CUTTING EDITOR ("Videoyu Kes / Düzenle")
+       9. VIDEO TRIMMING / CUTTING EDITOR
     ===================================================================== */
     let trimEditorCtx = {
       itemId: '',
@@ -3563,10 +3582,14 @@
       }
 
       const chosenSrc = srcs.find(s => s.id === sourceId) || srcs[0];
-      const playableUrl = await resolvePlayableUrl(chosenSrc);
+      const resolved = await resolvePlayableUrl(chosenSrc);
 
-      if (!playableUrl) {
-        showToast('Video dosyasına erişilemedi.', 'error');
+      if (!resolved.url) {
+        if (resolved.reason === 'other_device_pending_cloud') {
+          showToast('Bu video başka cihazda yerel olarak eklenmiş; bulut yüklemesi tamamlanmadan bu cihazda kesilemez.', 'error');
+        } else {
+          showToast('Video dosyasına erişilemedi.', 'error');
+        }
         return;
       }
 
@@ -3574,7 +3597,7 @@
         try { URL.revokeObjectURL(trimEditorCtx.objectUrl); } catch (e) {}
       }
 
-      const inspected = await inspectVideoFileOrUrl(playableUrl);
+      const inspected = await inspectVideoFileOrUrl(resolved.url);
       const totalDur = inspected.durationSec > 0
         ? inspected.durationSec
         : (chosenSrc.durationSec > 0 ? chosenSrc.durationSec : 120);
@@ -3591,7 +3614,7 @@
         season: item.type === 'series' ? (season || (item.episodes && item.episodes[0] && item.episodes[0].season) || 1) : null,
         episode: item.type === 'series' ? (episode || (item.episodes && item.episodes[0] && item.episodes[0].number) || 1) : null,
         sourceId: chosenSrc.id,
-        objectUrl: playableUrl,
+        objectUrl: resolved.url,
         revokeUrl: false,
         durationSec: Number(totalDur.toFixed(1)),
         trimStart: Number(savedStart.toFixed(1)),
@@ -3627,7 +3650,7 @@
           <div class="relative aspect-video rounded-xl overflow-hidden bg-black border-2 border-bpRoyal">
             <video
               id="trim-editor-video"
-              src="${escapeAttr(playableUrl)}"
+              src="${escapeAttr(resolved.url)}"
               playsinline
               preload="auto"
               onloadedmetadata="onTrimVideoMetadataLoaded()"
@@ -3928,7 +3951,7 @@
                 <input type="number" id="edit-day-inp" min="1" max="31" value="${item.day || ''}" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-mono font-extrabold" />
               </div>
               <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Süre (Video Yüklendiğinde Otomatik Çıkar)</label>
+                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Süre</label>
                 <input type="text" id="edit-duration-inp" value="${escapeAttr(item.duration || '')}" placeholder="Örn: 2 sa 10 dk" class="w-full px-3 py-2 rounded-xl bg-bpSky/55 border border-bpSkyBorder text-xs font-bold" />
               </div>
             </div>
@@ -3947,7 +3970,7 @@
 
             ${item.type === 'movie' ? `
               <div class="space-y-2 pt-1">
-                <div class="text-[11px] font-extrabold text-bpNavy">Yeni Video Seçerseniz Süre Otomatik Güncellenir:</div>
+                <div class="text-[11px] font-extrabold text-bpNavy">Video Dosyasını Yeniden Seç veya Buluta Yükle:</div>
                 ${renderVideoSourcesBlock('edit', null, 'movie', 'edit-duration-inp', false)}
               </div>
             ` : ''}
@@ -4461,7 +4484,7 @@
     }
 
     /* =====================================================================
-       13. WATCH STUDIO (BLUR MODE, NEXT EPISODE, DOUBLE CLICK, KEYBOARD)
+       13. WATCH STUDIO
     ===================================================================== */
     let hlsController = null;
     let singleTapTimer = null;
@@ -4873,14 +4896,12 @@
       const resume = vid ? vid.currentTime : 0;
       const playing = vid ? !vid.paused : true;
 
-      cleanupPlayerTimers();
-      hudVisibleInFullscreen = false;
       state.player.isFullscreen = false;
-      state.player.volumePopoverOpen = false;
+      hudVisibleInFullscreen = false;
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
 
-      if (document.fullscreenElement && document.exitFullscreen) {
+      if (document.fullscreenElement) {
         try { await document.exitFullscreen(); } catch (e) {}
       }
       if (screen.orientation && screen.orientation.unlock) {
@@ -4890,584 +4911,624 @@
       renderWatchStudio(resume, playing);
     }
 
-    function setFullscreenHudVisibility(show) {
-      const hud = document.getElementById('fs-hud');
-      hudVisibleInFullscreen = Boolean(show);
-      if (hud) {
-        if (hudVisibleInFullscreen) {
-          hud.classList.remove('opacity-0', 'pointer-events-none');
-          hud.classList.add('opacity-100');
-        } else {
-          hud.classList.remove('opacity-100');
-          hud.classList.add('opacity-0', 'pointer-events-none');
-          closeVolumePopover();
-        }
-      }
-    }
-
-    function toggleFullscreenHudByTap() {
-      if (state.player.volumePopoverOpen) {
-        closeVolumePopover();
-        return;
-      }
-      setFullscreenHudVisibility(!hudVisibleInFullscreen);
-    }
-
-    function flashSeekBadge(side, text) {
-      const el = document.getElementById(side === 'left' ? 'fs-seek-left' : 'fs-seek-right');
-      if (!el) return;
-      el.textContent = text;
-      el.classList.remove('hidden', 'seek-feedback-badge');
-      void el.offsetWidth;
-      el.classList.add('seek-feedback-badge');
-      clearTimeout(el._t);
-      el._t = setTimeout(() => el.classList.add('hidden'), 860);
-    }
-
-    function seekRelative(sec) {
-      const vid = document.getElementById('birperde-video');
-      if (!vid) return;
-      const ch = state.player.channels.find(c => c.id === state.player.activeChannelId);
-      const minBound = (ch && ch.trimStart > 0) ? ch.trimStart : 0;
-      const maxBound = (ch && ch.trimEnd > minBound)
-        ? ch.trimEnd
-        : ((isFinite(vid.duration) && vid.duration > 0) ? vid.duration : (vid.currentTime + Math.abs(sec) + 10));
-      vid.currentTime = Math.max(minBound, Math.min(maxBound, (vid.currentTime || 0) + sec));
-      syncPlayerControls();
-      flashSeekBadge(sec < 0 ? 'left' : 'right', sec < 0 ? '« 10s' : '10s »');
-    }
-
-    function handleFullscreenTap(ev) {
-      if (!state.player.isFullscreen) {
-        if (state.player.volumePopoverOpen) {
-          closeVolumePopover();
-          return;
-        }
-        togglePlayPause();
-        return;
-      }
-      const surface = document.getElementById('fs-tap-surface');
-      if (!surface) return;
-      const pt = (ev.changedTouches && ev.changedTouches[0]) || ev;
-      const rect = surface.getBoundingClientRect();
-      const rotated = isMobilePortraitViewport();
-      const angle = getOrientationAngle();
-
-      let relX = (pt.clientX - rect.left) / Math.max(1, rect.width);
-      if (rotated) {
-        relX = angle === 270
-          ? 1 - ((pt.clientY - rect.top) / Math.max(1, rect.height))
-          : (pt.clientY - rect.top) / Math.max(1, rect.height);
-      }
-
-      const now = Date.now();
-      if (now - lastTapTs < 270) {
-        clearTimeout(singleTapTimer);
-        lastTapTs = 0;
-        if (relX < 0.36) seekRelative(-10);
-        else if (relX > 0.64) seekRelative(10);
-        else togglePlayPause();
-      } else {
-        lastTapTs = now;
-        singleTapTimer = setTimeout(() => {
-          lastTapTs = 0;
-          toggleFullscreenHudByTap();
-        }, 275);
-      }
-    }
-
-    function togglePlayPause() {
-      unlockAudioEngine();
-      const vid = document.getElementById('birperde-video');
-      if (!vid) return;
-      if (vid.paused) {
-        const ch = state.player.channels.find(c => c.id === state.player.activeChannelId);
-        if (ch && ch.trimEnd > ch.trimStart && vid.currentTime >= ch.trimEnd - 0.1) {
-          vid.currentTime = ch.trimStart;
-        }
-        vid.play().catch(() => {});
-      } else {
-        vid.pause();
-      }
-    }
-
-    function scrubToPercent(pct) {
-      const vid = document.getElementById('birperde-video');
-      if (!vid || !isFinite(vid.duration) || vid.duration <= 0) return;
-      const ch = state.player.channels.find(c => c.id === state.player.activeChannelId);
-      const tStart = (ch && ch.trimStart > 0) ? ch.trimStart : 0;
-      const tEnd = (ch && ch.trimEnd > tStart && ch.trimEnd <= vid.duration) ? ch.trimEnd : vid.duration;
-      const span = Math.max(0.5, tEnd - tStart);
-      vid.currentTime = tStart + (Number(pct) / 100) * span;
-      syncPlayerControls();
-    }
-
-    function formatClock(sec) {
-      if (!isFinite(sec) || sec < 0) return '00:00';
-      const s = Math.floor(sec);
-      const hrs = Math.floor(s / 3600);
-      const mins = Math.floor((s % 3600) / 60);
-      const secs = s % 60;
-      if (hrs > 0) return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    }
-
-    function syncPlayerControls() {
-      const vid = document.getElementById('birperde-video');
-      if (!vid) return;
-      state.player.isPlaying = !vid.paused;
-
-      const ch = state.player.channels.find(c => c.id === state.player.activeChannelId);
-      const tStart = (ch && ch.trimStart > 0) ? ch.trimStart : 0;
-      const rawDur = isFinite(vid.duration) && vid.duration > 0 ? vid.duration : 0;
-      const tEnd = (ch && ch.trimEnd > tStart && (rawDur === 0 || ch.trimEnd <= rawDur)) ? ch.trimEnd : rawDur;
-
-      if (!vid.paused && tEnd > tStart && vid.currentTime >= tEnd) {
-        if (state.player.loopMode) {
-          vid.currentTime = tStart;
-          vid.play().catch(() => {});
-        } else {
-          vid.pause();
-          vid.currentTime = tStart;
-        }
-      }
-
-      const relCur = Math.max(0, (vid.currentTime || 0) - tStart);
-      const relDur = tEnd > tStart ? (tEnd - tStart) : rawDur;
-
-      const playIcon = vid.paused
-        ? '<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>'
-        : '<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
-
-      ['fs-play-btn', 'inline-play-btn'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = playIcon;
-      });
-
-      const clockStr = `${formatClock(relCur)} / ${formatClock(relDur)}`;
-      ['fs-time-label', 'inline-time-label'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = clockStr;
-      });
-
-      const pct = relDur > 0 ? Math.min(100, (relCur / relDur) * 100) : 0;
-      ['fs-scrubber', 'inline-scrubber'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = pct;
-      });
-
-      updateNextEpisodeButtonVisibility(relCur, relDur);
-    }
-
-    function closePlayer() {
-      const vid = document.getElementById('birperde-video');
-      if (vid) {
-        saveWatchProgress(getCurrentProgressKey(), vid.currentTime, vid.duration);
-        try { vid.pause(); } catch (e) {}
-      }
-      if (state.player.isFullscreen) {
-        exitFullscreenMode();
-      }
-      cleanupPlayerTimers();
-      state.player.media = null;
-      state.player.blurMode = false;
-      document.body.classList.remove('bp-cinema-blur-active');
-      const wrap = document.getElementById('watch-studio-wrapper');
-      if (wrap) {
-        wrap.className = 'hidden max-w-4xl w-full mx-auto px-3 sm:px-5 pt-4';
-        wrap.innerHTML = '';
-      }
-    }
-
-    async function renderWatchStudio(resumeTime = 0, autoPlay = true) {
-      const wrap = document.getElementById('watch-studio-wrapper');
-      const media = state.player.media;
-      if (!wrap || !media) return;
-
-      cleanupPlayerTimers();
-
-      const activeChannel = state.player.channels.find(c => c.id === state.player.activeChannelId) || state.player.channels[0];
-      const playableUrl = await resolvePlayableUrl(activeChannel);
-      const isSeries = media.type === 'series';
-      const eps = isSeries && Array.isArray(media.episodes) ? media.episodes : [];
-      const currentEp = isSeries
-        ? (eps.find(e => Number(e.season) === Number(state.player.season) && Number(e.number) === Number(state.player.episode)) || eps[0])
-        : null;
-
-      const subTitleText = isSeries && currentEp
-        ? `S${currentEp.season} B${currentEp.number} • ${currentEp.name || ''}`
-        : `${media.year}${media.duration ? ` • ${media.duration}` : ''}`;
-
-      const speedOptions = [0.75, 1, 1.25, 1.5, 1.75, 2].map(r =>
-        `<option value="${r}" ${Number(state.player.playbackRate) === r ? 'selected' : ''}>${r}x</option>`
-      ).join('');
-
-      wrap.classList.remove('hidden');
-
-      if (state.player.isFullscreen) {
-        syncFullscreenClass();
-        wrap.innerHTML = `
-          <div id="fs-stage" class="relative w-full h-full bg-black overflow-hidden select-none">
-            <video
-              id="birperde-video"
-              playsinline
-              webkit-playsinline
-              preload="auto"
-              ${state.player.loopMode ? 'loop' : ''}
-              poster="${escapeAttr(media.posterUrl || '')}"
-              class="w-full h-full object-contain bg-black"
-            ></video>
-
-            <div id="fs-tap-surface" onclick="handleFullscreenTap(event)" ondblclick="handleDesktopDoubleClickPlayer(event)" class="absolute inset-0 z-10 cursor-pointer"></div>
-
-            <div id="fs-seek-left" class="hidden pointer-events-none absolute left-10 top-1/2 -translate-y-1/2 z-30 px-4 py-2 rounded-full fs-icon-btn text-sm font-mono font-extrabold">« 10s</div>
-            <div id="fs-seek-right" class="hidden pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 z-30 px-4 py-2 rounded-full fs-icon-btn text-sm font-mono font-extrabold">10s »</div>
-
-            ${buildVerticalVolumeLineWidget(true)}
-
-            <div id="fs-hud" class="opacity-100 transition-opacity duration-200 pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-4 sm:p-6">
-              <div class="pointer-events-auto flex items-center justify-between gap-3">
-                <div class="px-3.5 py-2 rounded-full fs-icon-btn max-w-[60%] min-w-0">
-                  <div class="text-xs sm:text-sm font-extrabold text-white truncate">${escapeHtml(media.title)}</div>
-                  <div class="text-[10px] text-white/75 truncate">${escapeHtml(subTitleText)}</div>
-                </div>
-
-                <div class="flex items-center gap-2 shrink-0">
-                  ${state.player.channels.map(ch => `
-                    <button type="button" onclick="event.stopPropagation(); switchPlayerChannel('${escapeAttr(ch.id)}')" class="px-3 py-2 rounded-full text-xs font-extrabold cursor-pointer ${ch.id === activeChannel.id ? 'fs-icon-active' : 'fs-icon-btn'}">
-                      ${escapeHtml(ch.label)}
-                    </button>
-                  `).join('')}
-
-                  <button type="button" onclick="event.stopPropagation(); exitFullscreenMode()" class="px-3.5 py-2 rounded-full fs-icon-btn text-xs font-extrabold flex items-center gap-1.5 cursor-pointer">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-                    <span>Çık</span>
-                  </button>
-                </div>
-              </div>
-
-              <div class="pointer-events-auto space-y-2.5 bg-gradient-to-t from-black/80 via-black/35 to-transparent -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 px-4 pb-4 pt-8 sm:px-6 sm:pb-6">
-                <div class="flex items-center gap-3">
-                  <button type="button" id="fs-play-btn" onclick="event.stopPropagation(); togglePlayPause()" aria-label="Oynat veya Duraklat" class="w-10 h-10 rounded-full fs-icon-btn flex items-center justify-center shrink-0 cursor-pointer">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-                  </button>
-                  <button type="button" onclick="event.stopPropagation(); seekRelative(-10)" class="px-2.5 py-2 rounded-full fs-icon-btn text-[11px] font-mono font-extrabold shrink-0 cursor-pointer">-10s</button>
-                  <input type="range" id="fs-scrubber" min="0" max="100" step="0.1" value="0" onclick="event.stopPropagation()" oninput="scrubToPercent(this.value)" class="bp-scrubber flex-1 min-w-0" />
-                  <button type="button" onclick="event.stopPropagation(); seekRelative(10)" class="px-2.5 py-2 rounded-full fs-icon-btn text-[11px] font-mono font-extrabold shrink-0 cursor-pointer">+10s</button>
-                  <span id="fs-time-label" class="font-mono text-[11px] font-bold text-white/95 shrink-0">00:00 / 00:00</span>
-
-                  <button type="button" id="bp-vol-trigger-btn" onclick="toggleVolumePopoverByButton(event)" aria-label="Ses Seviyesi" class="w-9 h-9 rounded-full fs-icon-btn flex items-center justify-center shrink-0 cursor-pointer">
-                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        wrap.className = 'max-w-4xl w-full mx-auto px-3 sm:px-5 pt-4';
-        const nextEpObj = isSeries ? findNextEpisodeInfo() : null;
-        wrap.innerHTML = `
-          <div class="bg-bpBlack text-white rounded-2xl border-2 border-bpRoyal shadow-xl overflow-hidden">
-            <div class="birperde-ribbon"></div>
-            <div class="px-3.5 py-2.5 bg-bpNavy flex flex-wrap items-center justify-between gap-2">
-              <div class="min-w-0">
-                <div class="text-xs sm:text-sm font-extrabold text-white truncate">${escapeHtml(media.title)}</div>
-                <div class="text-[10px] font-bold text-bpYellow truncate">${escapeHtml(subTitleText)}</div>
-              </div>
-              <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
-                ${state.player.channels.map(ch => `
-                  <button type="button" onclick="switchPlayerChannel('${escapeAttr(ch.id)}')" class="px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold cursor-pointer ${ch.id === activeChannel.id ? 'watch-soft-active' : 'watch-soft-btn'}">
-                    ${escapeHtml(ch.label)}
-                  </button>
-                `).join('')}
-
-                <button type="button" id="bp-blur-btn" onclick="toggleCinemaBlurMode()" title="Film Modu: Arka planı bulanıklaştır ve ekranı büyüt (B)" class="px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold flex items-center gap-1 cursor-pointer ${state.player.blurMode ? 'watch-soft-active' : 'watch-soft-btn'}">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
-                  <span>Blur</span>
-                </button>
-
-                <button type="button" onclick="openVideoTrimModal('${escapeAttr(media.id)}', ${isSeries ? state.player.season : 'null'}, ${isSeries ? state.player.episode : 'null'}, '${escapeAttr(activeChannel.id)}')" class="px-2.5 py-1.5 rounded-lg bg-bpEmerald hover:bg-bpGreen text-white text-[11px] font-extrabold cursor-pointer">
-                  Videoyu Kes
-                </button>
-                <button type="button" onclick="enterFullscreenMode()" class="px-2.5 py-1.5 rounded-lg watch-soft-btn text-[11px] font-extrabold flex items-center gap-1 cursor-pointer">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                  <span>Tam Ekran</span>
-                </button>
-                <button type="button" onclick="closePlayer()" class="px-2.5 py-1.5 rounded-lg bg-bpRed hover:bg-red-700 text-white text-[11px] font-extrabold cursor-pointer">
-                  Kapat
-                </button>
-              </div>
-            </div>
-
-            <div class="bp-player-stage relative aspect-video max-h-[56vh] mx-auto bg-black overflow-hidden">
-              <video
-                id="birperde-video"
-                playsinline
-                webkit-playsinline
-                preload="auto"
-                ${state.player.loopMode ? 'loop' : ''}
-                poster="${escapeAttr(media.posterUrl || '')}"
-                onclick="handleFullscreenTap(event)"
-                ondblclick="handleDesktopDoubleClickPlayer(event)"
-                class="w-full h-full object-contain bg-black cursor-pointer"
-              ></video>
-
-              ${nextEpObj ? `
-                <button type="button" id="bp-next-ep-btn" onclick="playNextEpisodeIfAvailable()" class="hidden absolute right-3 bottom-3 z-20 px-3.5 py-2 rounded-xl bg-bpEmerald hover:bg-bpGreen text-white text-xs font-extrabold shadow-xl border border-white/25 flex items-center gap-1.5 cursor-pointer">
-                  <span>Sonraki Bölüm (S${nextEpObj.season} B${nextEpObj.number})</span>
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 4l10 8-10 8V4z"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
-                </button>
-              ` : ''}
-
-              ${buildVerticalVolumeLineWidget(false)}
-            </div>
-
-            <div class="px-3.5 py-2.5 bg-slate-900 border-t border-white/10 space-y-2">
-              <div class="flex items-center gap-2">
-                <button type="button" id="inline-play-btn" onclick="togglePlayPause()" aria-label="Oynat veya Duraklat" class="w-8 h-8 rounded-lg watch-soft-btn flex items-center justify-center shrink-0 cursor-pointer">
-                  <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
-                </button>
-                <button type="button" onclick="seekRelative(-10)" class="px-2 py-1.5 rounded-lg watch-soft-btn text-[11px] font-mono font-extrabold shrink-0 cursor-pointer">-10s</button>
-                <input type="range" id="inline-scrubber" min="0" max="100" step="0.1" value="0" oninput="scrubToPercent(this.value)" class="bp-scrubber flex-1 min-w-0" />
-                <button type="button" onclick="seekRelative(10)" class="px-2 py-1.5 rounded-lg watch-soft-btn text-[11px] font-mono font-extrabold shrink-0 cursor-pointer">+10s</button>
-                <span id="inline-time-label" class="font-mono text-[11px] font-bold text-slate-200 shrink-0">00:00 / 00:00</span>
-
-                <button type="button" id="bp-vol-trigger-btn" onclick="toggleVolumePopoverByButton(event)" aria-label="Ses Seviyesi" class="w-8 h-8 rounded-lg watch-soft-btn flex items-center justify-center shrink-0 cursor-pointer">
-                  <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                </button>
-              </div>
-
-              <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="text-[10px] font-bold text-slate-400">Hız:</span>
-                  <select id="bp-speed-select" onchange="changePlaybackSpeed(this.value)" class="px-2 py-1 rounded-lg bg-slate-800 border border-white/15 text-[11px] font-mono font-extrabold text-white cursor-pointer">
-                    ${speedOptions}
-                  </select>
-
-                  <button type="button" id="bp-blur-bottom-btn" onclick="toggleCinemaBlurMode()" title="Film Modu: Arka planı bulanıklaştır (B)" class="px-2 py-1 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer ${state.player.blurMode ? 'watch-soft-active' : 'watch-soft-btn'}">
-                    <span>Blur</span>
-                  </button>
-
-                  <button type="button" id="bp-loop-bottom-btn" onclick="toggleLoopMode()" title="Tekrar Oynat (R)" class="px-2 py-1 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer ${state.player.loopMode ? 'watch-soft-active' : 'watch-soft-btn'}">
-                    <span>Tekrar</span>
-                  </button>
-
-                  <button type="button" onclick="togglePictureInPicture()" title="Küçük Pencere PiP (P)" class="px-2 py-1 rounded-lg watch-soft-btn text-[10px] font-extrabold cursor-pointer">
-                    PiP
-                  </button>
-
-                  <button type="button" onclick="captureQuickVideoSnapshot()" title="Sahne Kare İndir (S)" class="px-2 py-1 rounded-lg watch-soft-btn text-[10px] font-extrabold cursor-pointer">
-                    Kare Al
-                  </button>
-
-                  ${nextEpObj ? `
-                    <button type="button" onclick="playNextEpisodeIfAvailable()" title="Sonraki Bölüm (N)" class="px-2 py-1 rounded-lg bg-bpEmerald/90 hover:bg-bpEmerald text-white text-[10px] font-extrabold cursor-pointer">
-                      Sonraki Bölüm
-                    </button>
-                  ` : ''}
-
-                  <button type="button" onclick="openKeyboardShortcutsModal()" title="Klavye Kısayolları (?)" class="hidden sm:inline-flex px-2 py-1 rounded-lg watch-soft-btn text-[10px] font-mono font-extrabold cursor-pointer">
-                    ? Tuşlar
-                  </button>
-                </div>
-
-                ${isSeries ? `
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <select onchange="switchPlayerEpisode(this.value.split('-')[0], this.value.split('-')[1])" class="px-2.5 py-1 rounded-lg bg-slate-800 border border-white/15 text-[11px] font-extrabold text-white cursor-pointer">
-                      ${eps.map(ep => `<option value="${ep.season}-${ep.number}" ${Number(ep.season) === Number(state.player.season) && Number(ep.number) === Number(state.player.episode) ? 'selected' : ''}>S${ep.season} B${ep.number} — ${escapeHtml(ep.name || '')}</option>`).join('')}
-                    </select>
-                    <button type="button" onclick="openAddContentModal('episode', '${escapeAttr(media.id)}')" class="px-2.5 py-1 rounded-lg bg-bpEmerald text-white text-[11px] font-extrabold cursor-pointer">+ Bölüm Ekle</button>
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-          </div>
-        `;
-      }
-
-      const vid = document.getElementById('birperde-video');
-      if (!vid) return;
-
-      const tStart = (activeChannel && activeChannel.trimStart > 0) ? activeChannel.trimStart : 0;
-
-      const applyPlaybackReady = () => {
-        const targetTime = resumeTime >= tStart ? resumeTime : tStart;
-        if (targetTime > 0 && isFinite(vid.duration) && targetTime < vid.duration - 1) {
-          vid.currentTime = targetTime;
-        }
-        vid.playbackRate = state.player.playbackRate || 1;
-        applyVolumeLevel(state.player.volume ?? 1, true, false);
-        if (autoPlay) {
-          vid.play().then(() => {
-            autoplayFallbackMuted = false;
-            syncMediaSessionMetadata();
-          }).catch(() => {
-            autoplayFallbackMuted = true;
-            vid.muted = true;
-            vid.play().catch(() => {});
-          });
-        }
-        syncPlayerControls();
-
-        if (isFinite(vid.duration) && vid.duration > 0 && !media.duration) {
-          const autoDur = formatDurationFromSeconds(vid.duration);
-          if (autoDur) {
-            media.duration = autoDur;
-            media.durationSec = vid.duration;
-            persistAndRenderCatalog();
-          }
-        }
-      };
-
-      vid.onloadedmetadata = applyPlaybackReady;
-      vid.ontimeupdate = () => {
-        syncPlayerControls();
-        if (Math.floor(vid.currentTime) % 5 === 0) {
-          saveWatchProgress(getCurrentProgressKey(), vid.currentTime, vid.duration);
-        }
-      };
-      vid.onplay = () => { syncPlayerControls(); syncMediaSessionMetadata(); };
-      vid.onpause = () => {
-        syncPlayerControls();
-        syncMediaSessionMetadata();
-        saveWatchProgress(getCurrentProgressKey(), vid.currentTime, vid.duration);
-      };
-      vid.onended = () => {
-        if (state.player.loopMode) {
-          vid.currentTime = tStart;
-          vid.play().catch(() => {});
-        } else {
-          syncPlayerControls();
-        }
-      };
-
-      if (!playableUrl) {
-        showToast('Video dosyası bulunamadı. Düzenle menüsünden tekrar seçebilirsiniz.', 'error');
-        return;
-      }
-
-      if (playableUrl.toLowerCase().includes('.m3u8')) {
-        if (window.Hls && Hls.isSupported()) {
-          hlsController = new Hls({ enableWorker: true });
-          hlsController.loadSource(playableUrl);
-          hlsController.attachMedia(vid);
-          hlsController.on(Hls.Events.MANIFEST_PARSED, applyPlaybackReady);
-        } else {
-          vid.src = playableUrl;
-        }
-      } else {
-        vid.src = playableUrl;
-      }
-
-      renderVerticalVolumeVisuals();
-    }
-
-    window.addEventListener('orientationchange', syncFullscreenClass);
-    window.addEventListener('resize', syncFullscreenClass);
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement && state.player.isFullscreen && !isMobilePortraitViewport()) {
         exitFullscreenMode();
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      const tag = (e.target && e.target.tagName) || '';
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || (e.target && e.target.isContentEditable)) return;
+    function onDeviceOrientationUpdated() {
+      if (!state.player.isFullscreen) return;
+      syncFullscreenClass();
+    }
 
-      if (e.key === 'Escape') {
-        if (state.player.isFullscreen) { exitFullscreenMode(); return; }
-        const modal = document.getElementById('modal-overlay');
-        if (modal && !modal.classList.contains('hidden')) { closeModal(); return; }
+    window.addEventListener('orientationchange', onDeviceOrientationUpdated);
+    window.addEventListener('resize', onDeviceOrientationUpdated);
+    if (screen.orientation && screen.orientation.addEventListener) {
+      screen.orientation.addEventListener('change', onDeviceOrientationUpdated);
+    }
+
+    function closePlayer() {
+      if (state.player.isFullscreen) {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        if (document.fullscreenElement) {
+          try { document.exitFullscreen(); } catch (e) {}
+        }
+        if (screen.orientation && screen.orientation.unlock) {
+          try { screen.orientation.unlock(); } catch (e) {}
+        }
+      }
+      if (state.player.blurMode) {
+        state.player.blurMode = false;
+        document.body.classList.remove('bp-cinema-blur-active');
+      }
+      cleanupPlayerTimers();
+      state.player.media = null;
+      state.player.isFullscreen = false;
+      const sec = document.getElementById('watch-studio-wrapper');
+      if (sec) {
+        sec.className = 'hidden max-w-4xl w-full mx-auto px-3 sm:px-5 pt-4';
+        sec.innerHTML = '';
+      }
+    }
+
+    function setFullscreenHudVisibility(visible) {
+      hudVisibleInFullscreen = visible;
+      const hud = document.getElementById('fullscreen-hud-layer');
+      if (!hud) return;
+      if (visible) {
+        hud.classList.remove('opacity-0', 'pointer-events-none');
+        hud.classList.add('opacity-100');
+      } else {
+        hud.classList.remove('opacity-100');
+        hud.classList.add('opacity-0', 'pointer-events-none');
+        closeVolumePopover();
+      }
+    }
+
+    function revealFullscreenHudBriefly() {
+      if (!state.player.isFullscreen) return;
+      setFullscreenHudVisibility(true);
+    }
+
+    function toggleFullscreenHudBySingleTap() {
+      if (!state.player.isFullscreen) {
+        togglePlayPauseVideo();
+        return;
+      }
+      setFullscreenHudVisibility(!hudVisibleInFullscreen);
+    }
+
+    function showSeekVisualBadge(labelText, side) {
+      const box = document.getElementById('seek-feedback-layer');
+      if (!box) return;
+      const alignClass = side === 'left'
+        ? 'left-8 top-1/2 -translate-y-1/2'
+        : side === 'right'
+          ? 'right-8 top-1/2 -translate-y-1/2'
+          : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2';
+
+      box.innerHTML = `
+        <div class="seek-feedback-badge absolute ${alignClass} px-3.5 py-2 rounded-full bg-slate-950/75 border border-white/25 text-white text-xs font-extrabold tracking-wide shadow-lg">
+          ${escapeHtml(labelText)}
+        </div>
+      `;
+    }
+
+    function handlePlayerSurfaceTap(ev) {
+      if (ev.target && ev.target.closest('button, input, select, a, label')) return;
+      unlockAudioEngine();
+
+      if (state.player.volumePopoverOpen) {
+        closeVolumePopover();
+        return;
       }
 
-      if (!state.player.media) return;
+      const rect = ev.currentTarget.getBoundingClientRect();
+      const pt = (ev.changedTouches && ev.changedTouches[0]) || ev;
+      let relX = (pt.clientX - rect.left) / Math.max(1, rect.width);
+
+      if (state.player.isFullscreen && isMobilePortraitViewport()) {
+        const angle = getOrientationAngle();
+        relX = angle === 270
+          ? 1 - ((pt.clientY - rect.top) / Math.max(1, rect.height))
+          : (pt.clientY - rect.top) / Math.max(1, rect.height);
+      }
+
+      const now = Date.now();
+      const isDoubleTap = (now - lastTapTs) < 280;
+      lastTapTs = now;
+
+      if (isDoubleTap) {
+        clearTimeout(singleTapTimer);
+        if (relX < 0.35) {
+          seekVideoBySeconds(-10);
+          showSeekVisualBadge('« 10 sn', 'left');
+        } else if (relX > 0.65) {
+          seekVideoBySeconds(10);
+          showSeekVisualBadge('10 sn »', 'right');
+        } else {
+          togglePlayPauseVideo();
+          const vid = document.getElementById('birperde-video');
+          showSeekVisualBadge(vid && vid.paused ? 'Duraklatıldı' : 'Oynatılıyor', 'center');
+        }
+        return;
+      }
+
+      clearTimeout(singleTapTimer);
+      singleTapTimer = setTimeout(() => {
+        toggleFullscreenHudBySingleTap();
+      }, 285);
+    }
+
+    function togglePlayPauseVideo() {
+      unlockAudioEngine();
       const vid = document.getElementById('birperde-video');
       if (!vid) return;
+      if (vid.paused) {
+        vid.play().catch(() => {});
+      } else {
+        vid.pause();
+      }
+    }
 
-      if (e.code === 'Space' || e.key === 'k' || e.key === 'K') {
+    function seekVideoBySeconds(delta) {
+      const vid = document.getElementById('birperde-video');
+      if (!vid) return;
+      const activeCh = state.player.channels.find(c => c.id === state.player.activeChannelId) || state.player.channels[0];
+      const minBound = activeCh && activeCh.trimStart > 0 ? activeCh.trimStart : 0;
+      const rawDur = (vid.duration && isFinite(vid.duration)) ? vid.duration : (vid.currentTime + Math.abs(delta) + 10);
+      const maxBound = activeCh && activeCh.trimEnd > minBound && activeCh.trimEnd <= rawDur ? activeCh.trimEnd : rawDur;
+
+      vid.currentTime = Math.max(minBound, Math.min(maxBound, (vid.currentTime || 0) + delta));
+      updateVideoTimelineUI();
+    }
+
+    function seekVideoByPercent(pct) {
+      const vid = document.getElementById('birperde-video');
+      if (!vid || !vid.duration || !isFinite(vid.duration)) return;
+      const activeCh = state.player.channels.find(c => c.id === state.player.activeChannelId) || state.player.channels[0];
+      const minBound = activeCh && activeCh.trimStart > 0 ? activeCh.trimStart : 0;
+      const maxBound = activeCh && activeCh.trimEnd > minBound && activeCh.trimEnd <= vid.duration ? activeCh.trimEnd : vid.duration;
+      const span = Math.max(0.1, maxBound - minBound);
+
+      vid.currentTime = minBound + (Number(pct) / 100) * span;
+      updateVideoTimelineUI();
+    }
+
+    function formatClock(sec) {
+      if (!isFinite(sec) || sec < 0) return '00:00';
+      const s = Math.floor(sec);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const rem = s % 60;
+      if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+      return `${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+    }
+
+    function updateVideoTimelineUI() {
+      const vid = document.getElementById('birperde-video');
+      if (!vid) return;
+      const activeCh = state.player.channels.find(c => c.id === state.player.activeChannelId) || state.player.channels[0];
+      const minBound = activeCh && activeCh.trimStart > 0 ? activeCh.trimStart : 0;
+      const rawDur = isFinite(vid.duration) && vid.duration > 0 ? vid.duration : 0;
+      const maxBound = activeCh && activeCh.trimEnd > minBound && (rawDur === 0 || activeCh.trimEnd <= rawDur)
+        ? activeCh.trimEnd
+        : rawDur;
+
+      if (maxBound > minBound && vid.currentTime >= maxBound - 0.15) {
+        if (state.player.loopMode) {
+          vid.currentTime = minBound;
+          vid.play().catch(() => {});
+          return;
+        }
+        vid.pause();
+        vid.currentTime = minBound;
+        const nextEp = findNextEpisodeInfo();
+        if (nextEp && state.player.media?.type === 'series') {
+          showToast(`Bölüm tamamlandı • Sonraki: S${nextEp.season} B${nextEp.number}`, 'info');
+        }
+        return;
+      }
+
+      const relCur = Math.max(0, (vid.currentTime || 0) - minBound);
+      const relDur = Math.max(0, maxBound - minBound);
+
+      const curEl = document.getElementById('bp-cur-time');
+      const durEl = document.getElementById('bp-dur-time');
+      const rngEl = document.getElementById('bp-timeline-range');
+      if (curEl) curEl.textContent = formatClock(relCur);
+      if (durEl) durEl.textContent = formatClock(relDur);
+      if (rngEl && relDur > 0) {
+        rngEl.value = Math.min(100, (relCur / relDur) * 100);
+      }
+      updateNextEpisodeButtonVisibility(relCur, relDur);
+      saveWatchProgress(getCurrentProgressKey(), vid.currentTime, rawDur);
+    }
+
+    function syncPlayPauseButtons(isPlaying) {
+      state.player.isPlaying = isPlaying;
+      syncMediaSessionMetadata();
+      const iconPlay = `<svg class="w-4 h-4 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+      const iconPause = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>`;
+      const btn = document.getElementById('bp-play-pause-btn');
+      if (btn) btn.innerHTML = isPlaying ? iconPause : iconPlay;
+
+      const fsIconPlay = `<svg class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+      const fsIconPause = `<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>`;
+      const fsBtn = document.getElementById('fs-center-play-btn');
+      if (fsBtn) fsBtn.innerHTML = isPlaying ? fsIconPause : fsIconPlay;
+    }
+
+    async function renderWatchStudio(resumeTime = 0, autoPlay = true) {
+      cleanupPlayerTimers();
+      const wrapper = document.getElementById('watch-studio-wrapper');
+      const media = state.player.media;
+      if (!wrapper || !media) return;
+
+      const channels = state.player.channels;
+      const activeCh = channels.find(c => c.id === state.player.activeChannelId) || channels[0];
+      const epList = media.type === 'series' && Array.isArray(media.episodes) ? media.episodes : [];
+      const isTrimmed = activeCh && (activeCh.trimStart > 0 || (activeCh.trimEnd > 0 && activeCh.durationSec > 0));
+
+      const volIconHtml = `<svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+
+      if (state.player.isFullscreen) {
+        wrapper.classList.remove('hidden');
+        syncFullscreenClass();
+        wrapper.innerHTML = `
+          <div
+            id="fs-tap-surface"
+            onclick="handlePlayerSurfaceTap(event)"
+            ondblclick="handleDesktopDoubleClickPlayer(event)"
+            class="relative w-full h-full bg-black overflow-hidden select-none"
+          >
+            <video
+              id="birperde-video"
+              playsinline
+              webkit-playsinline
+              preload="auto"
+              ${state.player.loopMode ? 'loop' : ''}
+              class="w-full h-full object-contain bg-black"
+            ></video>
+
+            <div id="seek-feedback-layer" class="pointer-events-none absolute inset-0 z-20"></div>
+
+            <div
+              id="fullscreen-hud-layer"
+              class="opacity-100 transition-opacity duration-200 absolute inset-0 z-10 flex flex-col justify-between p-4 sm:p-6 bg-gradient-to-b from-black/75 via-transparent to-black/80"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <button type="button" onclick="exitFullscreenMode()" aria-label="Tam Ekrandan Çık" class="fs-icon-btn px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-extrabold shrink-0 cursor-pointer">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                    <span>Çık</span>
+                  </button>
+                  <div class="px-3 py-1.5 rounded-xl bg-slate-950/60 backdrop-blur-md border border-white/20 text-white text-xs font-extrabold truncate">
+                    ${escapeHtml(media.title)}${media.type === 'series' ? ` • S${state.player.season} B${state.player.episode}` : ''}
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                  ${channels.map(ch => `
+                    <button type="button" onclick="switchPlayerChannel('${escapeAttr(ch.id)}')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold cursor-pointer ${ch.id === activeCh.id ? 'fs-icon-active' : 'fs-icon-btn'}">
+                      ${escapeHtml(ch.label)}
+                    </button>
+                  `).join('')}
+
+                  <button type="button" onclick="closePlayer()" aria-label="Oynatıcıyı Kapat" class="fs-icon-btn w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-center gap-6 my-auto">
+                <button type="button" onclick="seekVideoBySeconds(-10)" aria-label="10 saniye geri" class="fs-icon-btn w-12 h-12 rounded-full flex items-center justify-center text-xs font-extrabold cursor-pointer">
+                  -10
+                </button>
+                <button type="button" id="fs-center-play-btn" onclick="togglePlayPauseVideo()" aria-label="Oynat veya Duraklat" class="fs-icon-btn w-14 h-14 rounded-full flex items-center justify-center cursor-pointer">
+                  <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+                </button>
+                <button type="button" onclick="seekVideoBySeconds(10)" aria-label="10 saniye ileri" class="fs-icon-btn w-12 h-12 rounded-full flex items-center justify-center text-xs font-extrabold cursor-pointer">
+                  +10
+                </button>
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-mono text-white/95 px-1">
+                  <span id="bp-cur-time">00:00</span>
+                  <span id="bp-dur-time">00:00</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="range" id="bp-timeline-range" min="0" max="100" step="0.1" value="0" oninput="seekVideoByPercent(this.value)" class="bp-scrubber flex-1" />
+                  <button
+                    type="button"
+                    id="bp-vol-trigger-btn"
+                    onclick="toggleVolumePopoverByButton(event)"
+                    aria-label="Ses Seviyesi"
+                    class="fs-icon-btn w-9 h-9 rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
+                  >
+                    ${volIconHtml}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            ${buildVerticalVolumeLineWidget(true)}
+          </div>
+        `;
+      } else {
+        wrapper.className = 'max-w-4xl w-full mx-auto px-3 sm:px-5 pt-4';
+        const nextEpInfo = findNextEpisodeInfo();
+        wrapper.innerHTML = `
+          <div class="bg-slate-900 rounded-2xl border border-slate-700/80 shadow-xl overflow-hidden text-white">
+            <div class="px-3.5 py-2.5 bg-slate-950/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-amber-300 border border-amber-400/30 text-[10px] font-extrabold shrink-0">
+                  ${media.type === 'series' ? `S${state.player.season} B${state.player.episode}` : 'FİLM'}
+                </span>
+                <h2 class="text-xs sm:text-sm font-extrabold truncate text-slate-100">${escapeHtml(media.title)}</h2>
+                ${isTrimmed ? '<span class="px-1.5 py-0.5 rounded bg-bpEmerald/25 text-emerald-300 text-[9px] font-extrabold shrink-0">Kesilmiş</span>' : ''}
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                ${channels.map(ch => `
+                  <button type="button" onclick="switchPlayerChannel('${escapeAttr(ch.id)}')" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold cursor-pointer ${ch.id === activeCh.id ? 'watch-soft-active' : 'watch-soft-btn'}">
+                    ${escapeHtml(ch.label)}
+                  </button>
+                `).join('')}
+
+                <button
+                  type="button"
+                  id="bp-next-ep-btn"
+                  onclick="playNextEpisodeIfAvailable()"
+                  class="${nextEpInfo ? 'hidden' : 'hidden'} px-2.5 py-1 rounded-lg bg-bpEmerald hover:bg-bpGreen text-white text-[11px] font-extrabold cursor-pointer"
+                >
+                  Sonraki Bölüm »
+                </button>
+
+                <button
+                  type="button"
+                  id="bp-blur-btn"
+                  onclick="toggleCinemaBlurMode()"
+                  title="Film Modu: Arka planı bulanıklaştır ve ekranı büyüt (Tuş: B)"
+                  class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold cursor-pointer ${state.player.blurMode ? 'watch-soft-active' : 'watch-soft-btn'}"
+                >
+                  Blur Mod
+                </button>
+
+                <button type="button" onclick="openVideoTrimModal('${escapeAttr(media.id)}', ${state.player.season}, ${state.player.episode}, '${escapeAttr(activeCh.id)}')" class="px-2.5 py-1 rounded-lg watch-soft-btn text-[11px] font-extrabold cursor-pointer">
+                  Kes
+                </button>
+
+                <button type="button" onclick="openKeyboardShortcutsModal()" title="Bilgisayar Klavye Kısayolları" class="hidden sm:inline-flex px-2 py-1 rounded-lg watch-soft-btn text-[11px] font-extrabold cursor-pointer">
+                  Kısayollar
+                </button>
+
+                <button type="button" onclick="enterFullscreenMode()" class="px-2.5 py-1 rounded-lg watch-soft-btn text-[11px] font-extrabold flex items-center gap-1 cursor-pointer">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  <span>Tam Ekran</span>
+                </button>
+
+                <button type="button" onclick="closePlayer()" class="px-2 py-1 rounded-lg watch-soft-btn text-xs font-extrabold cursor-pointer">
+                  Kapat
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="fs-tap-surface"
+              onclick="handlePlayerSurfaceTap(event)"
+              ondblclick="handleDesktopDoubleClickPlayer(event)"
+              class="bp-player-stage relative aspect-video bg-black w-full select-none cursor-pointer"
+            >
+              <video
+                id="birperde-video"
+                playsinline
+                webkit-playsinline
+                preload="auto"
+                ${state.player.loopMode ? 'loop' : ''}
+                class="w-full h-full object-contain bg-black"
+              ></video>
+
+              <div id="seek-feedback-layer" class="pointer-events-none absolute inset-0 z-10"></div>
+
+              <div id="player-status-overlay" class="hidden absolute inset-0 bg-slate-950/88 flex flex-col items-center justify-center p-4 text-center z-20">
+                <p id="player-status-text" class="text-xs font-semibold text-slate-200 mb-3 max-w-md leading-relaxed"></p>
+                <div class="flex items-center gap-2 flex-wrap justify-center">
+                  <button type="button" onclick="openEditItemModal('${escapeAttr(media.id)}')" class="px-3.5 py-1.5 rounded-xl bg-bpRoyal text-white text-xs font-extrabold cursor-pointer">Video Ekle / Güncelle</button>
+                  <button type="button" onclick="forceCloudRefreshNow()" class="px-3.5 py-1.5 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Buluttan Yenile</button>
+                </div>
+              </div>
+
+              ${buildVerticalVolumeLineWidget(false)}
+            </div>
+
+            <div class="px-3.5 py-2.5 bg-slate-950/90 border-t border-slate-800 space-y-2">
+              <div class="flex items-center gap-2">
+                <span id="bp-cur-time" class="font-mono text-[11px] text-slate-300 w-12">00:00</span>
+                <input type="range" id="bp-timeline-range" min="0" max="100" step="0.1" value="0" oninput="seekVideoByPercent(this.value)" class="bp-scrubber flex-1" />
+                <span id="bp-dur-time" class="font-mono text-[11px] text-slate-300 w-12 text-right">00:00</span>
+                <button
+                  type="button"
+                  id="bp-vol-trigger-btn"
+                  onclick="toggleVolumePopoverByButton(event)"
+                  aria-label="Ses Seviyesi"
+                  class="watch-soft-btn w-8 h-8 rounded-lg flex items-center justify-center shrink-0 cursor-pointer"
+                >
+                  ${volIconHtml}
+                </button>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <button type="button" id="bp-play-pause-btn" onclick="togglePlayPauseVideo()" class="px-3 py-1.5 rounded-xl watch-soft-active text-xs font-extrabold flex items-center justify-center cursor-pointer">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+                  </button>
+                  <button type="button" onclick="seekVideoBySeconds(-10)" class="px-2.5 py-1.5 rounded-xl watch-soft-btn text-[11px] font-extrabold cursor-pointer">-10 sn</button>
+                  <button type="button" onclick="seekVideoBySeconds(10)" class="px-2.5 py-1.5 rounded-xl watch-soft-btn text-[11px] font-extrabold cursor-pointer">+10 sn</button>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  ${media.type === 'series' && epList.length > 0 ? `
+                    <select onchange="const p=this.value.split(':'); switchPlayerEpisode(p[0], p[1])" class="px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-extrabold text-slate-200 max-w-[145px]">
+                      ${epList.map(e => `<option value="${e.season}:${e.number}" ${Number(e.season) === Number(state.player.season) && Number(e.number) === Number(state.player.episode) ? 'selected' : ''}>S${e.season} B${e.number}</option>`).join('')}
+                    </select>
+                  ` : ''}
+
+                  <select id="bp-speed-select" onchange="changePlaybackSpeed(this.value)" title="Oynatma Hızı" class="px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-extrabold text-slate-200 cursor-pointer">
+                    <option value="0.75" ${state.player.playbackRate === 0.75 ? 'selected' : ''}>0.75x</option>
+                    <option value="1" ${state.player.playbackRate === 1 ? 'selected' : ''}>1.0x</option>
+                    <option value="1.25" ${state.player.playbackRate === 1.25 ? 'selected' : ''}>1.25x</option>
+                    <option value="1.5" ${state.player.playbackRate === 1.5 ? 'selected' : ''}>1.5x</option>
+                    <option value="2" ${state.player.playbackRate === 2 ? 'selected' : ''}>2.0x</option>
+                  </select>
+
+                  <button type="button" id="bp-loop-bottom-btn" onclick="toggleLoopMode()" title="Tekrar Oynat (Tuş: R)" class="px-2 py-1.5 rounded-lg text-[11px] font-extrabold cursor-pointer ${state.player.loopMode ? 'watch-soft-active' : 'watch-soft-btn'}">
+                    Loop
+                  </button>
+
+                  <button type="button" onclick="togglePictureInPicture()" title="Küçük Pencere PiP (Tuş: P)" class="px-2 py-1.5 rounded-lg watch-soft-btn text-[11px] font-extrabold cursor-pointer">
+                    PiP
+                  </button>
+
+                  <button type="button" onclick="captureQuickVideoSnapshot()" title="Kare Yakala (Tuş: S)" class="hidden sm:inline-flex px-2 py-1.5 rounded-lg watch-soft-btn text-[11px] font-extrabold cursor-pointer">
+                    Kare Al
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      renderVerticalVolumeVisuals();
+      const resolved = await resolvePlayableUrl(activeCh);
+      attachVideoStream(resolved.url, resolved.reason, resumeTime, autoPlay, activeCh);
+    }
+
+    function attachVideoStream(url, reason, resumeTime, autoPlay, activeCh) {
+      const video = document.getElementById('birperde-video');
+      const overlay = document.getElementById('player-status-overlay');
+      const statusText = document.getElementById('player-status-text');
+      if (!video) return;
+
+      wiredGainVideo = null;
+      audioGainNode = null;
+
+      video.onplay = () => syncPlayPauseButtons(true);
+      video.onpause = () => syncPlayPauseButtons(false);
+      video.ontimeupdate = updateVideoTimelineUI;
+      video.onloadedmetadata = updateVideoTimelineUI;
+
+      if (!url) {
+        if (overlay) overlay.classList.remove('hidden');
+        if (statusText) {
+          if (reason === 'other_device_pending_cloud') {
+            statusText.innerHTML = 'Bu film/bölüm başka bir cihazdan yerel dosya olarak eklenmiş ancak bulut yüklemesi henüz tamamlanmamış. İlk cihazda bulut yüklemesinin %100 bitmesini bekleyin veya bu cihazdan videoyu seçin.';
+          } else {
+            statusText.textContent = 'Bu kanal için video dosyası bulunamadı. Düzenle butonundan video seçebilirsiniz.';
+          }
+        }
+        return;
+      }
+
+      if (overlay) overlay.classList.add('hidden');
+      const minStart = (activeCh && activeCh.trimStart > 0) ? activeCh.trimStart : 0;
+
+      const onReady = () => {
+        video.playbackRate = state.player.playbackRate || 1;
+        setupVideoGainPipeline(video, url);
+        applyVolumeLevel(state.player.volume ?? 1, true, false);
+        const startPos = resumeTime > minStart ? resumeTime : minStart;
+        if (startPos > 0.2) {
+          try { video.currentTime = startPos; } catch (e) {}
+        }
+        if (autoPlay) {
+          video.play().catch(() => {
+            autoplayFallbackMuted = true;
+            video.muted = true;
+            video.play().catch(() => {});
+          });
+        }
+      };
+
+      video.onerror = () => {
+        if (overlay) overlay.classList.remove('hidden');
+        if (statusText) statusText.textContent = 'Video oynatılamadı. Bağlantıyı veya dosya formatını kontrol edin.';
+      };
+
+      if (url.includes('.m3u8') && window.Hls && Hls.isSupported()) {
+        hlsController = new Hls({ enableWorker: true });
+        hlsController.loadSource(url);
+        hlsController.attachMedia(video);
+        hlsController.on(Hls.Events.MANIFEST_PARSED, onReady);
+      } else {
+        video.src = url;
+        video.addEventListener('loadedmetadata', onReady, { once: true });
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!state.player.media) return;
+      const modalOpen = !document.getElementById('modal-overlay')?.classList.contains('hidden');
+      if (modalOpen) return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+      const key = e.key;
+      const lower = key.toLowerCase();
+
+      if (key === ' ' || lower === 'k') {
         e.preventDefault();
-        togglePlayPause();
-      } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
+        togglePlayPauseVideo();
+        const vid = document.getElementById('birperde-video');
+        showSeekVisualBadge(vid && vid.paused ? 'Duraklatıldı' : 'Oynatılıyor', 'center');
+      } else if (key === 'ArrowLeft' || lower === 'j') {
         e.preventDefault();
-        seekRelative(10);
-      } else if (e.key === 'ArrowLeft' || e.key === 'j' || e.key === 'J') {
+        seekVideoBySeconds(-10);
+        showSeekVisualBadge('« 10 sn', 'left');
+      } else if (key === 'ArrowRight' || lower === 'l') {
         e.preventDefault();
-        seekRelative(-10);
-      } else if (e.key === 'ArrowUp') {
+        seekVideoBySeconds(10);
+        showSeekVisualBadge('10 sn »', 'right');
+      } else if (key === 'ArrowUp') {
         e.preventDefault();
         adjustVolumeStep(0.1, true);
-      } else if (e.key === 'ArrowDown') {
+      } else if (key === 'ArrowDown') {
         e.preventDefault();
         adjustVolumeStep(-0.1, true);
-      } else if (e.key === 'm' || e.key === 'M') {
+      } else if (lower === 'm') {
         e.preventDefault();
         toggleMuteVerticalVolume();
-      } else if (e.key === 'f' || e.key === 'F') {
+      } else if (lower === 'f') {
         e.preventDefault();
         if (state.player.isFullscreen) exitFullscreenMode();
         else enterFullscreenMode();
-      } else if (e.key === 'b' || e.key === 'B') {
+      } else if (lower === 'b') {
         e.preventDefault();
         toggleCinemaBlurMode();
-      } else if (e.key === 'n' || e.key === 'N') {
-        e.preventDefault();
-        playNextEpisodeIfAvailable();
-      } else if (e.key === 'r' || e.key === 'R') {
+      } else if (lower === 'r') {
         e.preventDefault();
         toggleLoopMode();
-      } else if (e.key === 'p' || e.key === 'P') {
+      } else if (lower === 'p') {
         e.preventDefault();
         togglePictureInPicture();
-      } else if (e.key === 's' || e.key === 'S') {
+      } else if (lower === 's') {
         e.preventDefault();
         captureQuickVideoSnapshot();
-      } else if (e.key === '?') {
+      } else if (lower === 'n') {
         e.preventDefault();
-        openKeyboardShortcutsModal();
-      } else if (e.key === '>') {
+        playNextEpisodeIfAvailable();
+      } else if (key === '>' || (e.shiftKey && key === '.')) {
         e.preventDefault();
-        const speeds = [0.75, 1, 1.25, 1.5, 1.75, 2];
-        const idx = speeds.indexOf(Number(state.player.playbackRate) || 1);
-        const nextSpeed = speeds[Math.min(speeds.length - 1, idx + 1)];
-        changePlaybackSpeed(nextSpeed);
-        showToast(`Oynatma hızı: ${nextSpeed}x`, 'info');
-      } else if (e.key === '<') {
+        const rates = [0.75, 1, 1.25, 1.5, 2];
+        const idx = rates.indexOf(state.player.playbackRate || 1);
+        const nextRate = rates[Math.min(rates.length - 1, idx + 1)];
+        changePlaybackSpeed(nextRate);
+        showToast(`Oynatma hızı: ${nextRate}x`, 'info');
+      } else if (key === '<' || (e.shiftKey && key === ',')) {
         e.preventDefault();
-        const speeds = [0.75, 1, 1.25, 1.5, 1.75, 2];
-        const idx = speeds.indexOf(Number(state.player.playbackRate) || 1);
-        const prevSpeed = speeds[Math.max(0, idx - 1)];
-        changePlaybackSpeed(prevSpeed);
-        showToast(`Oynatma hızı: ${prevSpeed}x`, 'info');
-      } else if (/^[0-9]$/.test(e.key)) {
+        const rates = [0.75, 1, 1.25, 1.5, 2];
+        const idx = rates.indexOf(state.player.playbackRate || 1);
+        const prevRate = rates[Math.max(0, idx - 1)];
+        changePlaybackSpeed(prevRate);
+        showToast(`Oynatma hızı: ${prevRate}x`, 'info');
+      } else if (/^[0-9]$/.test(key)) {
         e.preventDefault();
-        const pct = Number(e.key) * 10;
-        scrubToPercent(pct);
-        showToast(`Video konumu: %${pct}`, 'info');
+        const pct = Number(key) * 10;
+        seekVideoByPercent(pct);
+        showSeekVisualBadge(`%${pct}`, 'center');
+      } else if (key === 'Escape' && state.player.isFullscreen) {
+        exitFullscreenMode();
+      } else if (key === 'Escape' && state.player.blurMode) {
+        toggleCinemaBlurMode();
       }
     });
 
     /* =====================================================================
-       14. TEXTLESS LOGO, MODAL & TOAST HELPERS
+       14. HELPERS, MODAL & TOAST
     ===================================================================== */
-    function getBrandSvg(size = 42) {
-      return `
-        <svg width="${size}" height="${size}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
-          <rect x="2" y="2" width="44" height="44" rx="12" fill="#0B1F3A" stroke="#1D4ED8" stroke-width="2"/>
-          <rect x="8" y="10" width="3.5" height="4" rx="1" fill="#EAB308"/>
-          <rect x="8" y="18" width="3.5" height="4" rx="1" fill="#EAF4FF"/>
-          <rect x="8" y="26" width="3.5" height="4" rx="1" fill="#16A34A"/>
-          <rect x="8" y="34" width="3.5" height="4" rx="1" fill="#D92626"/>
-          <rect x="36.5" y="10" width="3.5" height="4" rx="1" fill="#D92626"/>
-          <rect x="36.5" y="18" width="3.5" height="4" rx="1" fill="#EAB308"/>
-          <rect x="36.5" y="26" width="3.5" height="4" rx="1" fill="#EAF4FF"/>
-          <rect x="36.5" y="34" width="3.5" height="4" rx="1" fill="#16A34A"/>
-          <rect x="14.5" y="11" width="19" height="26" rx="4" fill="#047857"/>
-          <polygon points="21,18 30,24 21,30" fill="#FFFFFF"/>
-        </svg>
-      `;
-    }
-
     function openModal(html) {
       const overlay = document.getElementById('modal-overlay');
       const card = document.getElementById('modal-card');
@@ -5485,22 +5546,23 @@
       if (e.target && e.target.id === 'modal-overlay') closeModal();
     }
 
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toast-container');
-      if (!container) return;
-      const badgeColors = {
-        success: 'bg-bpEmerald text-white border-bpYellow',
-        error: 'bg-bpRed text-white border-bpYellow',
+    function showToast(msg, type = 'info') {
+      const box = document.getElementById('toast-container');
+      if (!box) return;
+      const colors = {
+        success: 'bg-bpEmerald text-white border-bpGreen',
+        error: 'bg-bpRed text-white border-red-900',
         info: 'bg-bpNavy text-white border-bpRoyal'
       };
       const el = document.createElement('div');
-      el.className = `pointer-events-auto px-3.5 py-2.5 rounded-xl border shadow-lg text-xs font-extrabold transition-all duration-300 ${badgeColors[type] || badgeColors.info}`;
-      el.textContent = message;
-      container.appendChild(el);
+      el.className = `pointer-events-auto px-3.5 py-2.5 rounded-xl border-2 text-xs font-extrabold shadow-lg ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      box.appendChild(el);
       setTimeout(() => {
         el.style.opacity = '0';
+        el.style.transition = 'opacity 0.25s ease';
         setTimeout(() => el.remove(), 260);
-      }, 2800);
+      }, 4000);
     }
 
     function escapeHtml(str) {
@@ -5516,57 +5578,57 @@
       return escapeHtml(str);
     }
 
-    /* =====================================================================
-       15. GLOBAL BINDINGS & INSTANT BOOTSTRAP
-    ===================================================================== */
+    function getBrandSvg(size = 44) {
+      return `
+        <svg width="${size}" height="${size}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="2" width="44" height="44" rx="12" fill="#0B1F3A" stroke="#1D4ED8" stroke-width="2"/>
+          <rect x="8" y="10" width="3.5" height="4" rx="1" fill="#EAB308"/>
+          <rect x="8" y="18" width="3.5" height="4" rx="1" fill="#EAF4FF"/>
+          <rect x="8" y="26" width="3.5" height="4" rx="1" fill="#16A34A"/>
+          <rect x="8" y="34" width="3.5" height="4" rx="1" fill="#D92626"/>
+          <rect x="36.5" y="10" width="3.5" height="4" rx="1" fill="#D92626"/>
+          <rect x="36.5" y="18" width="3.5" height="4" rx="1" fill="#EAB308"/>
+          <rect x="36.5" y="26" width="3.5" height="4" rx="1" fill="#EAF4FF"/>
+          <rect x="36.5" y="34" width="3.5" height="4" rx="1" fill="#16A34A"/>
+          <rect x="14.5" y="11" width="19" height="26" rx="4" fill="#047857"/>
+          <polygon points="21,18 30,24 21,30" fill="#FFFFFF"/>
+        </svg>
+      `;
+    }
+
     Object.assign(window, {
       dismissIntroSplashNow,
       replayIntroSplash,
       openAddContentModal,
-      toggleCloudSyncPreference,
-      forceCloudRefreshNow,
-      cancelActiveCloudSync,
+      openEditItemModal,
+      lookupIntoEditModal,
+      saveEditedItem,
+      openVideoTrimModal,
+      onTrimVideoMetadataLoaded,
+      onTrimVideoTimeUpdate,
+      onTrimStartChanged,
+      onTrimEndChanged,
+      markCutStartHere,
+      markCutEndHere,
+      toggleTrimRangePreview,
+      resetTrimRange,
+      saveTrimmedRange,
+      closeTrimEditor,
+      openEpisodesModal,
+      deleteEpisodeFromSeries,
       openBackupModal,
       downloadCatalogJsonFile,
       copyCatalogJsonToClipboard,
       importCatalogJsonText,
+      toggleCloudSyncPreference,
+      forceCloudRefreshNow,
+      cancelActiveCloudSync,
+      askDeleteItem,
+      confirmDeleteItem,
       handleSearchInput,
       resetSearchInput,
       switchNavTab,
       switchLangFilter,
-      openPlayer,
-      switchPlayerChannel,
-      switchPlayerEpisode,
-      changePlaybackSpeed,
-      enterFullscreenMode,
-      exitFullscreenMode,
-      handleFullscreenTap,
-      handleDesktopDoubleClickPlayer,
-      togglePlayPause,
-      scrubToPercent,
-      seekRelative,
-      toggleCinemaBlurMode,
-      toggleLoopMode,
-      togglePictureInPicture,
-      captureQuickVideoSnapshot,
-      openKeyboardShortcutsModal,
-      playNextEpisodeIfAvailable,
-      toggleVolumePopoverByButton,
-      adjustVolumeStep,
-      toggleMuteVerticalVolume,
-      onVerticalVolPointerDown,
-      onVerticalVolPointerMove,
-      onVerticalVolPointerUp,
-      onVerticalVolWheel,
-      closePlayer,
-      openEditItemModal,
-      lookupIntoEditModal,
-      saveEditedItem,
-      openEpisodesModal,
-      deleteEpisodeFromSeries,
-      askDeleteItem,
-      confirmDeleteItem,
-      onEpisodeSeriesChanged,
       handleDraftTitleChange,
       fetchBroadSuggestions,
       selectSearchCandidate,
@@ -5581,42 +5643,50 @@
       toggleCutterPlayback,
       captureCurrentFrameAsCover,
       closeCoverFrameCutter,
-      openVideoTrimModal,
-      onTrimVideoMetadataLoaded,
-      onTrimVideoTimeUpdate,
-      onTrimStartChanged,
-      onTrimEndChanged,
-      markCutStartHere,
-      markCutEndHere,
-      toggleTrimRangePreview,
-      resetTrimRange,
-      saveTrimmedRange,
-      closeTrimEditor,
+      onEpisodeSeriesChanged,
       submitNewMovie,
       submitNewSeries,
       submitNewEpisode,
+      openPlayer,
+      switchPlayerChannel,
+      switchPlayerEpisode,
+      changePlaybackSpeed,
+      enterFullscreenMode,
+      exitFullscreenMode,
+      closePlayer,
+      handlePlayerSurfaceTap,
+      handleDesktopDoubleClickPlayer,
+      togglePlayPauseVideo,
+      seekVideoBySeconds,
+      seekVideoByPercent,
+      toggleCinemaBlurMode,
+      toggleLoopMode,
+      togglePictureInPicture,
+      captureQuickVideoSnapshot,
+      openKeyboardShortcutsModal,
+      playNextEpisodeIfAvailable,
+      toggleVolumePopoverByButton,
+      adjustVolumeStep,
+      toggleMuteVerticalVolume,
+      onVerticalVolPointerDown,
+      onVerticalVolPointerMove,
+      onVerticalVolPointerUp,
+      onVerticalVolWheel,
       closeModal,
       handleOverlayClick
     });
 
-    function bootstrapApp() {
-      const logoEl = document.getElementById('header-brand-logo');
-      if (logoEl) logoEl.innerHTML = getBrandSvg(42);
-      startInitialIntro();
-      updateCloudToggleButton();
-      updateFilterButtons();
-      renderMainView();
-      hydrateCatalogFromIDBIfNeeded();
-      if (state.cloudSyncEnabled) {
-        initOptionalCloudSync(true);
-      }
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', bootstrapApp);
-    } else {
-      bootstrapApp();
-    }
+    /* =====================================================================
+       15. BOOTSTRAP APP
+    ===================================================================== */
+    const headerBrandLogo = document.getElementById('header-brand-logo');
+    if (headerBrandLogo) headerBrandLogo.innerHTML = getBrandSvg(44);
+    startInitialIntro();
+    updateCloudToggleButton();
+    updateFilterButtons();
+    renderMainView();
+    hydrateCatalogFromIDBIfNeeded();
+    initOptionalCloudSync(false);
   </script>
 </body>
 </html>
