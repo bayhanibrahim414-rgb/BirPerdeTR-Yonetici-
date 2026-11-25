@@ -64,6 +64,11 @@
       padding: 0;
     }
 
+    body.bp-dark-theme {
+      background-color: #030712;
+      color: #F8FAFC;
+    }
+
     input, textarea, select {
       -webkit-user-select: text;
       user-select: text;
@@ -102,7 +107,7 @@
       align-items: center;
       justify-content: center;
       background: radial-gradient(circle at 50% 35%, #16325C 0%, #071326 65%, #030712 100%);
-      transition: opacity 0.4s ease, transform 0.4s ease;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     #intro-splash.splash-exit {
@@ -113,8 +118,8 @@
 
     .intro-shimmer-ring {
       position: absolute;
-      width: 220px;
-      height: 220px;
+      width: 210px;
+      height: 210px;
       border-radius: 9999px;
       background: conic-gradient(from 0deg, rgba(250, 204, 21, 0), rgba(250, 204, 21, 0.55), rgba(56, 189, 248, 0.45), rgba(250, 204, 21, 0));
       filter: blur(18px);
@@ -128,12 +133,12 @@
     }
 
     @keyframes introPop {
-      0% { opacity: 0; transform: translateY(14px) scale(0.88); }
+      0% { opacity: 0; transform: translateY(12px) scale(0.9); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .intro-brand-pop {
-      animation: introPop 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: introPop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     @keyframes titleShine {
@@ -156,6 +161,11 @@
       background-size: 20px 20px;
     }
 
+    body.bp-dark-theme.bg-pattern-sky {
+      background-color: #030712;
+      background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px);
+    }
+
     .theme-banner-movies {
       background: linear-gradient(135deg, #071326 0%, #1E3A8A 100%);
     }
@@ -176,10 +186,26 @@
       width: 100%;
     }
 
+    .catalog-grid-compact {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .catalog-grid-large {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
     @media (min-width: 640px) {
       .catalog-responsive-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 14px;
+      }
+      .catalog-grid-compact {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+      .catalog-grid-large {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
 
@@ -187,6 +213,12 @@
       .catalog-responsive-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 16px;
+      }
+      .catalog-grid-compact {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+      .catalog-grid-large {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
     }
 
@@ -201,6 +233,13 @@
       flex-direction: column;
       box-shadow: 0 4px 12px -4px rgba(7, 19, 38, 0.12);
       transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    body.bp-dark-theme .card-movie-frame,
+    body.bp-dark-theme .card-series-frame {
+      background: #0F172A;
+      border-color: #1E293B;
+      color: #F8FAFC;
     }
 
     .card-movie-frame:hover {
@@ -344,7 +383,7 @@
     input[type="range"].bp-scrubber::-webkit-slider-runnable-track {
       height: 5px;
       border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.28);
+      background: rgba(148, 163, 184, 0.45);
     }
 
     input[type="range"].bp-scrubber::-webkit-slider-thumb {
@@ -367,8 +406,8 @@
     }
 
     @keyframes seekPop {
-      0% { opacity: 0; transform: scale(0.8); }
-      25% { opacity: 1; transform: scale(1.06); }
+      0% { opacity: 0; transform: scale(0.85); }
+      20% { opacity: 1; transform: scale(1.04); }
       80% { opacity: 1; transform: scale(1); }
       100% { opacity: 0; transform: scale(0.95); }
     }
@@ -400,7 +439,7 @@
         BirPerdeTR
       </h1>
       <p class="intro-brand-pop relative z-10 mt-2 text-xs sm:text-sm font-semibold tracking-widest uppercase text-sky-200/80">
-        Bulut Film &amp; Dizi Platformu
+        Yüksek Hızlı Bulut Film &amp; Dizi Platformu
       </p>
     </div>
   </div>
@@ -415,7 +454,7 @@
   <div id="admin-app" class="min-h-screen flex flex-col w-full">
 
     <!-- TOP HEADER BAR -->
-    <header class="sticky top-[4px] z-40 bg-bpWhite/95 backdrop-blur-md border-b border-slate-200 shadow-xs w-full">
+    <header id="app-top-header" class="sticky top-[4px] z-40 bg-bpWhite/95 backdrop-blur-md border-b border-slate-200 shadow-xs w-full">
       <div class="max-w-6xl mx-auto px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
 
         <!-- Left: Brand -->
@@ -423,13 +462,13 @@
           <div id="header-brand-logo" onclick="replayIntroSplash()" class="cursor-pointer"></div>
           <div class="min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-base sm:text-xl font-extrabold tracking-tight text-bpNavy">BirPerdeTR</span>
+              <span id="brand-title-text" class="text-base sm:text-xl font-extrabold tracking-tight text-bpNavy">BirPerdeTR</span>
               <span id="cloud-live-dot" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-bpEmerald/15 text-bpEmerald border border-bpEmerald/30">
                 <span class="w-1.5 h-1.5 rounded-full bg-bpEmerald live-indicator"></span>
                 <span>CANLI BULUT</span>
               </span>
             </div>
-            <p class="text-[11px] text-slate-500 hidden sm:block">Hızlı bulut &amp; cihazlar arası anında izle</p>
+            <p class="text-[11px] text-slate-500 hidden sm:block">Anında çoklu bulut • Tüm cihazlarda senkron</p>
           </div>
         </div>
 
@@ -437,22 +476,26 @@
         <div class="flex items-center gap-1.5 sm:gap-2 order-2 md:order-3 shrink-0 flex-wrap">
           <button type="button" onclick="openAddContentModal('movie')" class="px-3 py-2 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold flex items-center gap-1 shadow-xs transition cursor-pointer">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
-            <span>Film Ekle</span>
+            <span>Film</span>
           </button>
 
           <button type="button" onclick="openAddContentModal('series')" class="px-3 py-2 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold flex items-center gap-1 shadow-xs transition cursor-pointer">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
-            <span>Dizi Ekle</span>
+            <span>Dizi</span>
           </button>
 
-          <button type="button" onclick="openAddContentModal('episode')" class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-bpNavy text-xs font-extrabold flex items-center gap-1 shadow-xs transition cursor-pointer">
+          <button type="button" onclick="openAddContentModal('batch')" class="px-3 py-2 rounded-xl bg-bpRoyal hover:bg-blue-700 text-white text-xs font-extrabold flex items-center gap-1 shadow-xs transition cursor-pointer" title="Tek seferde birden fazla video yükle">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <span>Toplu Yükle</span>
+          </button>
+
+          <button type="button" onclick="openAddContentModal('episode')" class="px-2.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-bpNavy text-xs font-extrabold flex items-center gap-1 shadow-xs transition cursor-pointer">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
-            <span>Bölüm</span>
+            <span class="hidden sm:inline">Bölüm</span>
           </button>
 
-          <button type="button" onclick="openDirectTransferModal()" class="px-2.5 py-2 rounded-xl bg-bpRoyal/10 hover:bg-bpRoyal text-bpRoyal hover:text-white text-xs font-extrabold flex items-center gap-1 transition cursor-pointer" title="Karşı Cihaza Anında Aktar">
-            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-            <span class="hidden sm:inline">Hızlı Aktar</span>
+          <button type="button" onclick="openPlatformSettingsModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-bpNavy hover:text-white text-bpNavy transition cursor-pointer" title="Platform Ayarları & Kısayollar">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
 
           <button type="button" onclick="syncAllFromCloudNow(true)" class="p-2 rounded-xl bg-slate-100 hover:bg-bpRoyal hover:text-white text-bpNavy transition cursor-pointer" title="Buluttan Yenile">
@@ -471,7 +514,7 @@
               id="global-search-input"
               autocomplete="off"
               oninput="handleSearchInput(this.value)"
-              placeholder="Film, dizi, tür veya yıl ara..."
+              placeholder="Film, dizi, tür, bölüm veya yıl ara..."
               class="w-full pl-9 pr-10 py-2 rounded-xl bg-slate-100/80 border border-slate-200 focus:border-bpRoyal focus:bg-white focus:outline-none text-xs sm:text-sm font-medium text-bpBlack"
             />
             <button type="button" id="search-clear-btn" onclick="resetSearchInput()" class="hidden absolute right-2 w-6 h-6 rounded-lg bg-bpRed/15 text-bpRed flex items-center justify-center cursor-pointer" title="Temizle">
@@ -481,7 +524,7 @@
         </div>
       </div>
 
-      <!-- CATEGORY TABS & LANGUAGE FILTERS -->
+      <!-- CATEGORY TABS, SORT & ADVANCED FILTERS -->
       <div class="bg-slate-50 border-t border-slate-200 w-full">
         <div class="max-w-6xl mx-auto px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
@@ -494,18 +537,35 @@
             <button type="button" data-nav-tab="series" onclick="switchNavTab('series')" class="nav-tab-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer">
               Diziler
             </button>
+            <button type="button" data-nav-tab="continue" onclick="switchNavTab('continue')" class="nav-tab-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer">
+              Devam Et
+            </button>
           </div>
 
-          <div class="flex items-center gap-1 shrink-0">
-            <button type="button" data-lang-btn="all" onclick="switchLangFilter('all')" class="lang-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer">
-              Tümü
-            </button>
-            <button type="button" data-lang-btn="dub" onclick="switchLangFilter('dub')" class="lang-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer">
-              TR Dublaj
-            </button>
-            <button type="button" data-lang-btn="sub" onclick="switchLangFilter('sub')" class="lang-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer">
-              TR Altyazılı
-            </button>
+          <div class="flex items-center gap-1.5 flex-wrap shrink-0">
+            <select id="genre-filter-select" onchange="switchGenreFilter(this.value)" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-bpBlack cursor-pointer">
+              <option value="all">Tüm Türler</option>
+            </select>
+
+            <select id="sort-order-select" onchange="switchSortOrder(this.value)" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-bpBlack cursor-pointer">
+              <option value="newest">En Yeni</option>
+              <option value="oldest">En Eski</option>
+              <option value="az">İsim (A-Z)</option>
+              <option value="za">İsim (Z-A)</option>
+              <option value="year_desc">Yıl (Yeni→Eski)</option>
+            </select>
+
+            <div class="flex items-center gap-1">
+              <button type="button" data-lang-btn="all" onclick="switchLangFilter('all')" class="lang-filter-btn px-2 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer">
+                Tümü
+              </button>
+              <button type="button" data-lang-btn="dub" onclick="switchLangFilter('dub')" class="lang-filter-btn px-2 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer">
+                Dublaj
+              </button>
+              <button type="button" data-lang-btn="sub" onclick="switchLangFilter('sub')" class="lang-filter-btn px-2 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer">
+                Altyazı
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -517,7 +577,7 @@
         <div class="flex items-center justify-between gap-3 min-w-0">
           <div class="flex items-center gap-2 min-w-0">
             <span class="w-2.5 h-2.5 rounded-full bg-bpYellow live-indicator shrink-0"></span>
-            <span id="background-sync-text" class="text-xs font-extrabold text-bpYellow truncate">Buluta aktarılıyor...</span>
+            <span id="background-sync-text" class="text-xs font-extrabold text-bpYellow truncate">Yüksek hızda buluta aktarılıyor...</span>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span id="background-sync-pct" class="font-mono text-xs font-extrabold text-white">%0</span>
@@ -527,7 +587,7 @@
           </div>
         </div>
         <div class="w-full h-1.5 rounded-full bg-white/15 overflow-hidden">
-          <div id="background-sync-bar" style="width: 0%" class="h-full bg-bpYellow transition-all duration-200"></div>
+          <div id="background-sync-bar" style="width: 0%" class="h-full bg-bpYellow transition-all duration-150"></div>
         </div>
       </div>
     </div>
@@ -540,7 +600,7 @@
 
     <!-- FOOTER -->
     <footer class="bg-bpWhite border-t border-slate-200 mt-8 py-4 px-3 sm:px-5 text-center text-[11px] text-slate-500">
-      BirPerdeTR — Ortak Bulut Film &amp; Dizi Platformu
+      BirPerdeTR — Yüksek Hızlı Çoklu Bulut Film &amp; Dizi Platformu
     </footer>
   </div>
 
@@ -570,7 +630,7 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     /* =====================================================================
-       0. CLEAN START & GESTURE GUARDS
+       0. CLEAN START & PLATFORM PREFERENCES
     ===================================================================== */
     document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
     document.addEventListener('touchmove', (e) => {
@@ -578,14 +638,45 @@
     }, { passive: false });
 
     const CINEMA_FALLBACK_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/35mm_movie_film.jpg/500px-35mm_movie_film.jpg';
-    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v3';
-    const MASTER_DELETED_KEY = 'birperde_master_deleted_v3';
-    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v3';
+    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v4';
+    const MASTER_DELETED_KEY = 'birperde_master_deleted_v4';
+    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v4';
+    const PLATFORM_PREFS_KEY = 'birperde_prefs_v4';
     const FIRESTORE_COLLECTION = 'birperde_master_v2';
     const RTDB_NODE = 'birperde_master_v2';
 
+    const DEFAULT_PREFS = {
+      cardDensity: 'normal', // compact | normal | large
+      autoPlayNext: true,
+      resumePlayback: true,
+      defaultVolumeStep: 5, // 0..5 -> 0%, 20%, 40%, 60%, 80%, 100%
+      defaultSpeed: 1,
+      preferredLang: 'sub', // sub | dub
+      darkTheme: false,
+      showCloudBadge: true
+    };
+
+    function loadPrefs() {
+      try {
+        return { ...DEFAULT_PREFS, ...(JSON.parse(localStorage.getItem(PLATFORM_PREFS_KEY) || '{}') || {}) };
+      } catch (e) {
+        return { ...DEFAULT_PREFS };
+      }
+    }
+
+    function savePrefs(p) {
+      try {
+        localStorage.setItem(PLATFORM_PREFS_KEY, JSON.stringify(p));
+      } catch (e) {}
+      applyThemePrefs();
+    }
+
+    function applyThemePrefs() {
+      document.body.classList.toggle('bp-dark-theme', Boolean(state.prefs.darkTheme));
+    }
+
     /* =====================================================================
-       1. BRAND ICON & SPLASH SCREEN
+       1. BRAND ICON & FAST SPLASH SCREEN
     ===================================================================== */
     function getBrandSvg(size = 44) {
       return `
@@ -611,7 +702,7 @@
       const splash = document.getElementById('intro-splash');
       if (!splash) return;
       splash.classList.add('splash-exit');
-      setTimeout(() => splash.classList.add('hidden'), 420);
+      setTimeout(() => splash.classList.add('hidden'), 320);
     }
 
     function replayIntroSplash() {
@@ -619,17 +710,17 @@
       const splash = document.getElementById('intro-splash');
       if (!splash) return;
       splash.classList.remove('hidden', 'splash-exit');
-      splashDismissTimer = setTimeout(dismissIntroSplashNow, 1500);
+      splashDismissTimer = setTimeout(dismissIntroSplashNow, 1200);
     }
 
     function startInitialIntro() {
       const logoMount = document.getElementById('intro-logo-mount');
-      if (logoMount) logoMount.innerHTML = getBrandSvg(118);
-      splashDismissTimer = setTimeout(dismissIntroSplashNow, 1000);
+      if (logoMount) logoMount.innerHTML = getBrandSvg(108);
+      splashDismissTimer = setTimeout(dismissIntroSplashNow, 750);
     }
 
     /* =====================================================================
-       2. FIREBASE + MULTI-ENGINE CLOUD & DIRECT P2P TRANSFER
+       2. FIREBASE + HIGH-SPEED CLOUD SYNC ENGINE
     ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyB1eT555N2stbzj6x6zkmxHKtMolvCJmeY",
@@ -648,11 +739,10 @@
     const fbStorage = getStorage(app);
 
     const LOCAL_SESSION_BLOBS = new Map();
-    const LOCAL_SESSION_FILES = new Map();
     const PENDING_FILES = new Map();
     let cloudUploadCancelFlag = false;
     let activeUploadsCount = 0;
-    let activeXhrUpload = null;
+    const activeXhrSet = new Set();
     let activeFbTask = null;
 
     function readDeletedTombstones() {
@@ -717,10 +807,14 @@
       return Number(map[key]) || 0;
     }
 
+    const savedPrefs = loadPrefs();
     const state = {
+      prefs: savedPrefs,
       catalog: readLocalCatalogCache(),
       navTab: 'all',
       langFilter: 'all',
+      genreFilter: 'all',
+      sortOrder: 'newest',
       searchQuery: '',
       player: {
         media: null,
@@ -728,8 +822,8 @@
         episode: 1,
         channels: [],
         activeChannelId: 'sub',
-        playbackRate: 1,
-        volume: 1,
+        playbackRate: savedPrefs.defaultSpeed || 1,
+        volume: (savedPrefs.defaultVolumeStep ?? 5) / 5,
         lastNonZeroVolume: 1,
         volumePopoverOpen: false,
         isPlaying: false,
@@ -738,6 +832,8 @@
         loopMode: false
       }
     };
+
+    applyThemePrefs();
 
     async function ensureAuthReady() {
       if (fbAuth.currentUser) return fbAuth.currentUser;
@@ -780,6 +876,7 @@
         genre: String(raw.genre || (type === 'series' ? 'Dizi' : 'Sinema')),
         seasons: type === 'series' ? Math.max(1, Number(raw.seasons) || 1) : undefined,
         posterUrl: String(raw.posterUrl || CINEMA_FALLBACK_PHOTO),
+        posterStyle: String(raw.posterStyle || ''),
         posterStoragePath: String(raw.posterStoragePath || ''),
         createdAt: Number(raw.createdAt) || Date.now(),
         updatedAt: Number(raw.updatedAt) || Number(raw.createdAt) || Date.now(),
@@ -893,6 +990,7 @@
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
       writeLocalCatalogCache(state.catalog);
+      populateGenreSelect();
       renderMainView();
     }
 
@@ -904,18 +1002,14 @@
         payload.posterUrl = CINEMA_FALLBACK_PHOTO;
       }
 
-      try {
-        await fetch(`${firebaseConfig.databaseURL}/${RTDB_NODE}/${encodeURIComponent(payload.id)}.json`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } catch (e) {}
+      const p1 = fetch(`${firebaseConfig.databaseURL}/${RTDB_NODE}/${encodeURIComponent(payload.id)}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
 
-      try {
-        await ensureAuthReady();
-        await setDoc(doc(fbDb, FIRESTORE_COLLECTION, payload.id), payload);
-      } catch (e) {}
+      const p2 = ensureAuthReady().then(() => setDoc(doc(fbDb, FIRESTORE_COLLECTION, payload.id), payload)).catch(() => {});
+      await Promise.allSettled([p1, p2]);
     }
 
     async function deleteItemFromAllClouds(item) {
@@ -926,6 +1020,7 @@
 
       state.catalog = state.catalog.filter(m => m.id !== id);
       writeLocalCatalogCache(state.catalog);
+      populateGenreSelect();
       renderMainView();
 
       fetch(`${firebaseConfig.databaseURL}/${RTDB_NODE}/${encodeURIComponent(id)}.json`, {
@@ -976,7 +1071,7 @@
       } catch (e) {}
 
       if (showFeedback) {
-        showToast(mergedAny ? 'Bulut arşivi güncellendi.' : 'Bulut bağlantısı güncel.', 'success');
+        showToast(mergedAny ? 'Bulut arşivi anında güncellendi.' : 'Bulut bağlantısı güncel.', 'success');
       }
     }
 
@@ -985,7 +1080,7 @@
         if (activeUploadsCount === 0) {
           syncAllFromCloudNow(false);
         }
-      }, 4500);
+      }, 3000);
 
       ensureAuthReady().then(() => {
         onSnapshot(collection(fbDb, FIRESTORE_COLLECTION), (snap) => {
@@ -999,7 +1094,7 @@
     }
 
     /* =====================================================================
-       3. MULTI-ENGINE FAST CLOUD UPLOADER (TMPFILES + LITTERBOX + FIREBASE)
+       3. TURBO PARALLEL CLOUD UPLOADER (RACES MULTIPLE SERVERS SIMULTANEOUSLY)
     ===================================================================== */
     function setUploadBanner(show, text = '', pct = 0) {
       const banner = document.getElementById('background-sync-banner');
@@ -1023,23 +1118,20 @@
         try { activeFbTask.cancel(); } catch (e) {}
         activeFbTask = null;
       }
-      if (activeXhrUpload) {
-        try { activeXhrUpload.abort(); } catch (e) {}
-        activeXhrUpload = null;
-      }
+      activeXhrSet.forEach(xhr => { try { xhr.abort(); } catch (e) {} });
+      activeXhrSet.clear();
       activeUploadsCount = 0;
       setUploadBanner(false);
       showToast('Bulut aktarımı iptal edildi.', 'info');
     }
 
-    // Engine 1: Tmpfiles.org CORS-enabled direct upload -> converts to /dl/ direct streamable MP4 URL
     function uploadViaTmpfiles(file, onProgress) {
       return new Promise((resolve, reject) => {
         const formData = new FormData();
         formData.append('file', file, file.name || 'video.mp4');
 
         const xhr = new XMLHttpRequest();
-        activeXhrUpload = xhr;
+        activeXhrSet.add(xhr);
         xhr.open('POST', 'https://tmpfiles.org/api/v1/upload', true);
 
         xhr.upload.onprogress = (ev) => {
@@ -1048,7 +1140,7 @@
         };
 
         xhr.onload = () => {
-          activeXhrUpload = null;
+          activeXhrSet.delete(xhr);
           try {
             const json = JSON.parse(xhr.responseText || '{}');
             const rawUrl = json?.data?.url || '';
@@ -1056,20 +1148,17 @@
               const directUrl = rawUrl.replace(/^http:\/\//i, 'https://').replace('tmpfiles.org/', 'tmpfiles.org/dl/');
               resolve({ downloadUrl: directUrl, storagePath: '' });
             } else {
-              reject(new Error('Tmpfiles geçersiz yanıt'));
+              reject(new Error('Tmpfiles yanıt hatası'));
             }
-          } catch (e) {
-            reject(e);
-          }
+          } catch (e) { reject(e); }
         };
 
-        xhr.onerror = () => { activeXhrUpload = null; reject(new Error('Tmpfiles ağ hatası')); };
-        xhr.onabort = () => { activeXhrUpload = null; reject(new Error('İptal edildi')); };
+        xhr.onerror = () => { activeXhrSet.delete(xhr); reject(new Error('Ağ hatası')); };
+        xhr.onabort = () => { activeXhrSet.delete(xhr); reject(new Error('İptal')); };
         xhr.send(formData);
       });
     }
 
-    // Engine 2: Litterbox 72-hour fast file host
     function uploadViaLitterbox(file, onProgress) {
       return new Promise((resolve, reject) => {
         const formData = new FormData();
@@ -1078,7 +1167,7 @@
         formData.append('fileToUpload', file, file.name || 'video.mp4');
 
         const xhr = new XMLHttpRequest();
-        activeXhrUpload = xhr;
+        activeXhrSet.add(xhr);
         xhr.open('POST', 'https://litterbox.catbox.moe/resources/internals/api.php', true);
 
         xhr.upload.onprogress = (ev) => {
@@ -1087,22 +1176,21 @@
         };
 
         xhr.onload = () => {
-          activeXhrUpload = null;
+          activeXhrSet.delete(xhr);
           const url = (xhr.responseText || '').trim();
           if (xhr.status >= 200 && xhr.status < 300 && /^https?:\/\//i.test(url)) {
             resolve({ downloadUrl: url, storagePath: '' });
           } else {
-            reject(new Error('Litterbox geçersiz yanıt'));
+            reject(new Error('Litterbox yanıt hatası'));
           }
         };
 
-        xhr.onerror = () => { activeXhrUpload = null; reject(new Error('Litterbox ağ hatası')); };
-        xhr.onabort = () => { activeXhrUpload = null; reject(new Error('İptal edildi')); };
+        xhr.onerror = () => { activeXhrSet.delete(xhr); reject(new Error('Ağ hatası')); };
+        xhr.onabort = () => { activeXhrSet.delete(xhr); reject(new Error('İptal')); };
         xhr.send(formData);
       });
     }
 
-    // Engine 3: Firebase Storage with fast 4-second rules check
     function uploadFileViaFirebaseStorage(file, onProgress) {
       return new Promise(async (resolve, reject) => {
         try {
@@ -1119,7 +1207,7 @@
               try { task.cancel(); } catch (e) {}
               reject(new Error('Firebase Rules kapalı'));
             }
-          }, 4500);
+          }, 3500);
 
           task.on(
             'state_changed',
@@ -1145,6 +1233,28 @@
       });
     }
 
+    // Parallel race: starts Tmpfiles + Firebase Storage simultaneously; first to succeed wins and aborts the slower one!
+    function uploadFileTurboRace(file, onProgress) {
+      let maxSent = 0;
+      const reportProgress = (sent, total) => {
+        if (sent > maxSent) {
+          maxSent = sent;
+          onProgress(sent, total);
+        }
+      };
+
+      const p1 = uploadViaTmpfiles(file, reportProgress);
+      const p2 = uploadFileViaFirebaseStorage(file, reportProgress);
+
+      return Promise.any([p1, p2])
+        .then((winner) => {
+          activeXhrSet.forEach(x => { try { x.abort(); } catch (e) {} });
+          activeXhrSet.clear();
+          return winner;
+        })
+        .catch(() => uploadViaLitterbox(file, reportProgress));
+    }
+
     async function uploadMediaFilesToCloud(itemId, tasks) {
       if (!tasks || tasks.length === 0) return;
       cloudUploadCancelFlag = false;
@@ -1154,30 +1264,21 @@
         for (const task of tasks) {
           if (cloudUploadCancelFlag) break;
           const totalMb = (task.file.size / 1048576).toFixed(1);
-          setUploadBanner(true, `Buluta aktarılıyor: ${task.title} (${task.label}) • 0.0 / ${totalMb} MB`, 2);
+          setUploadBanner(true, `Turbo Aktarım: ${task.title} (${task.label}) • 0.0 / ${totalMb} MB`, 2);
 
           const onProgress = (sent, total) => {
             const pct = Math.round((sent / total) * 100);
             const sentMb = (sent / 1048576).toFixed(1);
-            setUploadBanner(true, `Karşı cihaza aktarılıyor: ${task.title} (${task.label}) • ${sentMb} / ${totalMb} MB`, pct);
+            setUploadBanner(true, `Turbo Aktarım: ${task.title} (${task.label}) • ${sentMb} / ${totalMb} MB`, pct);
           };
 
           let result = null;
-          const engines = [
-            () => uploadViaTmpfiles(task.file, onProgress),
-            () => uploadFileViaFirebaseStorage(task.file, onProgress),
-            () => uploadViaLitterbox(task.file, onProgress)
-          ];
-
-          for (const runEngine of engines) {
-            if (cloudUploadCancelFlag || result) break;
-            try {
-              result = await runEngine();
-            } catch (e) {}
-          }
-
-          if (!result && !cloudUploadCancelFlag) {
-            showToast(`"${task.title}" buluta yüklenemedi. "Hızlı Aktar" butonuyla doğrudan karşı cihaza gönderebilirsiniz.`, 'error');
+          try {
+            result = await uploadFileTurboRace(task.file, onProgress);
+          } catch (err) {
+            if (!cloudUploadCancelFlag) {
+              showToast(`"${task.title}" aktarımı tamamlanamadı. Bağlantıyı kontrol edin.`, 'error');
+            }
           }
 
           if (result && result.downloadUrl) {
@@ -1204,7 +1305,7 @@
               renderMainView();
               await pushItemToAllClouds(target);
               if (task.kind !== 'poster') {
-                showToast(`"${task.title}" (${task.label}) buluta yüklendi! Tüm cihazlarda izlenebilir.`, 'success');
+                showToast(`"${task.title}" (${task.label}) hazır! Tüm cihazlarda izlenebilir.`, 'success');
               }
             }
           }
@@ -1213,223 +1314,6 @@
         activeUploadsCount = Math.max(0, activeUploadsCount - 1);
         if (activeUploadsCount === 0) setUploadBanner(false);
       }
-    }
-
-    /* =====================================================================
-       3B. DIRECT DEVICE-TO-DEVICE P2P STREAMING (WEBRTC DATA CHANNEL)
-    ===================================================================== */
-    let activeP2pPeer = null;
-
-    function openDirectTransferModal() {
-      const localItems = state.catalog.filter(it => {
-        const srcs = it.type === 'movie' ? (it.sources || []) : (it.episodes || []).flatMap(e => e.sources || []);
-        return srcs.some(s => s.sessionKey && LOCAL_SESSION_FILES.has(s.sessionKey));
-      });
-
-      openModal(`
-        <div class="birperde-ribbon"></div>
-        <div class="p-4 sm:p-5 space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-extrabold text-bpNavy">Cihazlar Arası Doğrudan Aktarım</h3>
-            <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-bpRed hover:text-white flex items-center justify-center cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
-            </button>
-          </div>
-          <p class="text-xs text-slate-600 leading-relaxed">
-            Bulut sınırına takılmadan videoyu doğrudan bu cihazdan karşı cihaza yüksek hızda gönderir.
-          </p>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 space-y-2.5">
-              <div class="text-xs font-extrabold text-bpRoyal">1. Gönderici Cihaz (Bu Cihaz)</div>
-              <select id="p2p-send-select" class="w-full px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-bold">
-                ${localItems.length > 0
-                  ? localItems.map(it => `<option value="${escapeAttr(it.id)}">${escapeHtml(it.title)}</option>`).join('')
-                  : '<option value="">Önce cihazdan bir video ekleyin</option>'}
-              </select>
-              <button type="button" onclick="startP2pSender()" class="w-full py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold cursor-pointer">
-                6 Haneli Aktarım Kodu Oluştur
-              </button>
-              <div id="p2p-sender-status" class="text-[11px] font-extrabold text-bpNavy"></div>
-            </div>
-
-            <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2.5">
-              <div class="text-xs font-extrabold text-bpEmerald">2. Alıcı Cihaz (Karşı Cihaz)</div>
-              <input type="text" id="p2p-room-input" maxlength="6" placeholder="6 haneli kodu girin..." class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-mono font-extrabold tracking-widest uppercase" />
-              <button type="button" onclick="startP2pReceiver()" class="w-full py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">
-                Bağlan ve Videoyu Al
-              </button>
-              <div id="p2p-receiver-status" class="text-[11px] font-extrabold text-bpEmerald"></div>
-            </div>
-          </div>
-        </div>
-      `);
-    }
-
-    async function startP2pSender() {
-      const itemId = document.getElementById('p2p-send-select')?.value;
-      const item = state.catalog.find(m => m.id === itemId);
-      const statusEl = document.getElementById('p2p-sender-status');
-      if (!item) {
-        showToast('Önce cihazınızdan bir video ekleyin.', 'error');
-        return;
-      }
-      const srcs = item.type === 'movie' ? (item.sources || []) : (item.episodes || []).flatMap(e => e.sources || []);
-      const srcWithFile = srcs.find(s => s.sessionKey && LOCAL_SESSION_FILES.has(s.sessionKey));
-      const file = srcWithFile && LOCAL_SESSION_FILES.get(srcWithFile.sessionKey);
-      if (!file) {
-        showToast('Video dosyası bellekte bulunamadı.', 'error');
-        return;
-      }
-
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      const roomUrl = `${firebaseConfig.databaseURL}/birperde_p2p/${code}.json`;
-      if (statusEl) statusEl.innerHTML = `Kodunuz: <span class="px-2 py-0.5 rounded bg-bpNavy text-bpYellow font-mono text-sm">${code}</span><br/>Karşı cihazın bağlanması bekleniyor...`;
-
-      if (activeP2pPeer) { try { activeP2pPeer.close(); } catch (e) {} }
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-      activeP2pPeer = pc;
-      const dc = pc.createDataChannel('videoFile', { ordered: true });
-      dc.binaryType = 'arraybuffer';
-
-      const candidates = [];
-      pc.onicecandidate = (e) => { if (e.candidate) candidates.push(e.candidate); };
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await new Promise(r => setTimeout(r, 900));
-
-      await fetch(roomUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          offer: pc.localDescription,
-          offerCandidates: candidates,
-          meta: { itemId: item.id, title: item.title, fileName: file.name, fileSize: file.size, fileType: file.type || 'video/mp4' }
-        })
-      });
-
-      dc.onopen = async () => {
-        if (statusEl) statusEl.textContent = `Bağlandı! "${file.name}" gönderiliyor...`;
-        const chunkSize = 65536;
-        let offset = 0;
-        while (offset < file.size) {
-          if (dc.bufferedAmount > 4 * 1024 * 1024) {
-            await new Promise(r => setTimeout(r, 25));
-            continue;
-          }
-          const slice = file.slice(offset, offset + chunkSize);
-          const buf = await slice.arrayBuffer();
-          dc.send(buf);
-          offset += buf.byteLength;
-          const pct = Math.round((offset / file.size) * 100);
-          if (statusEl) statusEl.textContent = `Aktarılıyor: %${pct}`;
-        }
-        dc.send(JSON.stringify({ done: true }));
-        if (statusEl) statusEl.textContent = 'Aktarım tamamlandı!';
-        showToast('Video karşı cihaza başarıyla aktarıldı!', 'success');
-      };
-
-      const pollAnswer = setInterval(async () => {
-        try {
-          const r = await fetch(roomUrl, { cache: 'no-store' });
-          const d = await r.json();
-          if (d && d.answer && !pc.currentRemoteDescription) {
-            clearInterval(pollAnswer);
-            await pc.setRemoteDescription(new RTCSessionDescription(d.answer));
-            (d.answerCandidates || []).forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
-          }
-        } catch (e) {}
-      }, 1500);
-    }
-
-    async function startP2pReceiver() {
-      const code = (document.getElementById('p2p-room-input')?.value || '').trim();
-      const statusEl = document.getElementById('p2p-receiver-status');
-      if (code.length !== 6) {
-        showToast('6 haneli kodu girin.', 'error');
-        return;
-      }
-
-      const roomUrl = `${firebaseConfig.databaseURL}/birperde_p2p/${code}.json`;
-      const resp = await fetch(roomUrl, { cache: 'no-store' });
-      const data = await resp.json();
-      if (!data || !data.offer) {
-        showToast('Bu koda ait aktif bir gönderim bulunamadı.', 'error');
-        return;
-      }
-
-      if (statusEl) statusEl.textContent = `Bağlanıyor: ${data.meta?.title || 'Video'}...`;
-      if (activeP2pPeer) { try { activeP2pPeer.close(); } catch (e) {} }
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-      activeP2pPeer = pc;
-      const ansCandidates = [];
-      pc.onicecandidate = (e) => { if (e.candidate) ansCandidates.push(e.candidate); };
-
-      const chunks = [];
-      let receivedBytes = 0;
-      const totalBytes = Number(data.meta?.fileSize) || 1;
-
-      pc.ondatachannel = (ev) => {
-        const dc = ev.channel;
-        dc.binaryType = 'arraybuffer';
-        dc.onmessage = (msg) => {
-          if (typeof msg.data === 'string') {
-            const parsed = JSON.parse(msg.data);
-            if (parsed.done) {
-              const blob = new Blob(chunks, { type: data.meta?.fileType || 'video/mp4' });
-              const sk = 'p2p_' + Date.now();
-              const blobUrl = URL.createObjectURL(blob);
-              LOCAL_SESSION_BLOBS.set(sk, blobUrl);
-              LOCAL_SESSION_FILES.set(sk, new File([blob], data.meta?.fileName || 'video.mp4', { type: blob.type }));
-
-              let target = state.catalog.find(m => m.id === data.meta?.itemId);
-              if (!target) {
-                target = {
-                  id: data.meta?.itemId || ('mov-' + Date.now()),
-                  type: 'movie',
-                  title: data.meta?.title || 'Aktarılan Video',
-                  year: new Date().getFullYear(),
-                  genre: 'Sinema',
-                  duration: '',
-                  hasSub: true,
-                  hasDub: false,
-                  posterUrl: CINEMA_FALLBACK_PHOTO,
-                  sources: [{ id: 'sub', label: 'TR Altyazılı', defaultMode: 'sub', url: '', sessionKey: sk, storagePath: '', trimStart: 0, trimEnd: 0 }],
-                  createdAt: Date.now()
-                };
-                state.catalog.unshift(target);
-              } else {
-                const firstSrc = target.type === 'movie' ? target.sources?.[0] : target.episodes?.[0]?.sources?.[0];
-                if (firstSrc) firstSrc.sessionKey = sk;
-              }
-              writeLocalCatalogCache(state.catalog);
-              renderMainView();
-              closeModal();
-              openPlayer(target.id);
-              showToast('Video alındı ve açıldı!', 'success');
-              fetch(roomUrl, { method: 'DELETE' }).catch(() => {});
-            }
-            return;
-          }
-          chunks.push(msg.data);
-          receivedBytes += msg.data.byteLength;
-          const pct = Math.min(100, Math.round((receivedBytes / totalBytes) * 100));
-          if (statusEl) statusEl.textContent = `İndiriliyor: %${pct}`;
-        };
-      };
-
-      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-      (data.offerCandidates || []).forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await new Promise(r => setTimeout(r, 900));
-
-      await fetch(roomUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answer: pc.localDescription, answerCandidates: ansCandidates })
-      });
     }
 
     async function resolvePlayableVideoUrl(source) {
@@ -1461,13 +1345,46 @@
       if (hasCloudUrl) {
         return { label: 'Tüm Cihazlarda Hazır', cls: 'bg-bpEmerald text-white' };
       }
-      return { label: 'Aktarım Bekliyor', cls: 'bg-amber-500 text-bpNavy' };
+      return { label: 'Buluta Aktarılıyor...', cls: 'bg-amber-500 text-bpNavy' };
     }
 
     /* =====================================================================
-       4. VIDEO FRAME SNAPSHOT EXTRACTOR (AUTO RANDOM + MANUAL SCRUBBER)
+       4. ADVANCED COVER STUDIO (MULTI-FRAME GRID + SCRUBBER + ZOOM/FILTERS)
     ===================================================================== */
     let activeFrameVideoUrl = '';
+    let coverEditorState = {
+      zoom: 100,
+      posX: 50,
+      posY: 50,
+      brightness: 100,
+      contrast: 100,
+      saturate: 100
+    };
+
+    function resetCoverEditorState() {
+      coverEditorState = { zoom: 100, posX: 50, posY: 50, brightness: 100, contrast: 100, saturate: 100 };
+    }
+
+    function buildCoverCssStyle(st = coverEditorState) {
+      if (!st) return '';
+      const scale = (Number(st.zoom) || 100) / 100;
+      const px = Number(st.posX ?? 50);
+      const py = Number(st.posY ?? 50);
+      const br = Number(st.brightness ?? 100);
+      const ct = Number(st.contrast ?? 100);
+      const sat = Number(st.saturate ?? 100);
+      return `object-position: ${px}% ${py}%; transform: scale(${scale}); filter: brightness(${br}%) contrast(${ct}%) saturate(${sat}%);`;
+    }
+
+    function updateCoverStyleControl(prop, val) {
+      coverEditorState[prop] = Number(val);
+      const css = buildCoverCssStyle(coverEditorState);
+      const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
+      if (img) img.style.cssText = css;
+
+      const lbl = document.getElementById(`cov-lbl-${prop}`);
+      if (lbl) lbl.textContent = `%${val}`;
+    }
 
     function captureFrameFromVideoFile(fileOrUrl, targetRatio = null) {
       return new Promise((resolve) => {
@@ -1493,22 +1410,17 @@
           if (done) return;
           done = true;
           try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {}
-          if (rev) setTimeout(() => { try { URL.revokeObjectURL(rev); } catch (e) {} }, 300);
+          if (rev) setTimeout(() => { try { URL.revokeObjectURL(rev); } catch (e) {} }, 250);
           resolve(res);
         };
 
-        const timer = setTimeout(() => cleanup(null), 5000);
+        const timer = setTimeout(() => cleanup(null), 4500);
 
         v.onloadedmetadata = () => {
           const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 10;
-          const ratio = targetRatio !== null ? targetRatio : (0.18 + Math.random() * 0.64);
-          const seekTo = Math.max(0.5, Math.min(dur - 0.5, dur * ratio));
-          try {
-            v.currentTime = seekTo;
-          } catch (e) {
-            clearTimeout(timer);
-            cleanup(null);
-          }
+          const ratio = targetRatio !== null ? targetRatio : (0.15 + Math.random() * 0.68);
+          const seekTo = Math.max(0.4, Math.min(dur - 0.4, dur * ratio));
+          try { v.currentTime = seekTo; } catch (e) { clearTimeout(timer); cleanup(null); }
         };
 
         v.onseeked = () => {
@@ -1528,26 +1440,27 @@
               const posterFile = new File([blob], `kapak_${Date.now()}.jpg`, { type: 'image/jpeg' });
               const previewUrl = URL.createObjectURL(blob);
               cleanup({ file: posterFile, previewUrl, durationSec: v.duration || 0 });
-            }, 'image/jpeg', 0.86);
+            }, 'image/jpeg', 0.88);
           } catch (e) {
             cleanup(null);
           }
         };
 
-        v.onerror = () => {
-          clearTimeout(timer);
-          cleanup(null);
-        };
+        v.onerror = () => { clearTimeout(timer); cleanup(null); };
       });
     }
 
-    async function pickRandomFrameForCover() {
-      const anyVideoFile = PENDING_FILES.get('movie_sub') || PENDING_FILES.get('movie_dub') ||
+    function getActiveVideoSourceForCover() {
+      return PENDING_FILES.get('movie_sub') || PENDING_FILES.get('movie_dub') ||
         PENDING_FILES.get('series_sub') || PENDING_FILES.get('series_dub') ||
-        PENDING_FILES.get('edit_sub') || PENDING_FILES.get('edit_dub');
-      const source = anyVideoFile || activeFrameVideoUrl;
+        PENDING_FILES.get('edit_sub') || PENDING_FILES.get('edit_dub') ||
+        activeFrameVideoUrl;
+    }
+
+    async function pickRandomFrameForCover() {
+      const source = getActiveVideoSourceForCover();
       if (!source) {
-        showToast('Önce bir video dosyası seçin.', 'info');
+        showToast('Önce bir video seçin.', 'info');
         return;
       }
       const snap = await captureFrameFromVideoFile(source, null);
@@ -1555,17 +1468,13 @@
         PENDING_FILES.set('poster', snap.file);
         const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
         if (img) img.src = snap.previewUrl;
-        showToast('Videodan rastgele sahne kapağı seçildi.', 'success');
       }
     }
 
     async function scrubFrameForCover(ratioPct) {
-      const anyVideoFile = PENDING_FILES.get('movie_sub') || PENDING_FILES.get('movie_dub') ||
-        PENDING_FILES.get('series_sub') || PENDING_FILES.get('series_dub') ||
-        PENDING_FILES.get('edit_sub') || PENDING_FILES.get('edit_dub');
-      const source = anyVideoFile || activeFrameVideoUrl;
+      const source = getActiveVideoSourceForCover();
       if (!source) return;
-      const ratio = Math.max(0.02, Math.min(0.98, Number(ratioPct) / 100));
+      const ratio = Math.max(0.01, Math.min(0.99, Number(ratioPct) / 100));
       const snap = await captureFrameFromVideoFile(source, ratio);
       if (snap) {
         PENDING_FILES.set('poster', snap.file);
@@ -1574,8 +1483,41 @@
       }
     }
 
+    async function generateSixFrameStrip() {
+      const source = getActiveVideoSourceForCover();
+      const stripEl = document.getElementById('video-6frame-strip');
+      if (!source || !stripEl) return;
+
+      stripEl.classList.remove('hidden');
+      stripEl.innerHTML = `<div class="col-span-6 text-[10px] font-bold text-bpRoyal py-1 text-center">Videodan 6 sahne çıkarılıyor...</div>`;
+
+      const ratios = [0.10, 0.25, 0.42, 0.58, 0.74, 0.88];
+      const snaps = await Promise.all(ratios.map(r => captureFrameFromVideoFile(source, r)));
+      const valid = snaps.filter(Boolean);
+      if (valid.length === 0) {
+        stripEl.classList.add('hidden');
+        return;
+      }
+
+      window._stripSnapshots = valid;
+      stripEl.innerHTML = valid.map((s, idx) => `
+        <button type="button" onclick="selectFrameFromStrip(${idx})" class="relative aspect-video rounded-md overflow-hidden border-2 border-transparent hover:border-bpYellow focus:border-bpRoyal cursor-pointer bg-black">
+          <img src="${s.previewUrl}" class="w-full h-full object-cover" />
+        </button>
+      `).join('');
+    }
+
+    function selectFrameFromStrip(idx) {
+      const s = (window._stripSnapshots || [])[idx];
+      if (!s) return;
+      PENDING_FILES.set('poster', s.file);
+      const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
+      if (img) img.src = s.previewUrl;
+      showToast('Seçilen sahne kapak yapıldı.', 'success');
+    }
+
     /* =====================================================================
-       5. DURATION & LIVE AUTOCOMPLETE SUGGESTIONS (CLICKABLE, NO AUTO-OVERWRITE)
+       5. DURATION & LIVE AUTOCOMPLETE SUGGESTIONS (NO AUTO-OVERWRITE)
     ===================================================================== */
     function formatDurationFromSeconds(sec) {
       const s = Math.max(0, Math.round(Number(sec) || 0));
@@ -1623,7 +1565,7 @@
           resolve(res);
         };
 
-        const t = setTimeout(() => end({ durationSec: 0, durationLabel: '' }), 2500);
+        const t = setTimeout(() => end({ durationSec: 0, durationLabel: '' }), 2200);
         v.onloadedmetadata = () => {
           clearTimeout(t);
           const d = isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
@@ -1633,19 +1575,38 @@
       });
     }
 
-    function parseFilenameTitleYear(filename) {
-      if (!filename) return { title: '', year: null };
+    function parseFilenameDetails(filename) {
+      if (!filename) return { title: '', year: null, season: 1, episode: 1, isDub: false };
       let base = filename.replace(/\.[^/.]+$/, '');
+      const isDub = /\b(dublaj|tr\s*dub|turkce\s*dublaj)\b/i.test(base);
+
+      let season = 1;
+      let episode = 1;
+      const seMatch = base.match(/S(\d{1,2})[\s._-]*E(\d{1,3})/i) || base.match(/(\d{1,2})x(\d{1,3})/i);
+      if (seMatch) {
+        season = Number(seMatch[1]) || 1;
+        episode = Number(seMatch[2]) || 1;
+        base = base.slice(0, seMatch.index);
+      } else {
+        const epMatch = base.match(/\b(\d{1,3})\.?\s*(?:bolum|bölüm|ep)\b/i);
+        if (epMatch) {
+          episode = Number(epMatch[1]) || 1;
+          base = base.slice(0, epMatch.index);
+        }
+      }
+
       const yMatch = base.match(/\b(19\d{2}|20\d{2})\b/);
       const year = yMatch ? Number(yMatch[1]) : null;
       if (yMatch) base = base.slice(0, yMatch.index);
+
       base = base
         .replace(/\(.*?\)|\[.*?\]/g, ' ')
         .replace(/\b(1080p|720p|480p|2160p|4k|bluray|web-dl|webrip|hdrip|x264|x265|hevc|tr|dublaj|altyazili|altyazı)\b/gi, ' ')
         .replace(/[._-]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-      return { title: base, year };
+
+      return { title: base || 'Yeni İçerik', year, season, episode, isDub };
     }
 
     async function searchOnlineMetadata(query, mediaType = 'movie') {
@@ -1654,33 +1615,31 @@
       const out = [];
       const seen = new Set();
 
-      // 1. iTunes Search API
-      try {
-        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(clean)}&country=tr&media=${mediaType === 'series' ? 'tvShow' : 'movie'}&limit=8`);
-        const data = await res.json();
-        (data.results || []).forEach(it => {
-          const title = it.trackName || it.collectionName || '';
-          if (!title) return;
-          const yMatch = String(it.releaseDate || '').match(/\b(19\d{2}|20\d{2})\b/);
-          const yr = yMatch ? Number(yMatch[1]) : new Date().getFullYear();
-          const key = `${title.toLowerCase()}_${yr}`;
-          if (seen.has(key)) return;
-          seen.add(key);
-          out.push({
-            title,
-            year: yr,
-            genre: it.primaryGenreName || (mediaType === 'series' ? 'Dizi' : 'Sinema'),
-            posterUrl: it.artworkUrl100 ? it.artworkUrl100.replace(/100x100bb\.(jpg|png)/i, '600x600bb.$1') : '',
-            duration: it.trackTimeMillis ? formatDurationFromSeconds(it.trackTimeMillis / 1000) : ''
+      const p1 = fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(clean)}&country=tr&media=${mediaType === 'series' ? 'tvShow' : 'movie'}&limit=8`)
+        .then(r => r.json())
+        .then(data => {
+          (data.results || []).forEach(it => {
+            const title = it.trackName || it.collectionName || '';
+            if (!title) return;
+            const yMatch = String(it.releaseDate || '').match(/\b(19\d{2}|20\d{2})\b/);
+            const yr = yMatch ? Number(yMatch[1]) : new Date().getFullYear();
+            const key = `${title.toLowerCase()}_${yr}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            out.push({
+              title,
+              year: yr,
+              genre: it.primaryGenreName || (mediaType === 'series' ? 'Dizi' : 'Sinema'),
+              posterUrl: it.artworkUrl100 ? it.artworkUrl100.replace(/100x100bb\.(jpg|png)/i, '600x600bb.$1') : '',
+              duration: it.trackTimeMillis ? formatDurationFromSeconds(it.trackTimeMillis / 1000) : ''
+            });
           });
-        });
-      } catch (e) {}
+        })
+        .catch(() => {});
 
-      // 2. TVMaze API for TV series
-      if (mediaType === 'series' && out.length < 6) {
-        try {
-          const res2 = await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(clean)}`);
-          const list2 = await res2.json();
+      const p2 = fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(clean)}`)
+        .then(r => r.json())
+        .then(list2 => {
           (list2 || []).slice(0, 6).forEach(entry => {
             const sh = entry.show;
             if (!sh || !sh.name) return;
@@ -1696,9 +1655,10 @@
               duration: sh.runtime ? `${sh.runtime} dk` : ''
             });
           });
-        } catch (e) {}
-      }
+        })
+        .catch(() => {});
 
+      await Promise.allSettled([p1, p2]);
       return out.slice(0, 8);
     }
 
@@ -1719,7 +1679,7 @@
       autocompleteDebounceTimer = setTimeout(async () => {
         const seq = ++autocompleteSeq;
         box.classList.remove('hidden');
-        box.innerHTML = `<div class="px-3 py-2 text-[11px] font-bold text-slate-400">Öneriler aranıyor...</div>`;
+        box.innerHTML = `<div class="px-3 py-2 text-[11px] font-bold text-slate-400">Seçenekler aranıyor...</div>`;
         const results = await searchOnlineMetadata(q, mediaType);
         if (seq !== autocompleteSeq) return;
         foundCandidates = results;
@@ -1746,23 +1706,26 @@
             </button>
           `).join('')}
         `;
-      }, 250);
+      }, 220);
     }
 
     /* =====================================================================
-       6. ADD / EDIT / TRIM MODALS
+       6. ADD / BATCH UPLOAD / EDIT / TRIM MODALS
     ===================================================================== */
     let activeAddTab = 'movie';
     let preselectedSeriesId = '';
     let foundCandidates = [];
+    let batchQueueFiles = [];
     let formDraft = { year: new Date().getFullYear(), genre: 'Sinema', duration: '', durationSec: 0, posterUrl: '' };
 
     function openAddContentModal(tab = 'movie', seriesId = '') {
       activeAddTab = tab;
       if (seriesId) preselectedSeriesId = seriesId;
       PENDING_FILES.clear();
+      batchQueueFiles = [];
       activeFrameVideoUrl = '';
       foundCandidates = [];
+      resetCoverEditorState();
       formDraft = {
         year: new Date().getFullYear(),
         genre: tab === 'series' ? 'Dizi' : 'Sinema',
@@ -1832,12 +1795,11 @@
         badge.classList.remove('hidden');
       }
 
-      const parsed = parseFilenameTitleYear(file.name);
+      const parsed = parseFilenameDetails(file.name);
       if (titleInputId) {
         const tEl = document.getElementById(titleInputId);
         if (tEl && !tEl.value.trim() && parsed.title) {
           tEl.value = parsed.title;
-          onTitleTypingAutocomplete(titleInputId, activeAddTab === 'series' ? 'series' : 'movie');
         }
       }
       if (parsed.year) {
@@ -1863,6 +1825,7 @@
         }
       }
       document.getElementById('video-frame-cover-tools')?.classList.remove('hidden');
+      generateSixFrameStrip();
     }
 
     function renderVideoSourceInputs(prefix, titleInputId) {
@@ -1897,49 +1860,266 @@
       `;
     }
 
-    function renderMetaFieldsBox() {
+    function renderAdvancedCoverStudioHtml(imgId, initialSrc) {
       return `
-        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
-          <div class="w-24 shrink-0 space-y-1.5">
-            <div class="w-24 h-32 rounded-lg overflow-hidden bg-bpNavy border border-slate-300">
-              <img id="draft-poster-preview" src="${CINEMA_FALLBACK_PHOTO}" alt="Kapak" class="w-full h-full object-cover" />
-            </div>
-            <label class="block w-full py-1 px-1 rounded-lg bg-bpNavy hover:bg-bpRoyal text-white text-[10px] font-extrabold text-center cursor-pointer">
-              <span>Kapak Seç</span>
-              <input type="file" id="draft-poster-file" accept="image/*" onchange="if(this.files[0]){ PENDING_FILES.set('poster', this.files[0]); document.getElementById('draft-poster-preview').src = URL.createObjectURL(this.files[0]); }" class="hidden" />
-            </label>
-          </div>
-          <div class="flex-1 min-w-0 space-y-2">
-            <div class="grid grid-cols-3 gap-1.5">
-              <div>
-                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Yıl</label>
-                <input type="number" id="draft-year-input" value="${formDraft.year}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-extrabold" />
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+          <div class="flex items-start gap-3">
+            <div class="w-24 shrink-0 space-y-1.5">
+              <div class="w-24 h-36 rounded-lg overflow-hidden bg-bpNavy border border-slate-300 relative">
+                <img id="${imgId}" src="${escapeAttr(initialSrc)}" onerror="this.src='${CINEMA_FALLBACK_PHOTO}'" style="${buildCoverCssStyle(coverEditorState)}" alt="Kapak" class="w-full h-full object-cover transition-transform duration-150" />
               </div>
-              <div>
-                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Tür</label>
-                <input type="text" id="draft-genre-input" value="${escapeAttr(formDraft.genre)}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
-              </div>
-              <div>
-                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Süre</label>
-                <input type="text" id="draft-duration-input" value="${escapeAttr(formDraft.duration)}" placeholder="Otomatik" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
-              </div>
+              <label class="block w-full py-1 px-1 rounded-lg bg-bpNavy hover:bg-bpRoyal text-white text-[10px] font-extrabold text-center cursor-pointer">
+                <span>Dosyadan Kapak</span>
+                <input type="file" id="draft-poster-file" accept="image/*" onchange="if(this.files[0]){ PENDING_FILES.set('poster', this.files[0]); document.getElementById('${imgId}').src = URL.createObjectURL(this.files[0]); }" class="hidden" />
+              </label>
             </div>
 
-            <div id="video-frame-cover-tools" class="hidden p-2 rounded-lg bg-blue-50/90 border border-blue-200 space-y-1">
-              <div class="flex items-center justify-between gap-1">
-                <span class="text-[10px] font-extrabold text-bpRoyal">Video İçi Sahne Kapağı</span>
+            <div class="flex-1 min-w-0 space-y-2">
+              <div class="grid grid-cols-3 gap-1.5">
+                <div>
+                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Yıl</label>
+                  <input type="number" id="draft-year-input" value="${formDraft.year}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-extrabold" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Tür</label>
+                  <input type="text" id="draft-genre-input" value="${escapeAttr(formDraft.genre)}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Süre</label>
+                  <input type="text" id="draft-duration-input" value="${escapeAttr(formDraft.duration)}" placeholder="Otomatik" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Kapak URL (İsteğe bağlı)</label>
+                <input type="url" id="draft-poster-url-input" value="${escapeAttr(formDraft.posterUrl || '')}" oninput="if(this.value.trim()){ PENDING_FILES.delete('poster'); document.getElementById('${imgId}').src = this.value.trim(); }" placeholder="https://..." class="w-full px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px]" />
+              </div>
+
+              <!-- Fine Cover Adjustments: Zoom, X/Y Framing, Brightness, Contrast, Saturation -->
+              <div class="p-2 rounded-lg bg-white border border-slate-200 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-extrabold text-bpNavy">Kapak Kadraj &amp; Renk Ayarları</span>
+                  <button type="button" onclick="resetCoverEditorState(); document.getElementById('${imgId}').style.cssText='';" class="text-[9px] font-extrabold text-bpRoyal cursor-pointer">Sıfırla</button>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[9px] font-bold text-slate-600">
+                  <div>
+                    <div class="flex justify-between"><span>Yakınlaştır</span><span id="cov-lbl-zoom">%${coverEditorState.zoom}</span></div>
+                    <input type="range" min="100" max="175" value="${coverEditorState.zoom}" oninput="updateCoverStyleControl('zoom', this.value)" class="bp-scrubber w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between"><span>Yatay Odak</span><span id="cov-lbl-posX">%${coverEditorState.posX}</span></div>
+                    <input type="range" min="0" max="100" value="${coverEditorState.posX}" oninput="updateCoverStyleControl('posX', this.value)" class="bp-scrubber w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between"><span>Dikey Odak</span><span id="cov-lbl-posY">%${coverEditorState.posY}</span></div>
+                    <input type="range" min="0" max="100" value="${coverEditorState.posY}" oninput="updateCoverStyleControl('posY', this.value)" class="bp-scrubber w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between"><span>Parlaklık</span><span id="cov-lbl-brightness">%${coverEditorState.brightness}</span></div>
+                    <input type="range" min="70" max="140" value="${coverEditorState.brightness}" oninput="updateCoverStyleControl('brightness', this.value)" class="bp-scrubber w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between"><span>Kontrast</span><span id="cov-lbl-contrast">%${coverEditorState.contrast}</span></div>
+                    <input type="range" min="70" max="150" value="${coverEditorState.contrast}" oninput="updateCoverStyleControl('contrast', this.value)" class="bp-scrubber w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between"><span>Canlılık</span><span id="cov-lbl-saturate">%${coverEditorState.saturate}</span></div>
+                    <input type="range" min="50" max="160" value="${coverEditorState.saturate}" oninput="updateCoverStyleControl('saturate', this.value)" class="bp-scrubber w-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Internal Frame Picker -->
+          <div id="video-frame-cover-tools" class="${getActiveVideoSourceForCover() ? '' : 'hidden'} p-2.5 rounded-lg bg-blue-50/90 border border-blue-200 space-y-2">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-[10px] font-extrabold text-bpRoyal">Video İçi Sahne Seçici</span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="generateSixFrameStrip()" class="px-2 py-0.5 rounded bg-bpNavy text-white text-[10px] font-extrabold cursor-pointer">6 Sahne Getir</button>
                 <button type="button" onclick="pickRandomFrameForCover()" class="px-2 py-0.5 rounded bg-bpRoyal text-white text-[10px] font-extrabold cursor-pointer">Rastgele Sahne</button>
               </div>
-              <input type="range" min="2" max="98" value="45" onchange="scrubFrameForCover(this.value)" class="bp-scrubber w-full" title="Videodan kapak sahnesi seçin" />
             </div>
-
-            <div>
-              <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Kapak URL (İsteğe bağlı)</label>
-              <input type="url" id="draft-poster-url-input" oninput="if(this.value.trim()){ PENDING_FILES.delete('poster'); document.getElementById('draft-poster-preview').src = this.value.trim(); }" placeholder="https://..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px]" />
+            <div id="video-6frame-strip" class="hidden grid grid-cols-6 gap-1.5"></div>
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] font-bold text-bpNavy shrink-0">Saniye Kaydır:</span>
+              <input type="range" min="1" max="99" value="45" onchange="scrubFrameForCover(this.value)" class="bp-scrubber flex-1" title="Videonun istediğiniz saniyesinden kapak yakalayın" />
             </div>
           </div>
         </div>
       `;
+    }
+
+    function handleBatchFilesSelected(inputEl) {
+      const files = Array.from(inputEl?.files || []);
+      if (files.length === 0) return;
+      batchQueueFiles = files.map((f, idx) => {
+        const parsed = parseFilenameDetails(f.name);
+        return {
+          id: 'bq_' + idx + '_' + Date.now(),
+          file: f,
+          title: parsed.title,
+          year: parsed.year || new Date().getFullYear(),
+          season: parsed.season,
+          episode: parsed.episode,
+          isDub: parsed.isDub
+        };
+      });
+      renderBatchQueueList();
+    }
+
+    function renderBatchQueueList() {
+      const listEl = document.getElementById('batch-files-list');
+      if (!listEl) return;
+      if (batchQueueFiles.length === 0) {
+        listEl.innerHTML = '';
+        return;
+      }
+      listEl.innerHTML = batchQueueFiles.map((item, idx) => `
+        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-bpNavy text-bpYellow font-mono text-[10px] font-extrabold">${idx + 1}</span>
+          <input type="text" value="${escapeAttr(item.title)}" onchange="batchQueueFiles[${idx}].title = this.value" class="flex-1 min-w-[140px] px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-extrabold" />
+          <input type="number" value="${item.year}" onchange="batchQueueFiles[${idx}].year = Number(this.value)" class="w-16 px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold" />
+          <select onchange="batchQueueFiles[${idx}].isDub = (this.value === 'dub')" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-bold">
+            <option value="sub" ${!item.isDub ? 'selected' : ''}>Altyazı</option>
+            <option value="dub" ${item.isDub ? 'selected' : ''}>Dublaj</option>
+          </select>
+          <span class="text-[10px] font-mono text-slate-500">${(item.file.size / 1048576).toFixed(1)} MB</span>
+          <button type="button" onclick="batchQueueFiles.splice(${idx}, 1); renderBatchQueueList();" class="w-6 h-6 rounded bg-bpRed/15 text-bpRed font-extrabold text-xs cursor-pointer">✕</button>
+        </div>
+      `).join('');
+    }
+
+    async function submitBatchUpload(e) {
+      e.preventDefault();
+      if (batchQueueFiles.length === 0) {
+        showToast('Lütfen en az bir video dosyası seçin.', 'error');
+        return;
+      }
+      const mode = document.getElementById('batch-mode-select')?.value || 'movies';
+      const sharedSeriesTitle = document.getElementById('batch-series-title')?.value?.trim() || batchQueueFiles[0].title;
+      const itemsToProcess = [...batchQueueFiles];
+      closeModal();
+
+      if (mode === 'movies') {
+        showToast(`${itemsToProcess.length} film tek seferde ekleniyor...`, 'success');
+        for (const entry of itemsToProcess) {
+          const sk = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
+          LOCAL_SESSION_BLOBS.set(sk, URL.createObjectURL(entry.file));
+          const meta = await readVideoMetadataQuick(entry.file);
+          const snap = await captureFrameFromVideoFile(entry.file, null);
+
+          const id = 'mov-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+          const movie = {
+            id,
+            type: 'movie',
+            title: entry.title,
+            year: entry.year,
+            genre: 'Sinema',
+            duration: meta.durationLabel || '',
+            durationSec: meta.durationSec || 0,
+            hasSub: !entry.isDub,
+            hasDub: entry.isDub,
+            posterUrl: snap ? snap.previewUrl : CINEMA_FALLBACK_PHOTO,
+            sources: [{
+              id: entry.isDub ? 'dub' : 'sub',
+              label: entry.isDub ? 'TR Dublaj' : 'TR Altyazılı',
+              defaultMode: entry.isDub ? 'dub' : 'sub',
+              url: '',
+              sessionKey: sk,
+              storagePath: '',
+              durationSec: meta.durationSec || 0,
+              trimStart: 0,
+              trimEnd: meta.durationSec || 0
+            }],
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          };
+
+          state.catalog.unshift(movie);
+          writeLocalCatalogCache(state.catalog);
+          renderMainView();
+          await pushItemToAllClouds(movie);
+
+          const tasks = [{
+            kind: 'movie_source',
+            sourceId: entry.isDub ? 'dub' : 'sub',
+            title: entry.title,
+            label: entry.isDub ? 'TR Dublaj' : 'TR Altyazılı',
+            file: entry.file
+          }];
+          if (snap) tasks.unshift({ kind: 'poster', title: entry.title, label: 'Kapak', file: snap.file });
+          uploadMediaFilesToCloud(id, tasks);
+        }
+      } else {
+        // Batch episodes into a single series
+        showToast(`${itemsToProcess.length} bölüm "${sharedSeriesTitle}" dizisine ekleniyor...`, 'success');
+        const firstSnap = await captureFrameFromVideoFile(itemsToProcess[0].file, null);
+        const seriesId = 'ser-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+        const episodes = [];
+        const allTasks = [];
+        if (firstSnap) allTasks.push({ kind: 'poster', title: sharedSeriesTitle, label: 'Kapak', file: firstSnap.file });
+
+        for (let i = 0; i < itemsToProcess.length; i++) {
+          const entry = itemsToProcess[i];
+          const sk = 'sess_' + Date.now() + '_' + i;
+          LOCAL_SESSION_BLOBS.set(sk, URL.createObjectURL(entry.file));
+          const meta = await readVideoMetadataQuick(entry.file);
+          const epNum = entry.episode > 1 ? entry.episode : (i + 1);
+          const sNum = entry.season || 1;
+          const srcId = entry.isDub ? 'dub' : 'sub';
+
+          episodes.push({
+            season: sNum,
+            number: epNum,
+            name: `${epNum}. Bölüm`,
+            duration: meta.durationLabel || '',
+            durationSec: meta.durationSec || 0,
+            sources: [{
+              id: srcId,
+              label: entry.isDub ? 'TR Dublaj' : 'TR Altyazılı',
+              defaultMode: srcId,
+              url: '',
+              sessionKey: sk,
+              storagePath: '',
+              durationSec: meta.durationSec || 0,
+              trimStart: 0,
+              trimEnd: meta.durationSec || 0
+            }]
+          });
+
+          allTasks.push({
+            kind: 'episode_source',
+            sourceId: srcId,
+            season: sNum,
+            episode: epNum,
+            title: sharedSeriesTitle,
+            label: `S${sNum} B${epNum}`,
+            file: entry.file
+          });
+        }
+
+        const series = {
+          id: seriesId,
+          type: 'series',
+          title: sharedSeriesTitle,
+          year: itemsToProcess[0].year || new Date().getFullYear(),
+          genre: 'Dizi',
+          seasons: Math.max(...episodes.map(e => e.season)),
+          hasSub: episodes.some(ep => ep.sources.some(s => s.defaultMode === 'sub')),
+          hasDub: episodes.some(ep => ep.sources.some(s => s.defaultMode === 'dub')),
+          posterUrl: firstSnap ? firstSnap.previewUrl : CINEMA_FALLBACK_PHOTO,
+          episodes,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+
+        state.catalog.unshift(series);
+        writeLocalCatalogCache(state.catalog);
+        renderMainView();
+        await pushItemToAllClouds(series);
+        uploadMediaFilesToCloud(seriesId, allTasks);
+      }
     }
 
     function renderAddModal() {
@@ -1957,11 +2137,11 @@
               </div>
               <div id="draft-candidates-box" class="hidden mt-1.5 rounded-xl border border-bpRoyal bg-white max-h-52 overflow-y-auto shadow-xl"></div>
             </div>
-            ${renderMetaFieldsBox()}
+            ${renderAdvancedCoverStudioHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             ${renderVideoSourceInputs('movie', 'add-movie-title')}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow cursor-pointer">Yayınla ve Buluta Aktar</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow cursor-pointer">Turbo Yayınla</button>
             </div>
           </form>
         `;
@@ -1986,11 +2166,42 @@
                 <input type="number" id="add-series-episode" min="1" value="1" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold" />
               </div>
             </div>
-            ${renderMetaFieldsBox()}
+            ${renderAdvancedCoverStudioHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             ${renderVideoSourceInputs('series', 'add-series-title')}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Yayınla ve Buluta Aktar</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Turbo Yayınla</button>
+            </div>
+          </form>
+        `;
+      } else if (activeAddTab === 'batch') {
+        body = `
+          <form onsubmit="submitBatchUpload(event)" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Yükleme Türü</label>
+                <select id="batch-mode-select" onchange="document.getElementById('batch-series-box').classList.toggle('hidden', this.value !== 'series')" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold">
+                  <option value="movies">Her Dosya Ayrı Film Olsun</option>
+                  <option value="series">Hepsi Tek Dizinin Bölümleri Olsun</option>
+                </select>
+              </div>
+              <div id="batch-series-box" class="hidden">
+                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Ortak Dizi Adı</label>
+                <input type="text" id="batch-series-title" placeholder="Örn: Behzat Ç." class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold" />
+              </div>
+            </div>
+
+            <label class="block w-full py-4 px-4 rounded-2xl border-2 border-dashed border-bpRoyal bg-blue-50/70 hover:bg-blue-100/70 text-center cursor-pointer transition">
+              <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin (Çoklu Seçim)</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Seçtiğiniz tüm videoların kapakları içlerinden otomatik oluşturulur</div>
+              <input type="file" multiple accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleBatchFilesSelected(this)" class="hidden" />
+            </label>
+
+            <div id="batch-files-list" class="space-y-1.5 max-h-52 overflow-y-auto"></div>
+
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold shadow cursor-pointer">Hepsini Birden Yayınla</button>
             </div>
           </form>
         `;
@@ -2042,10 +2253,11 @@
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>
-          <div class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl">
-            <button type="button" onclick="openAddContentModal('movie')" class="py-2 rounded-lg text-xs font-extrabold cursor-pointer ${activeAddTab === 'movie' ? 'bg-bpNavy text-white' : 'text-bpNavy'}">+ Film</button>
-            <button type="button" onclick="openAddContentModal('series')" class="py-2 rounded-lg text-xs font-extrabold cursor-pointer ${activeAddTab === 'series' ? 'bg-bpEmerald text-white' : 'text-bpNavy'}">+ Dizi</button>
-            <button type="button" onclick="openAddContentModal('episode')" class="py-2 rounded-lg text-xs font-extrabold cursor-pointer ${activeAddTab === 'episode' ? 'bg-amber-500 text-bpNavy' : 'text-bpNavy'}">+ Bölüm</button>
+          <div class="grid grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <button type="button" onclick="openAddContentModal('movie')" class="py-2 rounded-lg text-[11px] font-extrabold cursor-pointer ${activeAddTab === 'movie' ? 'bg-bpNavy text-white' : 'text-bpNavy'}">+ Film</button>
+            <button type="button" onclick="openAddContentModal('series')" class="py-2 rounded-lg text-[11px] font-extrabold cursor-pointer ${activeAddTab === 'series' ? 'bg-bpEmerald text-white' : 'text-bpNavy'}">+ Dizi</button>
+            <button type="button" onclick="openAddContentModal('batch')" class="py-2 rounded-lg text-[11px] font-extrabold cursor-pointer ${activeAddTab === 'batch' ? 'bg-bpRoyal text-white' : 'text-bpNavy'}">Toplu Yükle</button>
+            <button type="button" onclick="openAddContentModal('episode')" class="py-2 rounded-lg text-[11px] font-extrabold cursor-pointer ${activeAddTab === 'episode' ? 'bg-amber-500 text-bpNavy' : 'text-bpNavy'}">+ Bölüm</button>
           </div>
           ${body}
         </div>
@@ -2064,7 +2276,6 @@
       if (subFile) {
         const sk = 'sess_' + Date.now() + '_sub';
         LOCAL_SESSION_BLOBS.set(sk, URL.createObjectURL(subFile));
-        LOCAL_SESSION_FILES.set(sk, subFile);
         sources.push({
           id: 'sub',
           label: 'TR Altyazılı',
@@ -2102,7 +2313,6 @@
       if (dubFile) {
         const sk = 'sess_' + Date.now() + '_dub';
         LOCAL_SESSION_BLOBS.set(sk, URL.createObjectURL(dubFile));
-        LOCAL_SESSION_FILES.set(sk, dubFile);
         sources.push({
           id: 'dub',
           label: 'TR Dublaj',
@@ -2175,6 +2385,7 @@
         hasSub: sources.some(s => s.defaultMode === 'sub'),
         hasDub: sources.some(s => s.defaultMode === 'dub'),
         posterUrl,
+        posterStyle: buildCoverCssStyle(coverEditorState),
         posterStoragePath: '',
         sources,
         createdAt: Date.now(),
@@ -2183,9 +2394,10 @@
 
       state.catalog.unshift(movie);
       writeLocalCatalogCache(state.catalog);
+      populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, karşı cihazlara aktarılıyor...`, 'success');
+      showToast(`"${title}" eklendi, turbo bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(movie);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2228,6 +2440,7 @@
         hasSub: sources.some(s => s.defaultMode === 'sub'),
         hasDub: sources.some(s => s.defaultMode === 'dub'),
         posterUrl,
+        posterStyle: buildCoverCssStyle(coverEditorState),
         posterStoragePath: '',
         episodes: [{
           season,
@@ -2243,9 +2456,10 @@
 
       state.catalog.unshift(series);
       writeLocalCatalogCache(state.catalog);
+      populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, karşı cihazlara aktarılıyor...`, 'success');
+      showToast(`"${title}" eklendi, turbo bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(series);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2288,12 +2502,20 @@
     }
 
     /* =====================================================================
-       7. EDIT, TRIM & DELETE MODALS
+       7. EDIT, TRIM, PLATFORM SETTINGS & DELETE MODALS
     ===================================================================== */
     function openEditItemModal(itemId) {
       const item = state.catalog.find(m => m.id === itemId);
       if (!item) return;
       PENDING_FILES.clear();
+      resetCoverEditorState();
+      formDraft = {
+        year: item.year,
+        genre: item.genre || '',
+        duration: item.duration || '',
+        durationSec: item.durationSec || 0,
+        posterUrl: item.posterUrl || ''
+      };
 
       const firstSrc = item.type === 'movie'
         ? (item.sources || [])[0]
@@ -2304,7 +2526,7 @@
         <div class="birperde-ribbon"></div>
         <div class="p-4 sm:p-5 space-y-3.5">
           <div class="flex items-center justify-between gap-2">
-            <h3 class="text-base font-extrabold text-bpNavy">Düzenle</h3>
+            <h3 class="text-base font-extrabold text-bpNavy">Düzenle &amp; Kapak Tasarla</h3>
             <div class="flex items-center gap-1.5">
               <button type="button" onclick="closeModal(); openVideoTrimModal('${escapeAttr(item.id)}')" class="px-3 py-1.5 rounded-lg bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Kes</button>
               <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-bpRed hover:text-white flex items-center justify-center cursor-pointer">
@@ -2319,35 +2541,7 @@
               <input type="text" id="edit-title-inp" required value="${escapeAttr(item.title)}" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold" />
             </div>
 
-            <div class="grid grid-cols-3 gap-2">
-              <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Yıl</label>
-                <input type="number" id="edit-year-inp" value="${item.year}" class="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-extrabold" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Tür</label>
-                <input type="text" id="edit-genre-inp" value="${escapeAttr(item.genre || '')}" class="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Süre</label>
-                <input type="text" id="edit-duration-inp" value="${escapeAttr(item.duration || '')}" class="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold" />
-              </div>
-            </div>
-
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
-              <img id="edit-poster-img" src="${escapeAttr(item.posterUrl || CINEMA_FALLBACK_PHOTO)}" onerror="this.src='${CINEMA_FALLBACK_PHOTO}'" class="w-16 h-24 rounded-lg object-cover bg-bpNavy shrink-0" />
-              <div class="flex-1 min-w-0 space-y-2">
-                <input type="url" id="edit-poster-url-inp" value="${escapeAttr(item.posterUrl || '')}" oninput="if(this.value.trim()){ PENDING_FILES.delete('poster'); document.getElementById('edit-poster-img').src = this.value.trim(); }" placeholder="Kapak URL" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px]" />
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <label class="inline-block px-2.5 py-1 rounded-lg bg-bpNavy text-white text-[10px] font-extrabold cursor-pointer">
-                    <span>Dosyadan Kapak Seç</span>
-                    <input type="file" id="edit-poster-file-inp" accept="image/*" onchange="if(this.files[0]){ PENDING_FILES.set('poster', this.files[0]); document.getElementById('edit-poster-img').src = URL.createObjectURL(this.files[0]); }" class="hidden" />
-                  </label>
-                  ${activeFrameVideoUrl ? `<button type="button" onclick="pickRandomFrameForCover()" class="px-2.5 py-1 rounded-lg bg-bpRoyal text-white text-[10px] font-extrabold cursor-pointer">Videodan Rastgele Kapak</button>` : ''}
-                </div>
-                ${activeFrameVideoUrl ? `<input type="range" min="2" max="98" value="45" onchange="scrubFrameForCover(this.value)" class="bp-scrubber w-full" title="Videodan sahne seç" />` : ''}
-              </div>
-            </div>
+            ${renderAdvancedCoverStudioHtml('edit-poster-img', item.posterUrl || CINEMA_FALLBACK_PHOTO)}
 
             ${item.type === 'movie' ? renderVideoSourceInputs('edit', null) : ''}
 
@@ -2366,12 +2560,13 @@
       if (!item) return;
 
       item.title = document.getElementById('edit-title-inp').value.trim() || item.title;
-      item.year = Number(document.getElementById('edit-year-inp').value) || item.year;
-      item.genre = document.getElementById('edit-genre-inp').value.trim();
-      item.duration = document.getElementById('edit-duration-inp').value.trim() || item.duration;
+      item.year = Number(document.getElementById('draft-year-input')?.value) || item.year;
+      item.genre = document.getElementById('draft-genre-input')?.value.trim() || item.genre;
+      item.duration = document.getElementById('draft-duration-input')?.value.trim() || item.duration;
+      item.posterStyle = buildCoverCssStyle(coverEditorState);
 
-      const posterUrl = document.getElementById('edit-poster-url-inp').value.trim();
-      const posterFile = PENDING_FILES.get('poster') || document.getElementById('edit-poster-file-inp')?.files?.[0];
+      const posterUrl = document.getElementById('draft-poster-url-input')?.value?.trim() || '';
+      const posterFile = PENDING_FILES.get('poster') || document.getElementById('draft-poster-file')?.files?.[0];
       const tasks = [];
 
       if (posterFile) {
@@ -2392,12 +2587,122 @@
       }
 
       writeLocalCatalogCache(state.catalog);
+      populateGenreSelect();
       renderMainView();
       closeModal();
       showToast(`"${item.title}" güncellendi.`, 'success');
 
       await pushItemToAllClouds(item);
       if (tasks.length > 0) uploadMediaFilesToCloud(item.id, tasks);
+    }
+
+    function openPlatformSettingsModal() {
+      const p = state.prefs;
+      openModal(`
+        <div class="birperde-ribbon"></div>
+        <div class="p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-extrabold text-bpNavy">Platform Ayarları &amp; Klavye Kısayolları</h3>
+            <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-bpRed hover:text-white flex items-center justify-center cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div class="font-extrabold text-bpNavy">Görünüm ve Oynatıcı Ayarları</div>
+
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700">Kart Boyutu</span>
+                <select onchange="state.prefs.cardDensity = this.value; savePrefs(state.prefs); renderMainView();" class="px-2 py-1 rounded-lg bg-white border border-slate-200 font-bold">
+                  <option value="compact" ${p.cardDensity === 'compact' ? 'selected' : ''}>Kompakt</option>
+                  <option value="normal" ${p.cardDensity === 'normal' ? 'selected' : ''}>Standart</option>
+                  <option value="large" ${p.cardDensity === 'large' ? 'selected' : ''}>Geniş</option>
+                </select>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700">Koyu Sinema Teması</span>
+                <input type="checkbox" ${p.darkTheme ? 'checked' : ''} onchange="state.prefs.darkTheme = this.checked; savePrefs(state.prefs);" class="w-4 h-4 accent-bpRoyal cursor-pointer" />
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700">Sonraki Bölüme Otomatik Geç</span>
+                <input type="checkbox" ${p.autoPlayNext ? 'checked' : ''} onchange="state.prefs.autoPlayNext = this.checked; savePrefs(state.prefs);" class="w-4 h-4 accent-bpRoyal cursor-pointer" />
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700">Kaldığın Yerden Devam Et</span>
+                <input type="checkbox" ${p.resumePlayback ? 'checked' : ''} onchange="state.prefs.resumePlayback = this.checked; savePrefs(state.prefs);" class="w-4 h-4 accent-bpRoyal cursor-pointer" />
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700">Varsayılan Ses Kademesi (0-5)</span>
+                <select onchange="state.prefs.defaultVolumeStep = Number(this.value); savePrefs(state.prefs); setVolumeStep(Number(this.value), false);" class="px-2 py-1 rounded-lg bg-white border border-slate-200 font-mono font-bold">
+                  <option value="1" ${p.defaultVolumeStep === 1 ? 'selected' : ''}>1 (%20)</option>
+                  <option value="2" ${p.defaultVolumeStep === 2 ? 'selected' : ''}>2 (%40)</option>
+                  <option value="3" ${p.defaultVolumeStep === 3 ? 'selected' : ''}>3 (%60)</option>
+                  <option value="4" ${p.defaultVolumeStep === 4 ? 'selected' : ''}>4 (%80)</option>
+                  <option value="5" ${p.defaultVolumeStep === 5 ? 'selected' : ''}>5 (%100)</option>
+                </select>
+              </div>
+
+              <div class="pt-1 flex gap-1.5">
+                <button type="button" onclick="exportCatalogBackup()" class="flex-1 py-1.5 rounded-lg bg-bpNavy text-white font-extrabold text-[11px] cursor-pointer">Arşivi Yedekle</button>
+                <label class="flex-1 py-1.5 rounded-lg bg-bpEmerald text-white font-extrabold text-[11px] text-center cursor-pointer">
+                  <span>Yedekten Yükle</span>
+                  <input type="file" accept=".json" onchange="importCatalogBackup(this)" class="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-200 space-y-1.5">
+              <div class="font-extrabold text-bpRoyal">Bilgisayar &amp; Tablet Klavye Kontrolleri</div>
+              <div class="flex justify-between"><span>Oynat / Duraklat</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">Space / K</kbd></div>
+              <div class="flex justify-between"><span>5 Kademe Ses Aç / Kıs</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">↑ / ↓</kbd></div>
+              <div class="flex justify-between"><span>10 sn Geri / İleri Sar</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">← / →</kbd></div>
+              <div class="flex justify-between"><span>Tam Ekran Aç / Kapat</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">F</kbd></div>
+              <div class="flex justify-between"><span>Sessize Al / Aç</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">M</kbd></div>
+              <div class="flex justify-between"><span>Oynatma Hızı (- / +)</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">C / V</kbd></div>
+              <div class="flex justify-between"><span>Önceki / Sonraki Bölüm</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">P / N</kbd></div>
+              <div class="flex justify-between"><span>Kare İndir (PNG)</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">S</kbd></div>
+              <div class="flex justify-between"><span>Sinema Blur Modu</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">B</kbd></div>
+              <div class="flex justify-between"><span>Sahneye Atla (%0-%90)</span><kbd class="px-1.5 py-0.5 rounded bg-white border font-mono text-[10px]">0 - 9</kbd></div>
+            </div>
+          </div>
+        </div>
+      `);
+    }
+
+    function exportCatalogBackup() {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state.catalog, null, 2));
+      const a = document.createElement('a');
+      a.href = dataStr;
+      a.download = `birperde-yedek-${Date.now()}.json`;
+      a.click();
+      showToast('Arşiv yedeği indirildi.', 'success');
+    }
+
+    function importCatalogBackup(inputEl) {
+      const f = inputEl?.files?.[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const arr = JSON.parse(ev.target.result);
+          if (Array.isArray(arr)) {
+            applyCloudCatalogMerge(arr);
+            for (const item of arr) {
+              await pushItemToAllClouds(item);
+            }
+            closeModal();
+            showToast(`${arr.length} içerik yedekten yüklendi.`, 'success');
+          }
+        } catch (e) {
+          showToast('Geçersiz yedek dosyası.', 'error');
+        }
+      };
+      reader.readAsText(f);
     }
 
     let trimCtx = { itemId: '', season: null, episode: null, sourceId: 'sub', durationSec: 120, trimStart: 0, trimEnd: 120 };
@@ -2592,8 +2897,26 @@
     }
 
     /* =====================================================================
-       8. CATALOG RENDERING & FILTERS
+       8. CATALOG RENDERING, SORTING & FILTERS
     ===================================================================== */
+    function populateGenreSelect() {
+      const sel = document.getElementById('genre-filter-select');
+      if (!sel) return;
+      const cur = state.genreFilter;
+      const genres = Array.from(new Set((state.catalog || []).map(i => (i.genre || '').trim()).filter(Boolean))).sort();
+      sel.innerHTML = `<option value="all">Tüm Türler</option>` + genres.map(g => `<option value="${escapeAttr(g)}" ${g === cur ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('');
+    }
+
+    function switchGenreFilter(val) {
+      state.genreFilter = val || 'all';
+      renderMainView();
+    }
+
+    function switchSortOrder(val) {
+      state.sortOrder = val || 'newest';
+      renderMainView();
+    }
+
     function handleSearchInput(val) {
       state.searchQuery = (val || '').trim();
       document.getElementById('search-clear-btn')?.classList.toggle('hidden', !state.searchQuery);
@@ -2610,7 +2933,7 @@
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         const tab = btn.getAttribute('data-nav-tab');
         const active = tab === state.navTab;
-        const activeMap = { all: 'bg-bpRoyal text-white', movies: 'bg-bpNavy text-white', series: 'bg-bpEmerald text-white' };
+        const activeMap = { all: 'bg-bpRoyal text-white', movies: 'bg-bpNavy text-white', series: 'bg-bpEmerald text-white', continue: 'bg-amber-500 text-bpNavy' };
         btn.className = active
           ? `nav-tab-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${activeMap[tab]}`
           : 'nav-tab-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-bpBlack border border-slate-200 hover:bg-slate-100 transition cursor-pointer';
@@ -2619,8 +2942,8 @@
       document.querySelectorAll('.lang-filter-btn').forEach(btn => {
         const lang = btn.getAttribute('data-lang-btn');
         btn.className = lang === state.langFilter
-          ? 'lang-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-bpNavy text-white transition cursor-pointer'
-          : 'lang-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition cursor-pointer';
+          ? 'lang-filter-btn px-2 py-1 rounded-lg text-[11px] font-extrabold bg-bpNavy text-white transition cursor-pointer'
+          : 'lang-filter-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition cursor-pointer';
       });
     }
 
@@ -2638,15 +2961,39 @@
 
     function getFilteredItems() {
       const q = state.searchQuery.toLowerCase();
-      return (state.catalog || []).filter(item => {
+      const progMap = readWatchProgressMap();
+      const list = (state.catalog || []).filter(item => {
         if (!item || deletedTombstones.has(item.id)) return false;
         if (q && !item.title.toLowerCase().includes(q) && !String(item.year).includes(q) && !(item.genre && item.genre.toLowerCase().includes(q))) {
           return false;
         }
         if (state.langFilter === 'dub' && !item.hasDub) return false;
         if (state.langFilter === 'sub' && !item.hasSub) return false;
+        if (state.genreFilter !== 'all' && (item.genre || '') !== state.genreFilter) return false;
+        if (state.navTab === 'continue') {
+          const hasProg = Object.keys(progMap).some(k => k === item.id || k.startsWith(`${item.id}_s`));
+          if (!hasProg) return false;
+        }
         return true;
       });
+
+      const order = state.sortOrder;
+      list.sort((a, b) => {
+        if (order === 'oldest') return (a.createdAt || 0) - (b.createdAt || 0);
+        if (order === 'az') return a.title.localeCompare(b.title, 'tr');
+        if (order === 'za') return b.title.localeCompare(a.title, 'tr');
+        if (order === 'year_desc') return (b.year || 0) - (a.year || 0);
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+
+      return list;
+    }
+
+    function getGridDensityClass() {
+      const d = state.prefs.cardDensity;
+      if (d === 'compact') return 'catalog-responsive-grid catalog-grid-compact';
+      if (d === 'large') return 'catalog-responsive-grid catalog-grid-large';
+      return 'catalog-responsive-grid';
     }
 
     function renderCard(item) {
@@ -2663,6 +3010,7 @@
               src="${escapeAttr(posterSrc)}"
               alt="${escapeAttr(item.title)}"
               loading="lazy"
+              style="${escapeAttr(item.posterStyle || '')}"
               onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${CINEMA_FALLBACK_PHOTO}';}"
               class="w-full h-full object-cover transition duration-300 hover:scale-105"
             />
@@ -2686,7 +3034,7 @@
 
           <div class="p-2 sm:p-2.5 flex-1 flex flex-col justify-between gap-1.5 min-w-0">
             <div class="min-w-0">
-              <h3 onclick="openPlayer('${escapeAttr(item.id)}')" class="text-[11px] sm:text-xs font-extrabold text-bpBlack hover:text-bpRoyal cursor-pointer truncate leading-snug">
+              <h3 onclick="openPlayer('${escapeAttr(item.id)}')" class="text-[11px] sm:text-xs font-extrabold hover:text-bpRoyal cursor-pointer truncate leading-snug">
                 ${escapeHtml(item.title)}
               </h3>
               <div class="flex items-center gap-1 mt-1 flex-wrap">
@@ -2722,10 +3070,13 @@
           <div class="text-sm font-extrabold ${isMovie ? 'text-bpNavy' : 'text-bpEmerald'}">
             ${isMovie ? 'Henüz Film Eklenmemiş' : 'Henüz Dizi Eklenmemiş'}
           </div>
-          <p class="text-xs text-slate-500">Eklediğiniz içerikler buluta aktarılır ve giriş yapan her cihazda anında açılır.</p>
+          <p class="text-xs text-slate-500">Eklediğiniz içerikler turbo buluta aktarılır ve siteye giren her cihazda anında açılır.</p>
           <div class="pt-1 flex justify-center gap-2">
             <button type="button" onclick="openAddContentModal('${kind}')" class="px-4 py-2 rounded-xl ${isMovie ? 'bg-bpNavy text-white' : 'bg-bpEmerald text-white'} text-xs font-extrabold cursor-pointer">
               ${isMovie ? '+ Film Ekle' : '+ Dizi Ekle'}
+            </button>
+            <button type="button" onclick="openAddContentModal('batch')" class="px-4 py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold cursor-pointer">
+              Toplu Yükle
             </button>
           </div>
         </div>
@@ -2739,6 +3090,17 @@
       const filtered = getFilteredItems();
       const movies = filtered.filter(m => m.type === 'movie');
       const series = filtered.filter(m => m.type === 'series');
+      const gridCls = getGridDensityClass();
+
+      if (state.navTab === 'continue') {
+        mainEl.innerHTML = `
+          <div class="bg-bpNavy text-white rounded-2xl p-4 flex items-center justify-between gap-2 shadow-xs">
+            <h2 class="text-base font-extrabold text-bpYellow">Kaldığın Yerden Devam Et (${filtered.length})</h2>
+          </div>
+          ${filtered.length === 0 ? `<div class="bg-white rounded-2xl p-6 border border-slate-200 text-center text-xs text-slate-500">Henüz yarım bıraktığınız bir film veya dizi yok.</div>` : `<div class="${gridCls}">${filtered.map(renderCard).join('')}</div>`}
+        `;
+        return;
+      }
 
       if (state.navTab === 'movies') {
         mainEl.innerHTML = `
@@ -2746,7 +3108,7 @@
             <h2 class="text-base font-extrabold">Filmler (${movies.length})</h2>
             <button type="button" onclick="openAddContentModal('movie')" class="px-3 py-1.5 rounded-xl bg-bpRed text-white text-xs font-extrabold cursor-pointer">+ Film Ekle</button>
           </div>
-          ${movies.length === 0 ? renderEmptyBox('movie') : `<div class="catalog-responsive-grid">${movies.map(renderCard).join('')}</div>`}
+          ${movies.length === 0 ? renderEmptyBox('movie') : `<div class="${gridCls}">${movies.map(renderCard).join('')}</div>`}
         `;
         return;
       }
@@ -2757,7 +3119,7 @@
             <h2 class="text-base font-extrabold">Diziler (${series.length})</h2>
             <button type="button" onclick="openAddContentModal('series')" class="px-3 py-1.5 rounded-xl bg-bpYellow text-bpNavy text-xs font-extrabold cursor-pointer">+ Dizi Ekle</button>
           </div>
-          ${series.length === 0 ? renderEmptyBox('series') : `<div class="catalog-responsive-grid">${series.map(renderCard).join('')}</div>`}
+          ${series.length === 0 ? renderEmptyBox('series') : `<div class="${gridCls}">${series.map(renderCard).join('')}</div>`}
         `;
         return;
       }
@@ -2768,7 +3130,7 @@
             <h2 class="text-sm sm:text-base font-extrabold">Filmler (${movies.length})</h2>
             <button type="button" onclick="openAddContentModal('movie')" class="px-3 py-1.5 rounded-xl bg-bpRed text-white text-xs font-extrabold cursor-pointer">+ Film Ekle</button>
           </div>
-          ${movies.length === 0 ? renderEmptyBox('movie') : `<div class="catalog-responsive-grid">${movies.map(renderCard).join('')}</div>`}
+          ${movies.length === 0 ? renderEmptyBox('movie') : `<div class="${gridCls}">${movies.map(renderCard).join('')}</div>`}
         </section>
 
         <section class="space-y-2.5">
@@ -2776,13 +3138,13 @@
             <h2 class="text-sm sm:text-base font-extrabold">Diziler (${series.length})</h2>
             <button type="button" onclick="openAddContentModal('series')" class="px-3 py-1.5 rounded-xl bg-bpYellow text-bpNavy text-xs font-extrabold cursor-pointer">+ Dizi Ekle</button>
           </div>
-          ${series.length === 0 ? renderEmptyBox('series') : `<div class="catalog-responsive-grid">${series.map(renderCard).join('')}</div>`}
+          ${series.length === 0 ? renderEmptyBox('series') : `<div class="${gridCls}">${series.map(renderCard).join('')}</div>`}
         </section>
       `;
     }
 
     /* =====================================================================
-       9. SYMBOL-BASED WATCH STUDIO
+       9. WATCH STUDIO + 5-LEVEL KEYBOARD VOLUME + PC/TABLET SHORTCUTS
     ===================================================================== */
     let hlsController = null;
     let singleTapTimer = null;
@@ -2829,7 +3191,7 @@
       hudVisibleInFullscreen = true;
 
       const progKey = media.type === 'series' ? `${media.id}_s${s}_e${ep}` : media.id;
-      const savedPos = getSavedWatchProgress(progKey);
+      const savedPos = state.prefs.resumePlayback ? getSavedWatchProgress(progKey) : 0;
       const minStart = channels[0]?.trimStart > 0 ? channels[0].trimStart : 0;
       const startSec = savedPos > minStart + 3 ? savedPos : minStart;
 
@@ -2861,10 +3223,20 @@
     }
 
     function changePlaybackSpeed(rate) {
-      const num = Number(rate) || 1;
+      const num = Math.max(0.5, Math.min(2.5, Number(rate) || 1));
       state.player.playbackRate = num;
       const vid = document.getElementById('birperde-video');
       if (vid) vid.playbackRate = num;
+      const sel = document.getElementById('bp-speed-select');
+      if (sel) sel.value = String(num);
+    }
+
+    function stepPlaybackSpeed(delta) {
+      const steps = [0.5, 0.75, 1, 1.25, 1.5, 2];
+      const curIdx = steps.findIndex(s => Math.abs(s - (state.player.playbackRate || 1)) < 0.05);
+      const nextIdx = Math.max(0, Math.min(steps.length - 1, (curIdx >= 0 ? curIdx : 2) + delta));
+      changePlaybackSpeed(steps[nextIdx]);
+      showSeekVisualBadge(`<span class="font-mono text-xs font-extrabold">${steps[nextIdx]}x</span>`, 'center');
     }
 
     function toggleCinemaBlurMode() {
@@ -2983,18 +3355,89 @@
       }
     });
 
+    /* 5-Level Keyboard Volume Control (Steps: 0 -> 0%, 1 -> 20%, 2 -> 40%, 3 -> 60%, 4 -> 80%, 5 -> 100%) */
+    function setVolumeStep(step, showOsd = true) {
+      const clampedStep = Math.max(0, Math.min(5, Math.round(step)));
+      const newVol = clampedStep / 5;
+      applyVolumeLevel(newVol, false);
+
+      if (showOsd) {
+        const bars = [1, 2, 3, 4, 5].map(i =>
+          `<span class="w-1.5 h-4 rounded-sm ${i <= clampedStep ? 'bg-bpYellow' : 'bg-white/25'}"></span>`
+        ).join('');
+        showSeekVisualBadge(
+          `<div class="flex flex-col items-center gap-1">
+            <div class="flex items-center gap-0.5">${bars}</div>
+            <span class="font-mono text-[10px] font-extrabold text-bpYellow">%${clampedStep * 20}</span>
+          </div>`,
+          'center'
+        );
+      }
+    }
+
+    function stepVolumeFiveLevels(delta) {
+      const curStep = Math.round((state.player.volume ?? 1) * 5);
+      setVolumeStep(curStep + delta, true);
+    }
+
+    /* Rich PC & Tablet Keyboard Controls */
     document.addEventListener('keydown', (e) => {
       if (!state.player.media) return;
       if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-      if (e.code === 'Space') { e.preventDefault(); togglePlayPauseVideo(); }
-      else if (e.code === 'ArrowLeft') { e.preventDefault(); seekVideoBySeconds(-10); }
-      else if (e.code === 'ArrowRight') { e.preventDefault(); seekVideoBySeconds(10); }
-      else if (e.key === 'f' || e.key === 'F') {
+
+      const key = e.key.toLowerCase();
+      if (e.code === 'Space' || key === 'k') {
+        e.preventDefault();
+        togglePlayPauseVideo();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const stepSec = e.shiftKey ? -30 : -10;
+        seekVideoBySeconds(stepSec);
+        showSeekVisualBadge(`<span class="font-mono text-xs font-extrabold">${stepSec}s</span>`, 'left');
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const stepSec = e.shiftKey ? 30 : 10;
+        seekVideoBySeconds(stepSec);
+        showSeekVisualBadge(`<span class="font-mono text-xs font-extrabold">+${stepSec}s</span>`, 'right');
+      } else if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        stepVolumeFiveLevels(1);
+      } else if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        stepVolumeFiveLevels(-1);
+      } else if (key === 'f') {
         e.preventDefault();
         if (state.player.isFullscreen) exitFullscreenMode(); else enterFullscreenMode();
-      } else if (e.key === 'm' || e.key === 'M') {
+      } else if (key === 'm') {
         e.preventDefault();
-        applyVolumeLevel(state.player.volume > 0 ? 0 : (state.player.lastNonZeroVolume || 1), true);
+        const curStep = Math.round((state.player.volume ?? 1) * 5);
+        if (curStep > 0) {
+          state.player.lastVolumeStep = curStep;
+          setVolumeStep(0, true);
+        } else {
+          setVolumeStep(state.player.lastVolumeStep || 5, true);
+        }
+      } else if (key === 'c') {
+        e.preventDefault();
+        stepPlaybackSpeed(-1);
+      } else if (key === 'v') {
+        e.preventDefault();
+        stepPlaybackSpeed(1);
+      } else if (key === 'n') {
+        e.preventDefault();
+        playAdjacentEpisode(1);
+      } else if (key === 'p') {
+        e.preventDefault();
+        playAdjacentEpisode(-1);
+      } else if (key === 's') {
+        e.preventDefault();
+        captureQuickVideoSnapshot();
+      } else if (key === 'b') {
+        e.preventDefault();
+        toggleCinemaBlurMode();
+      } else if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        seekVideoByPercent(Number(e.key) * 10);
       }
     });
 
@@ -3038,7 +3481,7 @@
           : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2';
 
       box.innerHTML = `
-        <div class="seek-feedback-badge absolute ${alignClass} w-12 h-12 rounded-full bg-slate-950/75 border border-white/25 text-white flex items-center justify-center shadow-lg">
+        <div class="seek-feedback-badge absolute ${alignClass} min-w-[3.25rem] h-12 px-2.5 rounded-full bg-slate-950/80 border border-white/25 text-white flex items-center justify-center shadow-lg">
           ${iconHtml}
         </div>
       `;
@@ -3166,7 +3609,7 @@
           vid.play().catch(() => {});
           return;
         }
-        if (media && media.type === 'series' && playAdjacentEpisode(1)) {
+        if (media && media.type === 'series' && state.prefs.autoPlayNext && playAdjacentEpisode(1)) {
           return;
         }
         vid.pause();
@@ -3199,7 +3642,7 @@
       }
     }
 
-    /* Vertical Volume Dock */
+    /* Vertical Volume Dock with 5-Step Buttons + Drag */
     function openVolumePopover(autoHideMs = 2400) {
       const dock = document.getElementById('bp-vertical-vol-dock');
       if (!dock) return;
@@ -3279,10 +3722,10 @@
         <div
           id="bp-vertical-vol-dock"
           onclick="event.stopPropagation()"
-          class="absolute ${isFs ? 'right-16 bottom-16 z-30' : 'right-11 bottom-12 z-20'} w-10 py-2 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-white/25 flex flex-col items-center gap-1 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all duration-150"
+          class="absolute ${isFs ? 'right-16 bottom-16 z-30' : 'right-11 bottom-12 z-20'} w-11 py-2 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-white/25 flex flex-col items-center gap-1 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all duration-150"
         >
           <span id="bp-vvol-pct" class="font-mono text-[9px] font-extrabold text-bpYellow leading-none">%${pct}</span>
-          <button type="button" onclick="applyVolumeLevel((state.player.volume||0)+0.15, true)" class="w-7 h-6 rounded-lg bg-white/10 hover:bg-white/25 text-white text-xs font-extrabold cursor-pointer">+</button>
+          <button type="button" onclick="stepVolumeFiveLevels(1)" class="w-7 h-6 rounded-lg bg-white/10 hover:bg-white/25 text-white text-xs font-extrabold cursor-pointer">+</button>
           <div
             onpointerdown="onVerticalVolPointerDown(event, this)"
             onpointermove="onVerticalVolPointerMove(event, this)"
@@ -3295,7 +3738,7 @@
               <span id="bp-vvol-thumb" style="bottom: calc(${pct}% - 6px)" class="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white shadow"></span>
             </div>
           </div>
-          <button type="button" onclick="applyVolumeLevel((state.player.volume||0)-0.15, true)" class="w-7 h-6 rounded-lg bg-white/10 hover:bg-white/25 text-white text-xs font-extrabold cursor-pointer">-</button>
+          <button type="button" onclick="stepVolumeFiveLevels(-1)" class="w-7 h-6 rounded-lg bg-white/10 hover:bg-white/25 text-white text-xs font-extrabold cursor-pointer">-</button>
         </div>
       `;
     }
@@ -3404,7 +3847,6 @@
               <div id="player-status-overlay" class="hidden absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center z-20">
                 <p id="player-status-text" class="text-xs font-semibold text-slate-200 mb-3 max-w-md leading-relaxed"></p>
                 <div class="flex items-center gap-2 flex-wrap justify-center">
-                  <button type="button" onclick="openDirectTransferModal()" class="px-3.5 py-1.5 rounded-xl bg-bpRoyal text-white text-xs font-extrabold cursor-pointer">Hızlı Cihaz Aktarımı</button>
                   <button type="button" onclick="syncAllFromCloudNow(true)" class="px-3.5 py-1.5 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Buluttan Yenile</button>
                 </div>
               </div>
@@ -3448,6 +3890,7 @@
 
                 <div class="flex items-center gap-1.5">
                   <select id="bp-speed-select" onchange="changePlaybackSpeed(this.value)" aria-label="Hız" class="px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-extrabold text-slate-200 cursor-pointer">
+                    <option value="0.5" ${state.player.playbackRate === 0.5 ? 'selected' : ''}>0.5x</option>
                     <option value="0.75" ${state.player.playbackRate === 0.75 ? 'selected' : ''}>0.75x</option>
                     <option value="1" ${state.player.playbackRate === 1 ? 'selected' : ''}>1x</option>
                     <option value="1.25" ${state.player.playbackRate === 1.25 ? 'selected' : ''}>1.25x</option>
@@ -3500,7 +3943,7 @@
         if (overlay) overlay.classList.remove('hidden');
         if (statusText) {
           statusText.textContent = status === 'not_uploaded_yet'
-            ? 'Bu video diğer cihazdan henüz aktarılıyor. Hızlı Cihaz Aktarımı ile doğrudan alabilir veya bulut tamamlanınca yenileyebilirsiniz.'
+            ? 'Bu video buluta aktarılıyor. Birkaç saniye içinde otomatik açılacaktır.'
             : 'Video kaynağı bulunamadı.';
         }
         return;
@@ -3575,7 +4018,7 @@
         el.style.opacity = '0';
         el.style.transition = 'opacity 0.25s ease';
         setTimeout(() => el.remove(), 260);
-      }, 3800);
+      }, 3400);
     }
 
     function escapeHtml(str) {
@@ -3593,19 +4036,28 @@
 
     Object.assign(window, {
       PENDING_FILES,
+      batchQueueFiles,
       state,
+      savePrefs,
       dismissIntroSplashNow,
       replayIntroSplash,
       openAddContentModal,
-      openDirectTransferModal,
-      startP2pSender,
-      startP2pReceiver,
+      openPlatformSettingsModal,
+      exportCatalogBackup,
+      importCatalogBackup,
       onTitleTypingAutocomplete,
       handleTitleSearchBtn,
       pickCandidate,
       pickRandomFrameForCover,
       scrubFrameForCover,
+      generateSixFrameStrip,
+      selectFrameFromStrip,
+      updateCoverStyleControl,
+      resetCoverEditorState,
       onVideoFilePicked,
+      handleBatchFilesSelected,
+      renderBatchQueueList,
+      submitBatchUpload,
       submitNewMovie,
       submitNewSeries,
       submitNewEpisode,
@@ -3623,6 +4075,8 @@
       resetSearchInput,
       switchNavTab,
       switchLangFilter,
+      switchGenreFilter,
+      switchSortOrder,
       syncAllFromCloudNow,
       cancelActiveCloudSync,
       openPlayer,
@@ -3630,6 +4084,7 @@
       switchPlayerEpisode,
       playAdjacentEpisode,
       changePlaybackSpeed,
+      stepPlaybackSpeed,
       toggleCinemaBlurMode,
       toggleLoopMode,
       togglePictureInPicture,
@@ -3643,6 +4098,8 @@
       seekVideoByPercent,
       toggleVolumePopoverByButton,
       applyVolumeLevel,
+      setVolumeStep,
+      stepVolumeFiveLevels,
       onVerticalVolPointerDown,
       onVerticalVolPointerMove,
       onVerticalVolPointerUp,
@@ -3656,6 +4113,7 @@
     const headerLogo = document.getElementById('header-brand-logo');
     if (headerLogo) headerLogo.innerHTML = getBrandSvg(44);
     startInitialIntro();
+    populateGenreSelect();
     updateFilterButtons();
     renderMainView();
     syncAllFromCloudNow(false);
