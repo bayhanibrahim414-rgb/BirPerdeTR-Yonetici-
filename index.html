@@ -70,6 +70,35 @@
       color: #F8FAFC;
     }
 
+    body.bp-dark-theme #app-top-header,
+    body.bp-dark-theme footer,
+    body.bp-dark-theme #modal-card {
+      background-color: #0F172A !important;
+      border-color: #1E293B !important;
+      color: #F8FAFC !important;
+    }
+
+    body.bp-dark-theme #app-top-header > div:last-child {
+      background-color: #071326 !important;
+      border-color: #1E293B !important;
+    }
+
+    body.bp-dark-theme #brand-title-text,
+    body.bp-dark-theme #modal-card h3,
+    body.bp-dark-theme #modal-card label {
+      color: #F8FAFC !important;
+    }
+
+    body.bp-dark-theme #modal-card input,
+    body.bp-dark-theme #modal-card select,
+    body.bp-dark-theme #global-search-input,
+    body.bp-dark-theme #genre-filter-select,
+    body.bp-dark-theme #sort-order-select {
+      background-color: #1E293B !important;
+      border-color: #334155 !important;
+      color: #F8FAFC !important;
+    }
+
     input, textarea, select {
       -webkit-user-select: text;
       user-select: text;
@@ -440,7 +469,7 @@
         BirPerdeTR
       </h1>
       <p class="intro-brand-pop relative z-10 mt-2 text-xs sm:text-sm font-semibold tracking-widest uppercase text-sky-200/80">
-        Yüksek Hızlı Bulut Film &amp; Dizi Platformu
+        Kalıcı Bulut Film &amp; Dizi Platformu
       </p>
     </div>
   </div>
@@ -469,7 +498,7 @@
                 <span>CANLI BULUT</span>
               </span>
             </div>
-            <p class="text-[11px] text-slate-500 hidden sm:block">Anında çoklu bulut • Tüm cihazlarda senkron</p>
+            <p class="text-[11px] text-slate-500 hidden sm:block">Evrensel MP4 bulut aktarımı • Tüm cihazlarda kalıcı</p>
           </div>
         </div>
 
@@ -495,7 +524,7 @@
             <span class="hidden sm:inline">Bölüm</span>
           </button>
 
-          <button type="button" onclick="openPlatformSettingsModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-bpNavy hover:text-white text-bpNavy transition cursor-pointer" title="Platform Ayarları & Kısayollar">
+          <button type="button" onclick="openPlatformSettingsModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-bpNavy hover:text-white text-bpNavy transition cursor-pointer" title="Bulut Ayarları & Kısayollar">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
 
@@ -578,7 +607,7 @@
         <div class="flex items-center justify-between gap-3 min-w-0">
           <div class="flex items-center gap-2 min-w-0">
             <span class="w-2.5 h-2.5 rounded-full bg-bpYellow live-indicator shrink-0"></span>
-            <span id="background-sync-text" class="text-xs font-extrabold text-bpYellow truncate">Yüksek hızda buluta aktarılıyor...</span>
+            <span id="background-sync-text" class="text-xs font-extrabold text-bpYellow truncate">Kalıcı bulut sunucusuna aktarılıyor...</span>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span id="background-sync-pct" class="font-mono text-xs font-extrabold text-white">%0</span>
@@ -601,7 +630,7 @@
 
     <!-- FOOTER -->
     <footer class="bg-bpWhite border-t border-slate-200 mt-8 py-4 px-3 sm:px-5 text-center text-[11px] text-slate-500">
-      BirPerdeTR — Yüksek Hızlı Çoklu Bulut Film &amp; Dizi Platformu
+      BirPerdeTR — Evrensel MP4 &amp; Kalıcı Bulut Film / Dizi Platformu
     </footer>
   </div>
 
@@ -669,7 +698,9 @@
       defaultSpeed: 1,
       preferredLang: 'sub',
       darkTheme: false,
-      showCloudBadge: true
+      showCloudBadge: true,
+      cloudinaryCloudName: '',
+      cloudinaryUploadPreset: ''
     };
 
     function loadPrefs() {
@@ -698,12 +729,10 @@
       return `
         <svg width="${size}" height="${size}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <rect x="2" y="2" width="44" height="44" rx="12" fill="#071326" stroke="#2563EB" stroke-width="2"/>
-          <!-- Sol şerit: Sarı -> Mavi -> Kırmızı -> Yeşil (Sarı ve Kırmızı yan yana değil) -->
           <rect x="8" y="10" width="3.5" height="4" rx="1" fill="#FACC15"/>
           <rect x="8" y="18" width="3.5" height="4" rx="1" fill="#38BDF8"/>
           <rect x="8" y="26" width="3.5" height="4" rx="1" fill="#E11D48"/>
           <rect x="8" y="34" width="3.5" height="4" rx="1" fill="#10B981"/>
-          <!-- Sağ şerit: Yeşil -> Kırmızı -> Mavi -> Sarı (Sarı ve Kırmızı yan yana değil) -->
           <rect x="36.5" y="10" width="3.5" height="4" rx="1" fill="#10B981"/>
           <rect x="36.5" y="18" width="3.5" height="4" rx="1" fill="#E11D48"/>
           <rect x="36.5" y="26" width="3.5" height="4" rx="1" fill="#38BDF8"/>
@@ -738,7 +767,7 @@
     }
 
     /* =====================================================================
-       2. FIREBASE + HIGH-SPEED CLOUD SYNC ENGINE
+       2. FIREBASE + CLOUDINARY UNIVERSAL MP4 SYNC ENGINE
     ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyB1eT555N2stbzj6x6zkmxHKtMolvCJmeY",
@@ -1112,7 +1141,7 @@
     }
 
     /* =====================================================================
-       3. MULTI-STREAM TURBO CLOUD UPLOADER (4 PARALLEL SOCKETS + INSTANT SYNC)
+       3. CLOUDINARY UNIVERSAL MP4 + MULTI-STREAM TURBO CLOUD UPLOADER
     ===================================================================== */
     function setUploadBanner(show, text = '', pct = 0) {
       const banner = document.getElementById('background-sync-banner');
@@ -1170,6 +1199,30 @@
         xhr.onerror = () => { activeXhrSet.delete(xhr); reject(new Error('Ağ hatası')); };
         xhr.onabort = () => { activeXhrSet.delete(xhr); reject(new Error('İptal')); };
         xhr.send(formData);
+      });
+    }
+
+    // Cloudinary kalıcı video yükleme + iPhone (.MOV) ve bilgisayar için evrensel MP4 (H.264) dönüşümü
+    function uploadViaCloudinary(file, onProgress) {
+      const cloudName = (state.prefs.cloudinaryCloudName || '').trim();
+      const uploadPreset = (state.prefs.cloudinaryUploadPreset || '').trim();
+      if (!cloudName || !uploadPreset) {
+        return Promise.reject(new Error('Cloudinary ayarlı değil'));
+      }
+
+      return uploadBlobSingleXhr(
+        `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/video/upload`,
+        'file',
+        { upload_preset: uploadPreset, resource_type: 'video' },
+        file,
+        file.name || 'video.mp4',
+        onProgress
+      ).then(txt => {
+        const yanit = JSON.parse(txt || '{}');
+        if (!yanit.secure_url) throw new Error('Cloudinary URL yok');
+        // KRİTİK NOKTA: iPhone (.MOV) ve bilgisayar uyumsuzluğunu çözmek için evrensel MP4 linki üretiyoruz
+        const evrenselUrl = yanit.secure_url.replace('/upload/', '/upload/f_mp4,vc_h264/');
+        return { downloadUrl: evrenselUrl, storagePath: '' };
       });
     }
 
@@ -1241,8 +1294,18 @@
       });
     }
 
-    // 3 sunucuyu aynı anda yarıştırır: ilk bitiren kazanır, diğerlerini anında iptal eder!
+    // Cloudinary ayarlıysa öncelikli olarak kalıcı evrensel MP4 yükler; değilse 3 bulut sunucusunu yarıştırır
     function uploadFileTurboRace(file, onProgress) {
+      const hasCloudinary = Boolean((state.prefs.cloudinaryCloudName || '').trim() && (state.prefs.cloudinaryUploadPreset || '').trim());
+      if (hasCloudinary) {
+        return uploadViaCloudinary(file, onProgress).catch(() => {
+          return runFallbackCloudRace(file, onProgress);
+        });
+      }
+      return runFallbackCloudRace(file, onProgress);
+    }
+
+    function runFallbackCloudRace(file, onProgress) {
       let maxSent = 0;
       const reportProgress = (sent, total) => {
         if (sent > maxSent) {
@@ -1272,12 +1335,12 @@
         for (const task of tasks) {
           if (cloudUploadCancelFlag) break;
           const totalMb = (task.file.size / 1048576).toFixed(1);
-          setUploadBanner(true, `Turbo Aktarım: ${task.title} (${task.label}) • 0.0 / ${totalMb} MB`, 3);
+          setUploadBanner(true, `Buluta Yükleniyor: ${task.title} (${task.label}) • 0.0 / ${totalMb} MB`, 3);
 
           const onProgress = (sent, total) => {
             const pct = Math.round((sent / total) * 100);
             const sentMb = (sent / 1048576).toFixed(1);
-            setUploadBanner(true, `Turbo Aktarım: ${task.title} (${task.label}) • ${sentMb} / ${totalMb} MB`, pct);
+            setUploadBanner(true, `Buluta Yükleniyor: ${task.title} (${task.label}) • ${sentMb} / ${totalMb} MB`, pct);
           };
 
           let result = null;
@@ -1285,7 +1348,7 @@
             result = await uploadFileTurboRace(task.file, onProgress);
           } catch (err) {
             if (!cloudUploadCancelFlag) {
-              showToast(`"${task.title}" aktarımı tamamlanamadı. Bağlantıyı kontrol edin.`, 'error');
+              showToast(`"${task.title}" buluta yüklenemedi. İnternet bağlantısını kontrol edin.`, 'error');
             }
           }
 
@@ -1313,7 +1376,7 @@
               renderMainView();
               await pushItemToAllClouds(target);
               if (task.kind !== 'poster') {
-                showToast(`"${task.title}" (${task.label}) karşı tarafa iletildi!`, 'success');
+                showToast(`"${task.title}" (${task.label}) kalıcı buluta kaydedildi!`, 'success');
               }
             }
           }
@@ -1351,17 +1414,17 @@
         : (item.episodes || []).flatMap(ep => ep.sources || []);
       const hasCloudUrl = srcs.some(s => /^https?:\/\//i.test(s.url || '') || Boolean(s.storagePath));
       if (hasCloudUrl) {
-        return { label: 'Tüm Cihazlarda Hazır', cls: 'bg-bpEmerald text-white' };
+        return { label: 'Kalıcı Bulut • Her Cihazda Açılır', cls: 'bg-bpEmerald text-white' };
       }
-      return { label: 'Buluta Aktarılıyor...', cls: 'bg-amber-500 text-bpNavy' };
+      return { label: 'Buluta Yükleniyor...', cls: 'bg-amber-500 text-bpNavy' };
     }
 
     /* =====================================================================
-       4. SIMPLE VIDEO FRAME CAPTURE (NO BLACK SCREEN) & DRAG-TO-CROP PICKER
+       4. VIDEO FRAME CAPTURE & DRAG-TO-CROP PICKER
     ===================================================================== */
     let activeFrameVideoUrl = '';
     let currentFullFrameDataUrl = '';
-    let cropBoxState = { x: 25, y: 5, w: 50, h: 90 }; // Yüzdelik 2:3 dikey poster kırpma kutusu
+    let cropBoxState = { x: 25, y: 5, w: 50, h: 90 };
     let cropDragMode = null;
     let cropDragStart = { px: 0, py: 0, box: null };
 
@@ -1453,7 +1516,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
 
-                // Eğer sahne tamamen siyahsa ve kullanıcı özel saniye seçmediyse aydınlık sahneye atla
                 if (targetRatio === null && retryCount < 3 && isCanvasMostlyBlack(ctx, canvas.width, canvas.height)) {
                   cleanup(null);
                   captureFrameFromVideoFile(fileOrUrl, null, retryCount + 1).then(resolve);
@@ -1929,7 +1991,6 @@
 
       document.getElementById('video-frame-cover-tools')?.classList.remove('hidden');
 
-      // Videonun içinden karanlık olmayan bir kareyi otomatik çek ve kırpma alanına yükle
       const snap = await captureFrameFromVideoFile(file, null);
       if (snap) {
         loadSnapshotIntoCropEditor(snap);
@@ -1947,10 +2008,10 @@
             </div>
             <label class="block w-full py-2 px-3 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold text-center cursor-pointer transition">
               <span>Cihazdan Video Seç</span>
-              <input type="file" id="${prefix}-sub-file" accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_sub', '${prefix}-sub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
+              <input type="file" id="${prefix}-sub-file" accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_sub', '${prefix}-sub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
             </label>
             <div id="${prefix}-sub-badge" class="hidden px-2 py-1 rounded bg-white border border-blue-200 text-[10px] font-extrabold text-bpRoyal truncate"></div>
-            <input type="url" id="${prefix}-sub-url" placeholder="Veya video URL (.mp4 / .m3u8)..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpRoyal" />
+            <input type="url" id="${prefix}-sub-url" placeholder="Veya kalıcı video URL (.mp4 / .m3u8)..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpRoyal" />
           </div>
 
           <div class="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-2">
@@ -1960,10 +2021,10 @@
             </div>
             <label class="block w-full py-2 px-3 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold text-center cursor-pointer transition">
               <span>Cihazdan Video Seç</span>
-              <input type="file" id="${prefix}-dub-file" accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_dub', '${prefix}-dub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
+              <input type="file" id="${prefix}-dub-file" accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_dub', '${prefix}-dub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
             </label>
             <div id="${prefix}-dub-badge" class="hidden px-2 py-1 rounded bg-white border border-emerald-200 text-[10px] font-extrabold text-bpEmerald truncate"></div>
-            <input type="url" id="${prefix}-dub-url" placeholder="Veya video URL (.mp4 / .m3u8)..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpEmerald" />
+            <input type="url" id="${prefix}-dub-url" placeholder="Veya kalıcı video URL (.mp4 / .m3u8)..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpEmerald" />
           </div>
         </div>
       `;
@@ -1993,7 +2054,7 @@
             </div>
           </div>
 
-          <!-- Sadeleştirilmiş Video İçi Kapak Kesme & Sahne Seçme Alanı -->
+          <!-- Video İçi Kapak Kesme & Sahne Seçme Alanı -->
           <div id="video-frame-cover-tools" class="${getActiveVideoSourceForCover() ? '' : 'hidden'} p-2.5 rounded-xl bg-blue-50/90 border border-blue-200 space-y-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
               <span class="text-[11px] font-extrabold text-bpRoyal">Video İçinden Kapak Seç ve Kes</span>
@@ -2003,7 +2064,6 @@
               </div>
             </div>
 
-            <!-- Sürükle & Kırp Sahne Çerçevesi -->
             <div id="video-crop-stage" class="relative w-full aspect-video rounded-lg overflow-hidden bg-bpNavy border border-slate-300 select-none">
               <img id="video-crop-base-img" src="${escapeAttr(initialSrc)}" class="w-full h-full object-contain pointer-events-none" />
               <div
@@ -2086,7 +2146,7 @@
       closeModal();
 
       if (mode === 'movies') {
-        showToast(`${itemsToProcess.length} film tek seferde ekleniyor...`, 'success');
+        showToast(`${itemsToProcess.length} film kalıcı buluta aktarılıyor...`, 'success');
         for (const entry of itemsToProcess) {
           const sk = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
           LOCAL_SESSION_BLOBS.set(sk, URL.createObjectURL(entry.file));
@@ -2204,11 +2264,23 @@
 
     function renderAddModal() {
       const seriesList = state.catalog.filter(i => i.type === 'series');
+      const hasCloudinary = Boolean((state.prefs.cloudinaryCloudName || '').trim() && (state.prefs.cloudinaryUploadPreset || '').trim());
+      const cloudStatusNote = hasCloudinary
+        ? `<div class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-bpEmerald flex items-center justify-between">
+             <span>Cloudinary Kalıcı Evrensel MP4 (H.264) Aktif</span>
+             <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="underline cursor-pointer">Değiştir</button>
+           </div>`
+        : `<div class="px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-800 flex items-center justify-between gap-2">
+             <span>Kalıcı Cloudinary bulut linki için ayar yapın (iPhone .MOV dahil tüm cihazlarda açılır)</span>
+             <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="px-2 py-1 rounded-lg bg-bpNavy text-white text-[10px] font-extrabold shrink-0 cursor-pointer">Ayarla</button>
+           </div>`;
+
       let body = '';
 
       if (activeAddTab === 'movie') {
         body = `
           <form onsubmit="submitNewMovie(event)" class="space-y-3">
+            ${cloudStatusNote}
             <div class="relative">
               <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Film Adı *</label>
               <div class="flex gap-1.5">
@@ -2221,13 +2293,14 @@
             ${renderSimpleVideoCoverPickerHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow cursor-pointer">Turbo Yayınla</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow cursor-pointer">Buluta Yükle ve Yayınla</button>
             </div>
           </form>
         `;
       } else if (activeAddTab === 'series') {
         body = `
           <form onsubmit="submitNewSeries(event)" class="space-y-3">
+            ${cloudStatusNote}
             <div class="relative">
               <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Dizi Adı *</label>
               <div class="flex gap-1.5">
@@ -2250,13 +2323,14 @@
             ${renderSimpleVideoCoverPickerHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Turbo Yayınla</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Buluta Yükle ve Yayınla</button>
             </div>
           </form>
         `;
       } else if (activeAddTab === 'batch') {
         body = `
           <form onsubmit="submitBatchUpload(event)" class="space-y-3">
+            ${cloudStatusNote}
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Yükleme Türü</label>
@@ -2274,7 +2348,7 @@
             <label class="block w-full py-4 px-4 rounded-2xl border-2 border-dashed border-bpRoyal bg-blue-50/70 hover:bg-blue-100/70 text-center cursor-pointer transition">
               <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin</div>
               <div class="text-[10px] text-slate-500 mt-0.5">Seçtiğiniz tüm videoların kapakları içlerinden otomatik oluşturulur</div>
-              <input type="file" multiple accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleBatchFilesSelected(this)" class="hidden" />
+              <input type="file" multiple accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleBatchFilesSelected(this)" class="hidden" />
             </label>
 
             <div id="batch-files-list" class="space-y-1.5 max-h-52 overflow-y-auto"></div>
@@ -2295,6 +2369,7 @@
           </div>
         ` : `
           <form onsubmit="submitNewEpisode(event)" class="space-y-3">
+            ${cloudStatusNote}
             <div>
               <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Dizi Seçin *</label>
               <select id="add-ep-series" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold">
@@ -2445,7 +2520,6 @@
       const genre = document.getElementById('draft-genre-input')?.value?.trim() || 'Sinema';
       const duration = document.getElementById('draft-duration-input')?.value?.trim() || formDraft.duration || '';
 
-      // Kesilmiş kapak fotoğrafı doğrudan data URL olarak anında senkronlanır (ekstra yükleme gecikmesi olmaz)
       const croppedDataUrl = PENDING_FILES.get('posterDataUrl') || '';
       const posterUrl = croppedDataUrl || formDraft.posterUrl || CINEMA_FALLBACK_PHOTO;
 
@@ -2473,7 +2547,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, 3'lü turbo bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, kalıcı bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(movie);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2530,7 +2604,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, 3'lü turbo bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, kalıcı bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(series);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2573,7 +2647,7 @@
     }
 
     /* =====================================================================
-       7. EDIT, TRIM, PLATFORM SETTINGS & DELETE MODALS
+       7. EDIT, TRIM, PLATFORM & CLOUDINARY SETTINGS, DELETE MODALS
     ===================================================================== */
     function openEditItemModal(itemId) {
       const item = state.catalog.find(m => m.id === itemId);
@@ -2663,16 +2737,49 @@
       if (tasks.length > 0) uploadMediaFilesToCloud(item.id, tasks);
     }
 
+    function saveCloudinarySettings() {
+      const cn = document.getElementById('pref-cloudinary-name')?.value?.trim() || '';
+      const pr = document.getElementById('pref-cloudinary-preset')?.value?.trim() || '';
+      state.prefs.cloudinaryCloudName = cn;
+      state.prefs.cloudinaryUploadPreset = pr;
+      savePrefs(state.prefs);
+      showToast(cn && pr ? 'Cloudinary kalıcı bulut bilgileri kaydedildi!' : 'Cloudinary ayarları temizlendi.', 'success');
+    }
+
     function openPlatformSettingsModal() {
       const p = state.prefs;
       openModal(`
         <div class="birperde-ribbon"></div>
         <div class="p-4 sm:p-5 space-y-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-base font-extrabold text-bpNavy">Platform Ayarları &amp; Klavye Kısayolları</h3>
+            <h3 class="text-base font-extrabold text-bpNavy">Bulut Depolama, Tema &amp; Kısayollar</h3>
             <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-bpRed hover:text-white flex items-center justify-center cursor-pointer">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
+          </div>
+
+          <!-- CLOUDINARY KALICI EVRENSEL MP4 AYARLARI -->
+          <div class="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200 space-y-2.5 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-extrabold text-bpEmerald">Cloudinary Kalıcı Video Bulutu (iPhone .MOV → MP4)</span>
+              <span class="px-2 py-0.5 rounded bg-bpEmerald text-white text-[10px] font-extrabold">KALICI LİNK</span>
+            </div>
+            <p class="text-[11px] text-slate-600 leading-relaxed">
+              Ücretsiz <strong>cloudinary.com</strong> hesabınızdan aldığınız <strong>Cloud Name</strong> ve <strong>Unsigned Upload Preset</strong> bilgilerini girin. Videolarınız cihazdan silinse bile her cihazda evrensel MP4 olarak açılır.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Cloud Name</label>
+                <input type="text" id="pref-cloudinary-name" value="${escapeAttr(p.cloudinaryCloudName || '')}" placeholder="Örn: dxyz123abc" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Unsigned Upload Preset</label>
+                <input type="text" id="pref-cloudinary-preset" value="${escapeAttr(p.cloudinaryUploadPreset || '')}" placeholder="Örn: birperde_unsigned" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold" />
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <button type="button" onclick="saveCloudinarySettings()" class="px-3.5 py-1.5 rounded-lg bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">Bulut Ayarını Kaydet</button>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -3136,7 +3243,7 @@
           <div class="text-sm font-extrabold ${isMovie ? 'text-bpNavy' : 'text-bpEmerald'}">
             ${isMovie ? 'Henüz Film Eklenmemiş' : 'Henüz Dizi Eklenmemiş'}
           </div>
-          <p class="text-xs text-slate-500">Eklediğiniz içerikler turbo buluta aktarılır ve siteye giren her cihazda anında açılır.</p>
+          <p class="text-xs text-slate-500">Eklediğiniz videolar kalıcı buluta kaydedilir ve cihazdan silseniz bile her yerden açılır.</p>
           <div class="pt-1 flex justify-center gap-2">
             <button type="button" onclick="openAddContentModal('${kind}')" class="px-4 py-2 rounded-xl ${isMovie ? 'bg-bpNavy text-white' : 'bg-bpEmerald text-white'} text-xs font-extrabold cursor-pointer">
               ${isMovie ? '+ Film Ekle' : '+ Dizi Ekle'}
@@ -3829,7 +3936,7 @@
         syncFullscreenClass();
         wrapper.innerHTML = `
           <div id="fs-tap-surface" onclick="handlePlayerSurfaceTap(event)" class="relative w-full h-full bg-black overflow-hidden select-none">
-            <video id="birperde-video" playsinline webkit-playsinline preload="auto" ${state.player.loopMode ? 'loop' : ''} class="w-full h-full object-contain bg-black"></video>
+            <video id="birperde-video" playsinline webkit-playsinline preload="metadata" ${state.player.loopMode ? 'loop' : ''} class="w-full h-full object-contain bg-black"></video>
             <div id="seek-feedback-layer" class="pointer-events-none absolute inset-0 z-20"></div>
 
             <div id="fullscreen-hud-layer" class="transition-opacity duration-200 absolute inset-0 z-10 flex flex-col justify-between p-4 sm:p-6 bg-gradient-to-b from-black/75 via-transparent to-black/80">
@@ -3904,7 +4011,7 @@
             </div>
 
             <div id="fs-tap-surface" onclick="handlePlayerSurfaceTap(event)" class="bp-player-stage relative aspect-video bg-black w-full select-none cursor-pointer">
-              <video id="birperde-video" playsinline webkit-playsinline preload="auto" ${state.player.loopMode ? 'loop' : ''} class="w-full h-full object-contain bg-black"></video>
+              <video id="birperde-video" playsinline webkit-playsinline preload="metadata" ${state.player.loopMode ? 'loop' : ''} class="w-full h-full object-contain bg-black"></video>
               <div id="seek-feedback-layer" class="pointer-events-none absolute inset-0 z-10"></div>
 
               <div id="player-status-overlay" class="hidden absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center z-20">
@@ -4006,7 +4113,7 @@
         if (overlay) overlay.classList.remove('hidden');
         if (statusText) {
           statusText.textContent = status === 'not_uploaded_yet'
-            ? 'Bu video buluta aktarılıyor. Birkaç saniye içinde otomatik açılacaktır.'
+            ? 'Bu video buluta yükleniyor. Tamamlandığında her cihazdan otomatik açılacaktır.'
             : 'Video kaynağı bulunamadı.';
         }
         return;
@@ -4102,6 +4209,7 @@
       batchQueueFiles,
       state,
       savePrefs,
+      saveCloudinarySettings,
       dismissIntroSplashNow,
       replayIntroSplash,
       openAddContentModal,
