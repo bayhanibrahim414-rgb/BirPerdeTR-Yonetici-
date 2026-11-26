@@ -787,7 +787,7 @@
     }
 
     /* =====================================================================
-       2. FIREBASE + CLOUDINARY + CORS-FREE STREAM ENGINE
+       2. FIREBASE + CLOUDINARY + H.264 TRANSCODE STREAM ENGINE
     ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyB1eT555N2stbzj6x6zkmxHKtMolvCJmeY",
@@ -915,9 +915,9 @@
     function sanitizePlayableUrl(rawUrl) {
       let u = String(rawUrl || '').trim();
       if (!u) return '';
-      u = u.replace('/upload/f_mp4,vc_h264/', '/upload/');
-      if (/res\.cloudinary\.com/i.test(u) && /\.mov(\?.*)?$/i.test(u)) {
-        u = u.replace(/\.mov(\?.*)?$/i, '.mp4$1');
+      if (/res\.cloudinary\.com/i.test(u) && u.includes('/upload/')) {
+        u = u.replace(/\/upload\/(?:f_mp4(?:,vc_h264(?:,ac_aac)?)?\/)?/i, '/upload/f_mp4,vc_h264,ac_aac/');
+        u = u.replace(/\.(mov|mkv|hevc|avi)(\?.*)?$/i, '.mp4$2');
       }
       const gdriveMatch = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]{15,})/i);
       if (gdriveMatch && gdriveMatch[1]) {
@@ -927,6 +927,23 @@
         u = u.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace(/[?&]dl=[01]/g, '');
       }
       return u;
+    }
+
+    function buildPlayableCandidates(rawUrl) {
+      const clean = sanitizePlayableUrl(rawUrl);
+      if (!clean) return [];
+      const list = [clean];
+
+      if (/res\.cloudinary\.com/i.test(clean) && clean.includes('/upload/')) {
+        const noTranscode = clean
+          .replace('/upload/f_mp4,vc_h264,ac_aac/', '/upload/')
+          .replace('/upload/f_mp4,vc_h264/', '/upload/')
+          .replace('/upload/f_mp4/', '/upload/');
+        const simpleMp4 = noTranscode.replace('/upload/', '/upload/f_mp4/');
+        list.push(simpleMp4, noTranscode);
+      }
+
+      return Array.from(new Set(list.filter(Boolean)));
     }
 
     function normalizeItem(raw) {
@@ -1181,7 +1198,7 @@
     }
 
     /* =====================================================================
-       3. 1 MB – 15 GB MULTI-STAGE CLOUD UPLOAD ENGINE (CORS-FREE)
+       3. 1 MB – 15 GB MULTI-STAGE CLOUD UPLOAD ENGINE
     ===================================================================== */
     function setUploadBanner(show, text = '', pct = 0) {
       const banner = document.getElementById('background-sync-banner');
@@ -1263,7 +1280,6 @@
       });
     }
 
-    // 1 MB - 15 GB arası dosyalar için %0 takılma korumalı Firebase Resumable Storage
     function uploadFileViaFirebaseResumable(file, onProgress) {
       return new Promise(async (resolve, reject) => {
         let settled = false;
@@ -1333,11 +1349,10 @@
       });
     }
 
-    // Cloudinary Parçalı (Chunked) Yükleme Motoru
     async function uploadViaCloudinaryChunked(file, onProgress) {
       const cloudName = (state.prefs.cloudinaryCloudName || '').trim() || HARDCODED_CLOUD_NAME;
       const uploadPreset = (state.prefs.cloudinaryUploadPreset || '').trim() || HARDCODED_UPLOAD_PRESET;
-      const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/auto/upload`;
+      const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/video/upload`;
 
       if (file.size <= CLOUDINARY_SINGLE_MAX_BYTES) {
         const txt = await uploadBlobSingleXhr(
@@ -1391,7 +1406,6 @@
       return { downloadUrl: sanitizePlayableUrl(lastResponseJson.secure_url), storagePath: '' };
     }
 
-    // Tam CORS Destekli Yüksek Kapasiteli Bulut Sunucusu (Litterbox / Catbox)
     async function uploadViaCorsFreeCloud(file, onProgress) {
       const txt = await uploadBlobSingleXhr(
         'https://litterbox.catbox.moe/resources/internals/api.php',
@@ -1408,7 +1422,6 @@
       return { downloadUrl: cleanUrl, storagePath: '' };
     }
 
-    // 1 MB - 15 GB Akıllı Sıralı Aktarım Motoru
     async function uploadFileSmartCloud(file, onProgress) {
       if (file.size > MAX_ALLOWED_FILE_BYTES) {
         throw new Error(`Dosya boyutu (${formatFileSizeHuman(file.size)}) 15 GB sınırını aşıyor.`);
@@ -1648,7 +1661,6 @@
         };
 
         v.onseeked = () => {
-          // Tarayıcı decoder'ının gerçek video karesini çizmesi için kısa frame beklemesi
           setTimeout(() => {
             if (done) return;
             try {
@@ -2414,7 +2426,7 @@
       const seriesList = state.catalog.filter(i => i.type === 'series');
       const cloudStatusNote = `
         <div class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-bpEmerald flex items-center justify-between gap-2">
-          <span>Bulut Aktarım Kapasitesi: 1 MB – 15 GB (Tüm cihazlarda kalıcı)</span>
+          <span>Otomatik H.264/MP4 Dönüşümlü Bulut Motoru (iPhone MOV + MP4 Tam Uyumlu)</span>
           <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="underline shrink-0 cursor-pointer">Ayarlar</button>
         </div>
       `;
@@ -2916,7 +2928,7 @@
         if (data.secure_url) {
           if (statusBox) {
             statusBox.className = 'text-[11px] font-extrabold text-bpEmerald';
-            statusBox.textContent = `✓ Bağlantı aktif! (${cn} / ${pr}) • 1 MB – 15 GB motor hazır.`;
+            statusBox.textContent = `✓ Bağlantı aktif! (${cn} / ${pr}) • H.264/MP4 motoru hazır.`;
           }
           showToast('Bulut bağlantısı doğrulandı!', 'success');
         }
@@ -2946,7 +2958,7 @@
               <span class="px-2 py-0.5 rounded bg-bpEmerald text-white text-[10px] font-extrabold">AKTİF</span>
             </div>
             <p class="text-[11px] text-slate-600 leading-relaxed">
-              1 MB ile 15 GB arasındaki tüm dosyalar otomatik olarak parçalı bulut motorundan aktarılır. Dilerseniz Google Drive veya doğrudan MP4 akış linki de kullanabilirsiniz.
+              iPhone (.MOV) ve bilgisayar (.MP4) videoları otomatik olarak tarayıcı uyumlu H.264 MP4 formatına çevrilir.
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
@@ -3499,7 +3511,7 @@
     }
 
     /* =====================================================================
-       9. WATCH STUDIO + DIAGNOSTIC FALLBACK STREAM LOADER
+       9. WATCH STUDIO + H.264 MULTI-CANDIDATE STREAM LOADER
     ===================================================================== */
     let hlsController = null;
     let singleTapTimer = null;
@@ -4316,11 +4328,7 @@
       if (overlay) overlay.classList.add('hidden');
       const minStart = activeCh?.trimStart > 0 ? activeCh.trimStart : 0;
 
-      const candidates = Array.from(new Set([
-        url,
-        url.replace(/\.mp4(\?.*)?$/i, '.mov$1'),
-        url.replace('/upload/', '/upload/f_mp4/')
-      ].filter(Boolean)));
+      const candidates = buildPlayableCandidates(url);
       let attemptIdx = 0;
 
       const onReady = () => {
@@ -4348,7 +4356,10 @@
         }
         if (overlay) overlay.classList.remove('hidden');
         if (statusText) {
-          statusText.textContent = `Bu bağlantı tarayıcı tarafından açılamadı. Videoyu yeniden seçip buluta yükleyin.`;
+          const isHevcMov = /\.mov(\?.*)?$/i.test(url) && !/res\.cloudinary\.com/i.test(url);
+          statusText.textContent = isHevcMov
+            ? 'Bu video iPhone HEVC (.MOV) formatında olduğu için bu tarayıcıda açılamadı. Safari’den izleyebilir veya videoyu MP4 olarak yükleyebilirsiniz.'
+            : 'Bu bağlantı tarayıcı tarafından açılamadı. Videoyu yeniden seçip buluta yükleyin.';
         }
         if (statusActions) {
           statusActions.innerHTML = `
