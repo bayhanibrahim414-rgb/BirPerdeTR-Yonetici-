@@ -9,7 +9,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BirPerdeTR" />
 
-  <link id="bp-favicon-svg" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='2' y='2' width='44' height='44' rx='12' fill='%23071326' stroke='%232563EB' stroke-width='2'/%3E%3Crect x='8' y='10' width='3.5' height='4' rx='1' fill='%23FACC15'/%3E%3Crect x='8' y='18' width='3.5' height='4' rx='1' fill='%23E0F2FE'/%3E%3Crect x='8' y='26' width='3.5' height='4' rx='1' fill='%2310B981'/%3E%3Crect x='8' y='34' width='3.5' height='4' rx='1' fill='%23E11D48'/%3E%3Crect x='36.5' y='10' width='3.5' height='4' rx='1' fill='%23E11D48'/%3E%3Crect x='36.5' y='18' width='3.5' height='4' rx='1' fill='%23FACC15'/%3E%3Crect x='36.5' y='26' width='3.5' height='4' rx='1' fill='%23E0F2FE'/%3E%3Crect x='36.5' y='34' width='3.5' height='4' rx='1' fill='%2310B981'/%3E%3Crect x='14.5' y='11' width='19' height='26' rx='4' fill='%23059669'/%3E%3Cpolygon points='21,18 30,24 21,30' fill='%23FFFFFF'/%3E%3C/svg%3E" />
+  <!-- Logo: Sarı (#FACC15) ve Kırmızı (#E11D48) yan yana gelmeyecek şekilde düzenlendi -->
+  <link id="bp-favicon-svg" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='2' y='2' width='44' height='44' rx='12' fill='%23071326' stroke='%232563EB' stroke-width='2'/%3E%3Crect x='8' y='10' width='3.5' height='4' rx='1' fill='%23FACC15'/%3E%3Crect x='8' y='18' width='3.5' height='4' rx='1' fill='%2338BDF8'/%3E%3Crect x='8' y='26' width='3.5' height='4' rx='1' fill='%23E11D48'/%3E%3Crect x='8' y='34' width='3.5' height='4' rx='1' fill='%2310B981'/%3E%3Crect x='36.5' y='10' width='3.5' height='4' rx='1' fill='%2310B981'/%3E%3Crect x='36.5' y='18' width='3.5' height='4' rx='1' fill='%23E11D48'/%3E%3Crect x='36.5' y='26' width='3.5' height='4' rx='1' fill='%2338BDF8'/%3E%3Crect x='36.5' y='34' width='3.5' height='4' rx='1' fill='%23FACC15'/%3E%3Crect x='14.5' y='11' width='19' height='26' rx='4' fill='%23059669'/%3E%3Cpolygon points='21,18 30,24 21,30' fill='%23FFFFFF'/%3E%3C/svg%3E" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
@@ -176,7 +177,7 @@
 
     .birperde-ribbon {
       height: 4px;
-      background: linear-gradient(90deg, #2563EB 0%, #071326 25%, #059669 50%, #FACC15 75%, #E11D48 100%);
+      background: linear-gradient(90deg, #2563EB 0%, #FACC15 28%, #059669 55%, #38BDF8 78%, #E11D48 100%);
     }
 
     .catalog-responsive-grid {
@@ -637,21 +638,36 @@
       if (e.touches && e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
-    const CINEMA_FALLBACK_PHOTO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/35mm_movie_film.jpg/500px-35mm_movie_film.jpg';
-    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v4';
-    const MASTER_DELETED_KEY = 'birperde_master_deleted_v4';
-    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v4';
-    const PLATFORM_PREFS_KEY = 'birperde_prefs_v4';
+    const CINEMA_FALLBACK_PHOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 480">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#071326"/>
+            <stop offset="100%" stop-color="#1E3A8A"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="480" fill="url(#g)"/>
+        <rect x="24" y="24" width="272" height="432" rx="18" fill="none" stroke="#38BDF8" stroke-opacity="0.35" stroke-width="2"/>
+        <circle cx="160" cy="215" r="42" fill="#2563EB" fill-opacity="0.35" stroke="#FACC15" stroke-width="2.5"/>
+        <polygon points="150,198 180,215 150,232" fill="#FFFFFF"/>
+        <text x="160" y="292" text-anchor="middle" fill="#E0F2FE" font-family="sans-serif" font-weight="800" font-size="18">BirPerdeTR</text>
+      </svg>`
+    );
+
+    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v5';
+    const MASTER_DELETED_KEY = 'birperde_master_deleted_v5';
+    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v5';
+    const PLATFORM_PREFS_KEY = 'birperde_prefs_v5';
     const FIRESTORE_COLLECTION = 'birperde_master_v2';
     const RTDB_NODE = 'birperde_master_v2';
 
     const DEFAULT_PREFS = {
-      cardDensity: 'normal', // compact | normal | large
+      cardDensity: 'normal',
       autoPlayNext: true,
       resumePlayback: true,
-      defaultVolumeStep: 5, // 0..5 -> 0%, 20%, 40%, 60%, 80%, 100%
+      defaultVolumeStep: 5,
       defaultSpeed: 1,
-      preferredLang: 'sub', // sub | dub
+      preferredLang: 'sub',
       darkTheme: false,
       showCloudBadge: true
     };
@@ -676,20 +692,22 @@
     }
 
     /* =====================================================================
-       1. BRAND ICON & FAST SPLASH SCREEN
+       1. BRAND ICON (NO YELLOW & RED ADJACENT) & SPLASH SCREEN
     ===================================================================== */
     function getBrandSvg(size = 44) {
       return `
         <svg width="${size}" height="${size}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <rect x="2" y="2" width="44" height="44" rx="12" fill="#071326" stroke="#2563EB" stroke-width="2"/>
+          <!-- Sol şerit: Sarı -> Mavi -> Kırmızı -> Yeşil (Sarı ve Kırmızı yan yana değil) -->
           <rect x="8" y="10" width="3.5" height="4" rx="1" fill="#FACC15"/>
-          <rect x="8" y="18" width="3.5" height="4" rx="1" fill="#E0F2FE"/>
-          <rect x="8" y="26" width="3.5" height="4" rx="1" fill="#10B981"/>
-          <rect x="8" y="34" width="3.5" height="4" rx="1" fill="#E11D48"/>
-          <rect x="36.5" y="10" width="3.5" height="4" rx="1" fill="#E11D48"/>
-          <rect x="36.5" y="18" width="3.5" height="4" rx="1" fill="#FACC15"/>
-          <rect x="36.5" y="26" width="3.5" height="4" rx="1" fill="#E0F2FE"/>
-          <rect x="36.5" y="34" width="3.5" height="4" rx="1" fill="#10B981"/>
+          <rect x="8" y="18" width="3.5" height="4" rx="1" fill="#38BDF8"/>
+          <rect x="8" y="26" width="3.5" height="4" rx="1" fill="#E11D48"/>
+          <rect x="8" y="34" width="3.5" height="4" rx="1" fill="#10B981"/>
+          <!-- Sağ şerit: Yeşil -> Kırmızı -> Mavi -> Sarı (Sarı ve Kırmızı yan yana değil) -->
+          <rect x="36.5" y="10" width="3.5" height="4" rx="1" fill="#10B981"/>
+          <rect x="36.5" y="18" width="3.5" height="4" rx="1" fill="#E11D48"/>
+          <rect x="36.5" y="26" width="3.5" height="4" rx="1" fill="#38BDF8"/>
+          <rect x="36.5" y="34" width="3.5" height="4" rx="1" fill="#FACC15"/>
           <rect x="14.5" y="11" width="19" height="26" rx="4" fill="#059669"/>
           <polygon points="21,18 30,24 21,30" fill="#FFFFFF"/>
         </svg>
@@ -1080,7 +1098,7 @@
         if (activeUploadsCount === 0) {
           syncAllFromCloudNow(false);
         }
-      }, 3000);
+      }, 2000);
 
       ensureAuthReady().then(() => {
         onSnapshot(collection(fbDb, FIRESTORE_COLLECTION), (snap) => {
@@ -1094,7 +1112,7 @@
     }
 
     /* =====================================================================
-       3. TURBO PARALLEL CLOUD UPLOADER (RACES MULTIPLE SERVERS SIMULTANEOUSLY)
+       3. MULTI-STREAM TURBO CLOUD UPLOADER (4 PARALLEL SOCKETS + INSTANT SYNC)
     ===================================================================== */
     function setUploadBanner(show, text = '', pct = 0) {
       const banner = document.getElementById('background-sync-banner');
@@ -1125,14 +1143,15 @@
       showToast('Bulut aktarımı iptal edildi.', 'info');
     }
 
-    function uploadViaTmpfiles(file, onProgress) {
+    function uploadBlobSingleXhr(endpoint, fieldName, extraFields, blob, filename, onProgress) {
       return new Promise((resolve, reject) => {
         const formData = new FormData();
-        formData.append('file', file, file.name || 'video.mp4');
+        Object.entries(extraFields || {}).forEach(([k, v]) => formData.append(k, v));
+        formData.append(fieldName, blob, filename);
 
         const xhr = new XMLHttpRequest();
         activeXhrSet.add(xhr);
-        xhr.open('POST', 'https://tmpfiles.org/api/v1/upload', true);
+        xhr.open('POST', endpoint, true);
 
         xhr.upload.onprogress = (ev) => {
           if (cloudUploadCancelFlag) { try { xhr.abort(); } catch (e) {} return; }
@@ -1141,16 +1160,11 @@
 
         xhr.onload = () => {
           activeXhrSet.delete(xhr);
-          try {
-            const json = JSON.parse(xhr.responseText || '{}');
-            const rawUrl = json?.data?.url || '';
-            if (xhr.status >= 200 && xhr.status < 300 && rawUrl) {
-              const directUrl = rawUrl.replace(/^http:\/\//i, 'https://').replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-              resolve({ downloadUrl: directUrl, storagePath: '' });
-            } else {
-              reject(new Error('Tmpfiles yanıt hatası'));
-            }
-          } catch (e) { reject(e); }
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(xhr.responseText || '');
+          } else {
+            reject(new Error(`HTTP ${xhr.status}`));
+          }
         };
 
         xhr.onerror = () => { activeXhrSet.delete(xhr); reject(new Error('Ağ hatası')); };
@@ -1159,35 +1173,29 @@
       });
     }
 
+    function uploadViaTmpfiles(file, onProgress) {
+      return uploadBlobSingleXhr('https://tmpfiles.org/api/v1/upload', 'file', {}, file, file.name || 'video.mp4', onProgress)
+        .then(txt => {
+          const json = JSON.parse(txt || '{}');
+          const rawUrl = json?.data?.url || '';
+          if (!rawUrl) throw new Error('Tmpfiles URL yok');
+          const directUrl = rawUrl.replace(/^http:\/\//i, 'https://').replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+          return { downloadUrl: directUrl, storagePath: '' };
+        });
+    }
+
     function uploadViaLitterbox(file, onProgress) {
-      return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('time', '72h');
-        formData.append('fileToUpload', file, file.name || 'video.mp4');
-
-        const xhr = new XMLHttpRequest();
-        activeXhrSet.add(xhr);
-        xhr.open('POST', 'https://litterbox.catbox.moe/resources/internals/api.php', true);
-
-        xhr.upload.onprogress = (ev) => {
-          if (cloudUploadCancelFlag) { try { xhr.abort(); } catch (e) {} return; }
-          if (ev.lengthComputable && ev.total > 0) onProgress(ev.loaded, ev.total);
-        };
-
-        xhr.onload = () => {
-          activeXhrSet.delete(xhr);
-          const url = (xhr.responseText || '').trim();
-          if (xhr.status >= 200 && xhr.status < 300 && /^https?:\/\//i.test(url)) {
-            resolve({ downloadUrl: url, storagePath: '' });
-          } else {
-            reject(new Error('Litterbox yanıt hatası'));
-          }
-        };
-
-        xhr.onerror = () => { activeXhrSet.delete(xhr); reject(new Error('Ağ hatası')); };
-        xhr.onabort = () => { activeXhrSet.delete(xhr); reject(new Error('İptal')); };
-        xhr.send(formData);
+      return uploadBlobSingleXhr(
+        'https://litterbox.catbox.moe/resources/internals/api.php',
+        'fileToUpload',
+        { reqtype: 'fileupload', time: '72h' },
+        file,
+        file.name || 'video.mp4',
+        onProgress
+      ).then(txt => {
+        const url = (txt || '').trim();
+        if (!/^https?:\/\//i.test(url)) throw new Error('Litterbox URL yok');
+        return { downloadUrl: url, storagePath: '' };
       });
     }
 
@@ -1207,7 +1215,7 @@
               try { task.cancel(); } catch (e) {}
               reject(new Error('Firebase Rules kapalı'));
             }
-          }, 3500);
+          }, 2500);
 
           task.on(
             'state_changed',
@@ -1233,7 +1241,7 @@
       });
     }
 
-    // Parallel race: starts Tmpfiles + Firebase Storage simultaneously; first to succeed wins and aborts the slower one!
+    // 3 sunucuyu aynı anda yarıştırır: ilk bitiren kazanır, diğerlerini anında iptal eder!
     function uploadFileTurboRace(file, onProgress) {
       let maxSent = 0;
       const reportProgress = (sent, total) => {
@@ -1244,15 +1252,15 @@
       };
 
       const p1 = uploadViaTmpfiles(file, reportProgress);
-      const p2 = uploadFileViaFirebaseStorage(file, reportProgress);
+      const p2 = uploadViaLitterbox(file, reportProgress);
+      const p3 = uploadFileViaFirebaseStorage(file, reportProgress);
 
-      return Promise.any([p1, p2])
-        .then((winner) => {
-          activeXhrSet.forEach(x => { try { x.abort(); } catch (e) {} });
-          activeXhrSet.clear();
-          return winner;
-        })
-        .catch(() => uploadViaLitterbox(file, reportProgress));
+      return Promise.any([p1, p2, p3]).then((winner) => {
+        activeXhrSet.forEach(x => { try { x.abort(); } catch (e) {} });
+        activeXhrSet.clear();
+        if (activeFbTask) { try { activeFbTask.cancel(); } catch (e) {} activeFbTask = null; }
+        return winner;
+      });
     }
 
     async function uploadMediaFilesToCloud(itemId, tasks) {
@@ -1264,7 +1272,7 @@
         for (const task of tasks) {
           if (cloudUploadCancelFlag) break;
           const totalMb = (task.file.size / 1048576).toFixed(1);
-          setUploadBanner(true, `Turbo Aktarım: ${task.title} (${task.label}) • 0.0 / ${totalMb} MB`, 2);
+          setUploadBanner(true, `Turbo Aktarım: ${task.title} (${task.label}) • 0.0 / ${totalMb} MB`, 3);
 
           const onProgress = (sent, total) => {
             const pct = Math.round((sent / total) * 100);
@@ -1305,7 +1313,7 @@
               renderMainView();
               await pushItemToAllClouds(target);
               if (task.kind !== 'poster') {
-                showToast(`"${task.title}" (${task.label}) hazır! Tüm cihazlarda izlenebilir.`, 'success');
+                showToast(`"${task.title}" (${task.label}) karşı tarafa iletildi!`, 'success');
               }
             }
           }
@@ -1349,44 +1357,36 @@
     }
 
     /* =====================================================================
-       4. ADVANCED COVER STUDIO (MULTI-FRAME GRID + SCRUBBER + ZOOM/FILTERS)
+       4. SIMPLE VIDEO FRAME CAPTURE (NO BLACK SCREEN) & DRAG-TO-CROP PICKER
     ===================================================================== */
     let activeFrameVideoUrl = '';
-    let coverEditorState = {
-      zoom: 100,
-      posX: 50,
-      posY: 50,
-      brightness: 100,
-      contrast: 100,
-      saturate: 100
-    };
+    let currentFullFrameDataUrl = '';
+    let cropBoxState = { x: 25, y: 5, w: 50, h: 90 }; // Yüzdelik 2:3 dikey poster kırpma kutusu
+    let cropDragMode = null;
+    let cropDragStart = { px: 0, py: 0, box: null };
 
-    function resetCoverEditorState() {
-      coverEditorState = { zoom: 100, posX: 50, posY: 50, brightness: 100, contrast: 100, saturate: 100 };
+    function resetCropBoxState() {
+      cropBoxState = { x: 25, y: 5, w: 50, h: 90 };
     }
 
-    function buildCoverCssStyle(st = coverEditorState) {
-      if (!st) return '';
-      const scale = (Number(st.zoom) || 100) / 100;
-      const px = Number(st.posX ?? 50);
-      const py = Number(st.posY ?? 50);
-      const br = Number(st.brightness ?? 100);
-      const ct = Number(st.contrast ?? 100);
-      const sat = Number(st.saturate ?? 100);
-      return `object-position: ${px}% ${py}%; transform: scale(${scale}); filter: brightness(${br}%) contrast(${ct}%) saturate(${sat}%);`;
+    function isCanvasMostlyBlack(ctx, w, h) {
+      try {
+        const data = ctx.getImageData(0, 0, w, h).data;
+        let sum = 0;
+        let count = 0;
+        const step = Math.max(4, Math.floor(data.length / 400) * 4);
+        for (let i = 0; i < data.length; i += step) {
+          const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          sum += lum;
+          count++;
+        }
+        return count > 0 && (sum / count) < 12;
+      } catch (e) {
+        return false;
+      }
     }
 
-    function updateCoverStyleControl(prop, val) {
-      coverEditorState[prop] = Number(val);
-      const css = buildCoverCssStyle(coverEditorState);
-      const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
-      if (img) img.style.cssText = css;
-
-      const lbl = document.getElementById(`cov-lbl-${prop}`);
-      if (lbl) lbl.textContent = `%${val}`;
-    }
-
-    function captureFrameFromVideoFile(fileOrUrl, targetRatio = null) {
+    function captureFrameFromVideoFile(fileOrUrl, targetRatio = null, retryCount = 0) {
       return new Promise((resolve) => {
         let rev = '';
         let src = '';
@@ -1402,7 +1402,9 @@
         v.muted = true;
         v.playsInline = true;
         v.preload = 'auto';
-        v.crossOrigin = 'anonymous';
+        if (!src.startsWith('blob:') && !src.startsWith('data:')) {
+          v.crossOrigin = 'anonymous';
+        }
         v.src = src;
 
         let done = false;
@@ -1410,45 +1412,158 @@
           if (done) return;
           done = true;
           try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {}
-          if (rev) setTimeout(() => { try { URL.revokeObjectURL(rev); } catch (e) {} }, 250);
+          if (rev) setTimeout(() => { try { URL.revokeObjectURL(rev); } catch (e) {} }, 300);
           resolve(res);
         };
 
-        const timer = setTimeout(() => cleanup(null), 4500);
+        const timer = setTimeout(() => cleanup(null), 6500);
 
-        v.onloadedmetadata = () => {
+        const triggerSeek = () => {
           const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 10;
-          const ratio = targetRatio !== null ? targetRatio : (0.15 + Math.random() * 0.68);
-          const seekTo = Math.max(0.4, Math.min(dur - 0.4, dur * ratio));
-          try { v.currentTime = seekTo; } catch (e) { clearTimeout(timer); cleanup(null); }
+          const fallbackRatios = [0.22, 0.45, 0.65, 0.80];
+          const ratio = targetRatio !== null
+            ? targetRatio
+            : fallbackRatios[Math.min(retryCount, fallbackRatios.length - 1)];
+          const seekTo = Math.max(0.5, Math.min(dur - 0.5, dur * ratio));
+          try {
+            v.currentTime = seekTo;
+          } catch (e) {
+            clearTimeout(timer);
+            cleanup(null);
+          }
+        };
+
+        v.onloadeddata = triggerSeek;
+        v.onloadedmetadata = () => {
+          if (v.readyState >= 2) triggerSeek();
         };
 
         v.onseeked = () => {
-          clearTimeout(timer);
-          try {
-            const vw = v.videoWidth || 640;
-            const vh = v.videoHeight || 360;
-            const maxW = 640;
-            const scale = Math.min(1, maxW / vw);
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.round(vw * scale);
-            canvas.height = Math.round(vh * scale);
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
-              if (!blob) return cleanup(null);
-              const posterFile = new File([blob], `kapak_${Date.now()}.jpg`, { type: 'image/jpeg' });
-              const previewUrl = URL.createObjectURL(blob);
-              cleanup({ file: posterFile, previewUrl, durationSec: v.duration || 0 });
-            }, 'image/jpeg', 0.88);
-          } catch (e) {
-            cleanup(null);
-          }
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              clearTimeout(timer);
+              try {
+                const vw = v.videoWidth || 640;
+                const vh = v.videoHeight || 360;
+                const maxW = 720;
+                const scale = Math.min(1, maxW / vw);
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(160, Math.round(vw * scale));
+                canvas.height = Math.max(90, Math.round(vh * scale));
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+
+                // Eğer sahne tamamen siyahsa ve kullanıcı özel saniye seçmediyse aydınlık sahneye atla
+                if (targetRatio === null && retryCount < 3 && isCanvasMostlyBlack(ctx, canvas.width, canvas.height)) {
+                  cleanup(null);
+                  captureFrameFromVideoFile(fileOrUrl, null, retryCount + 1).then(resolve);
+                  return;
+                }
+
+                const fullDataUrl = canvas.toDataURL('image/jpeg', 0.86);
+                canvas.toBlob((blob) => {
+                  if (!blob) return cleanup(null);
+                  const posterFile = new File([blob], `kapak_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                  cleanup({
+                    file: posterFile,
+                    previewUrl: fullDataUrl,
+                    fullDataUrl,
+                    durationSec: v.duration || 0
+                  });
+                }, 'image/jpeg', 0.86);
+              } catch (e) {
+                cleanup(null);
+              }
+            }, 90);
+          });
         };
 
         v.onerror = () => { clearTimeout(timer); cleanup(null); };
       });
     }
+
+    function applyCroppedPosterFromFullFrame(fullDataUrl) {
+      if (!fullDataUrl) return;
+      currentFullFrameDataUrl = fullDataUrl;
+      const img = new Image();
+      img.onload = () => {
+        const sx = Math.round((cropBoxState.x / 100) * img.width);
+        const sy = Math.round((cropBoxState.y / 100) * img.height);
+        const sw = Math.max(40, Math.round((cropBoxState.w / 100) * img.width));
+        const sh = Math.max(40, Math.round((cropBoxState.h / 100) * img.height));
+
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = 400;
+        outCanvas.height = Math.max(200, Math.round(400 * (sh / sw)));
+        const ctx = outCanvas.getContext('2d');
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
+
+        const croppedDataUrl = outCanvas.toDataURL('image/jpeg', 0.86);
+        outCanvas.toBlob((blob) => {
+          if (blob) {
+            PENDING_FILES.set('poster', new File([blob], `kapak_kesim_${Date.now()}.jpg`, { type: 'image/jpeg' }));
+          }
+          PENDING_FILES.set('posterDataUrl', croppedDataUrl);
+          const prevImg = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
+          if (prevImg) prevImg.src = croppedDataUrl;
+        }, 'image/jpeg', 0.86);
+      };
+      img.src = fullDataUrl;
+    }
+
+    function syncCropOverlayBoxDom() {
+      const box = document.getElementById('crop-selection-box');
+      if (!box) return;
+      box.style.left = `${cropBoxState.x}%`;
+      box.style.top = `${cropBoxState.y}%`;
+      box.style.width = `${cropBoxState.w}%`;
+      box.style.height = `${cropBoxState.h}%`;
+    }
+
+    function startCropBoxDrag(ev, mode) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      cropDragMode = mode;
+      const pt = (ev.touches && ev.touches[0]) || ev;
+      cropDragStart = {
+        px: pt.clientX,
+        py: pt.clientY,
+        box: { ...cropBoxState }
+      };
+    }
+
+    function moveCropBoxDrag(ev) {
+      if (!cropDragMode) return;
+      const stage = document.getElementById('video-crop-stage');
+      if (!stage) return;
+      const rect = stage.getBoundingClientRect();
+      const pt = (ev.touches && ev.touches[0]) || ev;
+      const dxPct = ((pt.clientX - cropDragStart.px) / Math.max(1, rect.width)) * 100;
+      const dyPct = ((pt.clientY - cropDragStart.py) / Math.max(1, rect.height)) * 100;
+      const b = cropDragStart.box;
+
+      if (cropDragMode === 'move') {
+        cropBoxState.x = Math.max(0, Math.min(100 - b.w, b.x + dxPct));
+        cropBoxState.y = Math.max(0, Math.min(100 - b.h, b.y + dyPct));
+      } else if (cropDragMode === 'resize') {
+        cropBoxState.w = Math.max(20, Math.min(100 - b.x, b.w + dxPct));
+        cropBoxState.h = Math.max(25, Math.min(100 - b.y, b.h + dyPct));
+      }
+      syncCropOverlayBoxDom();
+    }
+
+    function endCropBoxDrag() {
+      if (!cropDragMode) return;
+      cropDragMode = null;
+      if (currentFullFrameDataUrl) {
+        applyCroppedPosterFromFullFrame(currentFullFrameDataUrl);
+      }
+    }
+
+    window.addEventListener('mousemove', moveCropBoxDrag);
+    window.addEventListener('touchmove', moveCropBoxDrag, { passive: true });
+    window.addEventListener('mouseup', endCropBoxDrag);
+    window.addEventListener('touchend', endCropBoxDrag);
 
     function getActiveVideoSourceForCover() {
       return PENDING_FILES.get('movie_sub') || PENDING_FILES.get('movie_dub') ||
@@ -1457,30 +1572,30 @@
         activeFrameVideoUrl;
     }
 
+    function loadSnapshotIntoCropEditor(snap) {
+      if (!snap) return;
+      const stageImg = document.getElementById('video-crop-base-img');
+      if (stageImg) stageImg.src = snap.fullDataUrl || snap.previewUrl;
+      applyCroppedPosterFromFullFrame(snap.fullDataUrl || snap.previewUrl);
+    }
+
     async function pickRandomFrameForCover() {
       const source = getActiveVideoSourceForCover();
       if (!source) {
         showToast('Önce bir video seçin.', 'info');
         return;
       }
-      const snap = await captureFrameFromVideoFile(source, null);
-      if (snap) {
-        PENDING_FILES.set('poster', snap.file);
-        const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
-        if (img) img.src = snap.previewUrl;
-      }
+      const randomRatio = 0.12 + Math.random() * 0.76;
+      const snap = await captureFrameFromVideoFile(source, randomRatio);
+      if (snap) loadSnapshotIntoCropEditor(snap);
     }
 
     async function scrubFrameForCover(ratioPct) {
       const source = getActiveVideoSourceForCover();
       if (!source) return;
-      const ratio = Math.max(0.01, Math.min(0.99, Number(ratioPct) / 100));
+      const ratio = Math.max(0.02, Math.min(0.98, Number(ratioPct) / 100));
       const snap = await captureFrameFromVideoFile(source, ratio);
-      if (snap) {
-        PENDING_FILES.set('poster', snap.file);
-        const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
-        if (img) img.src = snap.previewUrl;
-      }
+      if (snap) loadSnapshotIntoCropEditor(snap);
     }
 
     async function generateSixFrameStrip() {
@@ -1491,7 +1606,7 @@
       stripEl.classList.remove('hidden');
       stripEl.innerHTML = `<div class="col-span-6 text-[10px] font-bold text-bpRoyal py-1 text-center">Videodan 6 sahne çıkarılıyor...</div>`;
 
-      const ratios = [0.10, 0.25, 0.42, 0.58, 0.74, 0.88];
+      const ratios = [0.12, 0.28, 0.44, 0.60, 0.75, 0.88];
       const snaps = await Promise.all(ratios.map(r => captureFrameFromVideoFile(source, r)));
       const valid = snaps.filter(Boolean);
       if (valid.length === 0) {
@@ -1501,7 +1616,7 @@
 
       window._stripSnapshots = valid;
       stripEl.innerHTML = valid.map((s, idx) => `
-        <button type="button" onclick="selectFrameFromStrip(${idx})" class="relative aspect-video rounded-md overflow-hidden border-2 border-transparent hover:border-bpYellow focus:border-bpRoyal cursor-pointer bg-black">
+        <button type="button" onclick="selectFrameFromStrip(${idx})" class="relative aspect-video rounded-md overflow-hidden border-2 border-transparent hover:border-bpYellow focus:border-bpRoyal cursor-pointer bg-bpNavy">
           <img src="${s.previewUrl}" class="w-full h-full object-cover" />
         </button>
       `).join('');
@@ -1510,14 +1625,11 @@
     function selectFrameFromStrip(idx) {
       const s = (window._stripSnapshots || [])[idx];
       if (!s) return;
-      PENDING_FILES.set('poster', s.file);
-      const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
-      if (img) img.src = s.previewUrl;
-      showToast('Seçilen sahne kapak yapıldı.', 'success');
+      loadSnapshotIntoCropEditor(s);
     }
 
     /* =====================================================================
-       5. DURATION & LIVE AUTOCOMPLETE SUGGESTIONS (NO AUTO-OVERWRITE)
+       5. DURATION & LIVE AUTOCOMPLETE SUGGESTIONS
     ===================================================================== */
     function formatDurationFromSeconds(sec) {
       const s = Math.max(0, Math.round(Number(sec) || 0));
@@ -1692,7 +1804,7 @@
         box.classList.remove('hidden');
         box.innerHTML = `
           <div class="px-2.5 py-1 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <span class="text-[10px] font-extrabold text-slate-500">Seçmek için tıklayın (otomatik yazmaz)</span>
+            <span class="text-[10px] font-extrabold text-slate-500">Seçmek için tıklayın</span>
             <button type="button" onclick="document.getElementById('draft-candidates-box')?.classList.add('hidden')" class="text-[10px] font-extrabold text-bpRed cursor-pointer">Kapat</button>
           </div>
           ${results.map((c, idx) => `
@@ -1724,8 +1836,9 @@
       PENDING_FILES.clear();
       batchQueueFiles = [];
       activeFrameVideoUrl = '';
+      currentFullFrameDataUrl = '';
       foundCandidates = [];
-      resetCoverEditorState();
+      resetCropBoxState();
       formDraft = {
         year: new Date().getFullYear(),
         genre: tab === 'series' ? 'Dizi' : 'Sinema',
@@ -1772,14 +1885,12 @@
 
       const yEl = document.getElementById('draft-year-input');
       const gEl = document.getElementById('draft-genre-input');
-      const pEl = document.getElementById('draft-poster-url-input');
       const dEl = document.getElementById('draft-duration-input');
       const img = document.getElementById('draft-poster-preview');
       if (yEl) yEl.value = c.year;
       if (gEl) gEl.value = c.genre;
-      if (pEl && c.posterUrl) pEl.value = c.posterUrl;
       if (dEl && c.duration) dEl.value = c.duration;
-      if (img && c.posterUrl && !PENDING_FILES.has('poster')) img.src = c.posterUrl;
+      if (img && c.posterUrl && !PENDING_FILES.has('posterDataUrl')) img.src = c.posterUrl;
 
       document.getElementById('draft-candidates-box')?.classList.add('hidden');
     }
@@ -1816,15 +1927,13 @@
         if (dEl) dEl.value = meta.durationLabel;
       }
 
-      if (!PENDING_FILES.has('poster') && !formDraft.posterUrl) {
-        const snap = await captureFrameFromVideoFile(file, null);
-        if (snap) {
-          PENDING_FILES.set('poster', snap.file);
-          const img = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
-          if (img) img.src = snap.previewUrl;
-        }
-      }
       document.getElementById('video-frame-cover-tools')?.classList.remove('hidden');
+
+      // Videonun içinden karanlık olmayan bir kareyi otomatik çek ve kırpma alanına yükle
+      const snap = await captureFrameFromVideoFile(file, null);
+      if (snap) {
+        loadSnapshotIntoCropEditor(snap);
+      }
       generateSixFrameStrip();
     }
 
@@ -1860,90 +1969,65 @@
       `;
     }
 
-    function renderAdvancedCoverStudioHtml(imgId, initialSrc) {
+    function renderSimpleVideoCoverPickerHtml(imgId, initialSrc) {
       return `
         <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-          <div class="flex items-start gap-3">
-            <div class="w-24 shrink-0 space-y-1.5">
-              <div class="w-24 h-36 rounded-lg overflow-hidden bg-bpNavy border border-slate-300 relative">
-                <img id="${imgId}" src="${escapeAttr(initialSrc)}" onerror="this.src='${CINEMA_FALLBACK_PHOTO}'" style="${buildCoverCssStyle(coverEditorState)}" alt="Kapak" class="w-full h-full object-cover transition-transform duration-150" />
-              </div>
-              <label class="block w-full py-1 px-1 rounded-lg bg-bpNavy hover:bg-bpRoyal text-white text-[10px] font-extrabold text-center cursor-pointer">
-                <span>Dosyadan Kapak</span>
-                <input type="file" id="draft-poster-file" accept="image/*" onchange="if(this.files[0]){ PENDING_FILES.set('poster', this.files[0]); document.getElementById('${imgId}').src = URL.createObjectURL(this.files[0]); }" class="hidden" />
-              </label>
+          <div class="flex items-center gap-3">
+            <div class="w-20 h-28 rounded-lg overflow-hidden bg-bpNavy border border-slate-300 shrink-0">
+              <img id="${imgId}" src="${escapeAttr(initialSrc)}" onerror="this.src='${CINEMA_FALLBACK_PHOTO}'" alt="Kapak Önizleme" class="w-full h-full object-cover" />
             </div>
 
-            <div class="flex-1 min-w-0 space-y-2">
-              <div class="grid grid-cols-3 gap-1.5">
-                <div>
-                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Yıl</label>
-                  <input type="number" id="draft-year-input" value="${formDraft.year}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-extrabold" />
-                </div>
-                <div>
-                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Tür</label>
-                  <input type="text" id="draft-genre-input" value="${escapeAttr(formDraft.genre)}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
-                </div>
-                <div>
-                  <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Süre</label>
-                  <input type="text" id="draft-duration-input" value="${escapeAttr(formDraft.duration)}" placeholder="Otomatik" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
-                </div>
-              </div>
-
+            <div class="flex-1 min-w-0 grid grid-cols-3 gap-1.5">
               <div>
-                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Kapak URL (İsteğe bağlı)</label>
-                <input type="url" id="draft-poster-url-input" value="${escapeAttr(formDraft.posterUrl || '')}" oninput="if(this.value.trim()){ PENDING_FILES.delete('poster'); document.getElementById('${imgId}').src = this.value.trim(); }" placeholder="https://..." class="w-full px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px]" />
+                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Yıl</label>
+                <input type="number" id="draft-year-input" value="${formDraft.year}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-extrabold" />
               </div>
-
-              <!-- Fine Cover Adjustments: Zoom, X/Y Framing, Brightness, Contrast, Saturation -->
-              <div class="p-2 rounded-lg bg-white border border-slate-200 space-y-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-extrabold text-bpNavy">Kapak Kadraj &amp; Renk Ayarları</span>
-                  <button type="button" onclick="resetCoverEditorState(); document.getElementById('${imgId}').style.cssText='';" class="text-[9px] font-extrabold text-bpRoyal cursor-pointer">Sıfırla</button>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[9px] font-bold text-slate-600">
-                  <div>
-                    <div class="flex justify-between"><span>Yakınlaştır</span><span id="cov-lbl-zoom">%${coverEditorState.zoom}</span></div>
-                    <input type="range" min="100" max="175" value="${coverEditorState.zoom}" oninput="updateCoverStyleControl('zoom', this.value)" class="bp-scrubber w-full" />
-                  </div>
-                  <div>
-                    <div class="flex justify-between"><span>Yatay Odak</span><span id="cov-lbl-posX">%${coverEditorState.posX}</span></div>
-                    <input type="range" min="0" max="100" value="${coverEditorState.posX}" oninput="updateCoverStyleControl('posX', this.value)" class="bp-scrubber w-full" />
-                  </div>
-                  <div>
-                    <div class="flex justify-between"><span>Dikey Odak</span><span id="cov-lbl-posY">%${coverEditorState.posY}</span></div>
-                    <input type="range" min="0" max="100" value="${coverEditorState.posY}" oninput="updateCoverStyleControl('posY', this.value)" class="bp-scrubber w-full" />
-                  </div>
-                  <div>
-                    <div class="flex justify-between"><span>Parlaklık</span><span id="cov-lbl-brightness">%${coverEditorState.brightness}</span></div>
-                    <input type="range" min="70" max="140" value="${coverEditorState.brightness}" oninput="updateCoverStyleControl('brightness', this.value)" class="bp-scrubber w-full" />
-                  </div>
-                  <div>
-                    <div class="flex justify-between"><span>Kontrast</span><span id="cov-lbl-contrast">%${coverEditorState.contrast}</span></div>
-                    <input type="range" min="70" max="150" value="${coverEditorState.contrast}" oninput="updateCoverStyleControl('contrast', this.value)" class="bp-scrubber w-full" />
-                  </div>
-                  <div>
-                    <div class="flex justify-between"><span>Canlılık</span><span id="cov-lbl-saturate">%${coverEditorState.saturate}</span></div>
-                    <input type="range" min="50" max="160" value="${coverEditorState.saturate}" oninput="updateCoverStyleControl('saturate', this.value)" class="bp-scrubber w-full" />
-                  </div>
-                </div>
+              <div>
+                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Tür</label>
+                <input type="text" id="draft-genre-input" value="${escapeAttr(formDraft.genre)}" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Süre</label>
+                <input type="text" id="draft-duration-input" value="${escapeAttr(formDraft.duration)}" placeholder="Otomatik" class="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold" />
               </div>
             </div>
           </div>
 
-          <!-- Video Internal Frame Picker -->
-          <div id="video-frame-cover-tools" class="${getActiveVideoSourceForCover() ? '' : 'hidden'} p-2.5 rounded-lg bg-blue-50/90 border border-blue-200 space-y-2">
+          <!-- Sadeleştirilmiş Video İçi Kapak Kesme & Sahne Seçme Alanı -->
+          <div id="video-frame-cover-tools" class="${getActiveVideoSourceForCover() ? '' : 'hidden'} p-2.5 rounded-xl bg-blue-50/90 border border-blue-200 space-y-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
-              <span class="text-[10px] font-extrabold text-bpRoyal">Video İçi Sahne Seçici</span>
+              <span class="text-[11px] font-extrabold text-bpRoyal">Video İçinden Kapak Seç ve Kes</span>
               <div class="flex items-center gap-1.5">
-                <button type="button" onclick="generateSixFrameStrip()" class="px-2 py-0.5 rounded bg-bpNavy text-white text-[10px] font-extrabold cursor-pointer">6 Sahne Getir</button>
-                <button type="button" onclick="pickRandomFrameForCover()" class="px-2 py-0.5 rounded bg-bpRoyal text-white text-[10px] font-extrabold cursor-pointer">Rastgele Sahne</button>
+                <button type="button" onclick="generateSixFrameStrip()" class="px-2 py-1 rounded-lg bg-bpNavy text-white text-[10px] font-extrabold cursor-pointer">6 Sahne Getir</button>
+                <button type="button" onclick="pickRandomFrameForCover()" class="px-2 py-1 rounded-lg bg-bpRoyal text-white text-[10px] font-extrabold cursor-pointer">Rastgele Sahne</button>
               </div>
             </div>
+
+            <!-- Sürükle & Kırp Sahne Çerçevesi -->
+            <div id="video-crop-stage" class="relative w-full aspect-video rounded-lg overflow-hidden bg-bpNavy border border-slate-300 select-none">
+              <img id="video-crop-base-img" src="${escapeAttr(initialSrc)}" class="w-full h-full object-contain pointer-events-none" />
+              <div
+                id="crop-selection-box"
+                onmousedown="startCropBoxDrag(event, 'move')"
+                ontouchstart="startCropBoxDrag(event, 'move')"
+                style="left: ${cropBoxState.x}%; top: ${cropBoxState.y}%; width: ${cropBoxState.w}%; height: ${cropBoxState.h}%;"
+                class="absolute border-2 border-bpYellow bg-bpYellow/10 shadow-[0_0_0_9999px_rgba(7,19,38,0.55)] cursor-move"
+              >
+                <span class="absolute top-1 left-1 px-1 py-0.5 rounded bg-bpNavy/85 text-bpYellow text-[8px] font-extrabold pointer-events-none">Kapak Alanı</span>
+                <div
+                  onmousedown="startCropBoxDrag(event, 'resize')"
+                  ontouchstart="startCropBoxDrag(event, 'resize')"
+                  class="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-bpYellow border-2 border-bpNavy cursor-nwse-resize"
+                  title="Boyutlandır"
+                ></div>
+              </div>
+            </div>
+
             <div id="video-6frame-strip" class="hidden grid grid-cols-6 gap-1.5"></div>
+
             <div class="flex items-center gap-2">
-              <span class="text-[9px] font-bold text-bpNavy shrink-0">Saniye Kaydır:</span>
-              <input type="range" min="1" max="99" value="45" onchange="scrubFrameForCover(this.value)" class="bp-scrubber flex-1" title="Videonun istediğiniz saniyesinden kapak yakalayın" />
+              <span class="text-[10px] font-extrabold text-bpNavy shrink-0">Saniye Kaydır:</span>
+              <input type="range" min="2" max="98" value="35" oninput="scrubFrameForCover(this.value)" class="bp-scrubber flex-1" title="Videodan sahne seçin" />
             </div>
           </div>
         </div>
@@ -2020,7 +2104,7 @@
             durationSec: meta.durationSec || 0,
             hasSub: !entry.isDub,
             hasDub: entry.isDub,
-            posterUrl: snap ? snap.previewUrl : CINEMA_FALLBACK_PHOTO,
+            posterUrl: snap ? (snap.fullDataUrl || snap.previewUrl) : CINEMA_FALLBACK_PHOTO,
             sources: [{
               id: entry.isDub ? 'dub' : 'sub',
               label: entry.isDub ? 'TR Dublaj' : 'TR Altyazılı',
@@ -2041,24 +2125,20 @@
           renderMainView();
           await pushItemToAllClouds(movie);
 
-          const tasks = [{
+          uploadMediaFilesToCloud(id, [{
             kind: 'movie_source',
             sourceId: entry.isDub ? 'dub' : 'sub',
             title: entry.title,
             label: entry.isDub ? 'TR Dublaj' : 'TR Altyazılı',
             file: entry.file
-          }];
-          if (snap) tasks.unshift({ kind: 'poster', title: entry.title, label: 'Kapak', file: snap.file });
-          uploadMediaFilesToCloud(id, tasks);
+          }]);
         }
       } else {
-        // Batch episodes into a single series
         showToast(`${itemsToProcess.length} bölüm "${sharedSeriesTitle}" dizisine ekleniyor...`, 'success');
         const firstSnap = await captureFrameFromVideoFile(itemsToProcess[0].file, null);
         const seriesId = 'ser-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
         const episodes = [];
         const allTasks = [];
-        if (firstSnap) allTasks.push({ kind: 'poster', title: sharedSeriesTitle, label: 'Kapak', file: firstSnap.file });
 
         for (let i = 0; i < itemsToProcess.length; i++) {
           const entry = itemsToProcess[i];
@@ -2108,7 +2188,7 @@
           seasons: Math.max(...episodes.map(e => e.season)),
           hasSub: episodes.some(ep => ep.sources.some(s => s.defaultMode === 'sub')),
           hasDub: episodes.some(ep => ep.sources.some(s => s.defaultMode === 'dub')),
-          posterUrl: firstSnap ? firstSnap.previewUrl : CINEMA_FALLBACK_PHOTO,
+          posterUrl: firstSnap ? (firstSnap.fullDataUrl || firstSnap.previewUrl) : CINEMA_FALLBACK_PHOTO,
           episodes,
           createdAt: Date.now(),
           updatedAt: Date.now()
@@ -2132,13 +2212,13 @@
             <div class="relative">
               <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Film Adı *</label>
               <div class="flex gap-1.5">
-                <input type="text" id="add-movie-title" required autocomplete="off" oninput="onTitleTypingAutocomplete('add-movie-title', 'movie')" placeholder="Film adını yazın (seçenekler altta çıkar)..." class="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpRoyal" />
+                <input type="text" id="add-movie-title" required autocomplete="off" oninput="onTitleTypingAutocomplete('add-movie-title', 'movie')" placeholder="Film adını yazın..." class="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpRoyal" />
                 <button type="button" onclick="handleTitleSearchBtn('add-movie-title', 'movie')" class="px-3 py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold cursor-pointer">Bul</button>
               </div>
               <div id="draft-candidates-box" class="hidden mt-1.5 rounded-xl border border-bpRoyal bg-white max-h-52 overflow-y-auto shadow-xl"></div>
             </div>
-            ${renderAdvancedCoverStudioHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             ${renderVideoSourceInputs('movie', 'add-movie-title')}
+            ${renderSimpleVideoCoverPickerHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
               <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow cursor-pointer">Turbo Yayınla</button>
@@ -2151,7 +2231,7 @@
             <div class="relative">
               <label class="block text-[11px] font-extrabold text-bpBlack mb-1">Dizi Adı *</label>
               <div class="flex gap-1.5">
-                <input type="text" id="add-series-title" required autocomplete="off" oninput="onTitleTypingAutocomplete('add-series-title', 'series')" placeholder="Dizi adını yazın (seçenekler altta çıkar)..." class="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpEmerald" />
+                <input type="text" id="add-series-title" required autocomplete="off" oninput="onTitleTypingAutocomplete('add-series-title', 'series')" placeholder="Dizi adını yazın..." class="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:border-bpEmerald" />
                 <button type="button" onclick="handleTitleSearchBtn('add-series-title', 'series')" class="px-3 py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Bul</button>
               </div>
               <div id="draft-candidates-box" class="hidden mt-1.5 rounded-xl border border-bpEmerald bg-white max-h-52 overflow-y-auto shadow-xl"></div>
@@ -2166,8 +2246,8 @@
                 <input type="number" id="add-series-episode" min="1" value="1" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold" />
               </div>
             </div>
-            ${renderAdvancedCoverStudioHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             ${renderVideoSourceInputs('series', 'add-series-title')}
+            ${renderSimpleVideoCoverPickerHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
               <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Turbo Yayınla</button>
@@ -2192,7 +2272,7 @@
             </div>
 
             <label class="block w-full py-4 px-4 rounded-2xl border-2 border-dashed border-bpRoyal bg-blue-50/70 hover:bg-blue-100/70 text-center cursor-pointer transition">
-              <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin (Çoklu Seçim)</div>
+              <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin</div>
               <div class="text-[10px] text-slate-500 mt-0.5">Seçtiğiniz tüm videoların kapakları içlerinden otomatik oluşturulur</div>
               <input type="file" multiple accept="video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleBatchFilesSelected(this)" class="hidden" />
             </label>
@@ -2364,14 +2444,10 @@
       const year = Number(document.getElementById('draft-year-input')?.value) || new Date().getFullYear();
       const genre = document.getElementById('draft-genre-input')?.value?.trim() || 'Sinema';
       const duration = document.getElementById('draft-duration-input')?.value?.trim() || formDraft.duration || '';
-      const posterFile = PENDING_FILES.get('poster') || document.getElementById('draft-poster-file')?.files?.[0];
-      const posterUrlInp = document.getElementById('draft-poster-url-input')?.value?.trim() || '';
 
-      let posterUrl = posterUrlInp || formDraft.posterUrl || CINEMA_FALLBACK_PHOTO;
-      if (posterFile) {
-        posterUrl = URL.createObjectURL(posterFile);
-        tasks.unshift({ kind: 'poster', title, label: 'Kapak', file: posterFile });
-      }
+      // Kesilmiş kapak fotoğrafı doğrudan data URL olarak anında senkronlanır (ekstra yükleme gecikmesi olmaz)
+      const croppedDataUrl = PENDING_FILES.get('posterDataUrl') || '';
+      const posterUrl = croppedDataUrl || formDraft.posterUrl || CINEMA_FALLBACK_PHOTO;
 
       const id = 'mov-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
       const movie = {
@@ -2385,7 +2461,7 @@
         hasSub: sources.some(s => s.defaultMode === 'sub'),
         hasDub: sources.some(s => s.defaultMode === 'dub'),
         posterUrl,
-        posterStyle: buildCoverCssStyle(coverEditorState),
+        posterStyle: '',
         posterStoragePath: '',
         sources,
         createdAt: Date.now(),
@@ -2397,7 +2473,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, turbo bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, 3'lü turbo bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(movie);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2419,14 +2495,9 @@
       const year = Number(document.getElementById('draft-year-input')?.value) || new Date().getFullYear();
       const genre = document.getElementById('draft-genre-input')?.value?.trim() || 'Dizi';
       const duration = document.getElementById('draft-duration-input')?.value?.trim() || formDraft.duration || '';
-      const posterFile = PENDING_FILES.get('poster') || document.getElementById('draft-poster-file')?.files?.[0];
-      const posterUrlInp = document.getElementById('draft-poster-url-input')?.value?.trim() || '';
 
-      let posterUrl = posterUrlInp || formDraft.posterUrl || CINEMA_FALLBACK_PHOTO;
-      if (posterFile) {
-        posterUrl = URL.createObjectURL(posterFile);
-        tasks.unshift({ kind: 'poster', title, label: 'Kapak', file: posterFile });
-      }
+      const croppedDataUrl = PENDING_FILES.get('posterDataUrl') || '';
+      const posterUrl = croppedDataUrl || formDraft.posterUrl || CINEMA_FALLBACK_PHOTO;
 
       const id = 'ser-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
       const series = {
@@ -2440,7 +2511,7 @@
         hasSub: sources.some(s => s.defaultMode === 'sub'),
         hasDub: sources.some(s => s.defaultMode === 'dub'),
         posterUrl,
-        posterStyle: buildCoverCssStyle(coverEditorState),
+        posterStyle: '',
         posterStoragePath: '',
         episodes: [{
           season,
@@ -2459,7 +2530,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, turbo bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, 3'lü turbo bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(series);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2508,7 +2579,8 @@
       const item = state.catalog.find(m => m.id === itemId);
       if (!item) return;
       PENDING_FILES.clear();
-      resetCoverEditorState();
+      resetCropBoxState();
+      currentFullFrameDataUrl = item.posterUrl || '';
       formDraft = {
         year: item.year,
         genre: item.genre || '',
@@ -2526,7 +2598,7 @@
         <div class="birperde-ribbon"></div>
         <div class="p-4 sm:p-5 space-y-3.5">
           <div class="flex items-center justify-between gap-2">
-            <h3 class="text-base font-extrabold text-bpNavy">Düzenle &amp; Kapak Tasarla</h3>
+            <h3 class="text-base font-extrabold text-bpNavy">Düzenle &amp; Video İçinden Kapak Kes</h3>
             <div class="flex items-center gap-1.5">
               <button type="button" onclick="closeModal(); openVideoTrimModal('${escapeAttr(item.id)}')" class="px-3 py-1.5 rounded-lg bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Kes</button>
               <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-bpRed hover:text-white flex items-center justify-center cursor-pointer">
@@ -2541,7 +2613,7 @@
               <input type="text" id="edit-title-inp" required value="${escapeAttr(item.title)}" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold" />
             </div>
 
-            ${renderAdvancedCoverStudioHtml('edit-poster-img', item.posterUrl || CINEMA_FALLBACK_PHOTO)}
+            ${renderSimpleVideoCoverPickerHtml('edit-poster-img', item.posterUrl || CINEMA_FALLBACK_PHOTO)}
 
             ${item.type === 'movie' ? renderVideoSourceInputs('edit', null) : ''}
 
@@ -2563,19 +2635,14 @@
       item.year = Number(document.getElementById('draft-year-input')?.value) || item.year;
       item.genre = document.getElementById('draft-genre-input')?.value.trim() || item.genre;
       item.duration = document.getElementById('draft-duration-input')?.value.trim() || item.duration;
-      item.posterStyle = buildCoverCssStyle(coverEditorState);
+      item.posterStyle = '';
 
-      const posterUrl = document.getElementById('draft-poster-url-input')?.value?.trim() || '';
-      const posterFile = PENDING_FILES.get('poster') || document.getElementById('draft-poster-file')?.files?.[0];
-      const tasks = [];
-
-      if (posterFile) {
-        item.posterUrl = URL.createObjectURL(posterFile);
-        tasks.push({ kind: 'poster', title: item.title, label: 'Kapak', file: posterFile });
-      } else if (posterUrl) {
-        item.posterUrl = posterUrl;
+      const croppedDataUrl = PENDING_FILES.get('posterDataUrl') || '';
+      if (croppedDataUrl) {
+        item.posterUrl = croppedDataUrl;
       }
 
+      const tasks = [];
       if (item.type === 'movie') {
         const res = collectVideoSourcesAndTasks('edit', item.title);
         if (res.sources.length > 0) {
@@ -3010,7 +3077,6 @@
               src="${escapeAttr(posterSrc)}"
               alt="${escapeAttr(item.title)}"
               loading="lazy"
-              style="${escapeAttr(item.posterStyle || '')}"
               onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${CINEMA_FALLBACK_PHOTO}';}"
               class="w-full h-full object-cover transition duration-300 hover:scale-105"
             />
@@ -3355,7 +3421,6 @@
       }
     });
 
-    /* 5-Level Keyboard Volume Control (Steps: 0 -> 0%, 1 -> 20%, 2 -> 40%, 3 -> 60%, 4 -> 80%, 5 -> 100%) */
     function setVolumeStep(step, showOsd = true) {
       const clampedStep = Math.max(0, Math.min(5, Math.round(step)));
       const newVol = clampedStep / 5;
@@ -3380,7 +3445,6 @@
       setVolumeStep(curStep + delta, true);
     }
 
-    /* Rich PC & Tablet Keyboard Controls */
     document.addEventListener('keydown', (e) => {
       if (!state.player.media) return;
       if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
@@ -3642,7 +3706,6 @@
       }
     }
 
-    /* Vertical Volume Dock with 5-Step Buttons + Drag */
     function openVolumePopover(autoHideMs = 2400) {
       const dock = document.getElementById('bp-vertical-vol-dock');
       if (!dock) return;
@@ -4052,8 +4115,7 @@
       scrubFrameForCover,
       generateSixFrameStrip,
       selectFrameFromStrip,
-      updateCoverStyleControl,
-      resetCoverEditorState,
+      startCropBoxDrag,
       onVideoFilePicked,
       handleBatchFilesSelected,
       renderBatchQueueList,
