@@ -494,10 +494,10 @@
               <span id="brand-title-text" class="text-base sm:text-xl font-extrabold tracking-tight text-bpNavy">BirPerdeTR</span>
               <span id="cloud-live-dot" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-bpEmerald/15 text-bpEmerald border border-bpEmerald/30">
                 <span class="w-1.5 h-1.5 rounded-full bg-bpEmerald live-indicator"></span>
-                <span>YÖNETİCİ</span>
+                <span>CANLI BULUT</span>
               </span>
             </div>
-            <p class="text-[11px] text-slate-500 hidden sm:block">1 MB – 15 GB bulut video motoru • Tüm cihazlarda kalıcı</p>
+            <p class="text-[11px] text-slate-500 hidden sm:block">Tek cihazdan yükle • Tüm cihazlardan anında izle</p>
           </div>
         </div>
 
@@ -687,10 +687,10 @@
       </svg>`
     );
 
-    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v7';
-    const MASTER_DELETED_KEY = 'birperde_master_deleted_v7';
-    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v7';
-    const PLATFORM_PREFS_KEY = 'birperde_prefs_v7';
+    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v8';
+    const MASTER_DELETED_KEY = 'birperde_master_deleted_v8';
+    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v8';
+    const PLATFORM_PREFS_KEY = 'birperde_prefs_v8';
     const FIRESTORE_COLLECTION = 'birperde_master_v2';
     const RTDB_NODE = 'birperde_master_v2';
 
@@ -787,7 +787,7 @@
     }
 
     /* =====================================================================
-       2. FIREBASE + CLOUDINARY + H.264 TRANSCODE STREAM ENGINE
+       2. FIREBASE + CLOUDINARY UNIVERSAL H.264/MP4 STREAM ENGINE
     ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyB1eT555N2stbzj6x6zkmxHKtMolvCJmeY",
@@ -916,7 +916,10 @@
       let u = String(rawUrl || '').trim();
       if (!u) return '';
       if (/res\.cloudinary\.com/i.test(u) && u.includes('/upload/')) {
-        u = u.replace(/\/upload\/(?:f_mp4(?:,vc_h264(?:,ac_aac)?)?\/)?/i, '/upload/f_mp4,vc_h264,ac_aac/');
+        u = u.replace(/\/upload\/(?:[^/]+\/)?(v\d+\/)/i, '/upload/f_mp4,vc_h264,ac_aac,q_auto/$1');
+        if (!/\/upload\/f_mp4/i.test(u)) {
+          u = u.replace('/upload/', '/upload/f_mp4,vc_h264,ac_aac,q_auto/');
+        }
         u = u.replace(/\.(mov|mkv|hevc|avi)(\?.*)?$/i, '.mp4$2');
       }
       const gdriveMatch = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]{15,})/i);
@@ -935,12 +938,13 @@
       const list = [clean];
 
       if (/res\.cloudinary\.com/i.test(clean) && clean.includes('/upload/')) {
-        const noTranscode = clean
-          .replace('/upload/f_mp4,vc_h264,ac_aac/', '/upload/')
-          .replace('/upload/f_mp4,vc_h264/', '/upload/')
-          .replace('/upload/f_mp4/', '/upload/');
-        const simpleMp4 = noTranscode.replace('/upload/', '/upload/f_mp4/');
-        list.push(simpleMp4, noTranscode);
+        const baseClean = clean.replace(/\/upload\/[^/]+\/(v\d+\/)/i, '/upload/$1');
+        list.push(
+          baseClean.replace('/upload/', '/upload/f_mp4,vc_h264/'),
+          baseClean.replace('/upload/', '/upload/f_mp4,q_auto/'),
+          baseClean.replace('/upload/', '/upload/f_mp4/'),
+          baseClean
+        );
       }
 
       return Array.from(new Set(list.filter(Boolean)));
@@ -1198,7 +1202,7 @@
     }
 
     /* =====================================================================
-       3. 1 MB – 15 GB MULTI-STAGE CLOUD UPLOAD ENGINE
+       3. UNIVERSAL CLOUDINARY H.264/MP4 CHUNKED ENGINE (1 MB – 15 GB)
     ===================================================================== */
     function setUploadBanner(show, text = '', pct = 0) {
       const banner = document.getElementById('background-sync-banner');
@@ -1242,7 +1246,7 @@
 
         let lastByteAt = Date.now();
         const stallGuard = setInterval(() => {
-          if (Date.now() - lastByteAt > 30000) {
+          if (Date.now() - lastByteAt > 45000) {
             clearInterval(stallGuard);
             try { xhr.abort(); } catch (e) {}
             reject(new Error('Sunucu yanıt vermedi'));
@@ -1427,24 +1431,12 @@
         throw new Error(`Dosya boyutu (${formatFileSizeHuman(file.size)}) 15 GB sınırını aşıyor.`);
       }
 
-      if (file.size <= CLOUDINARY_SINGLE_MAX_BYTES) {
-        try {
-          return await uploadViaCloudinaryChunked(file, onProgress);
-        } catch (e1) {
-          try {
-            return await uploadFileViaFirebaseResumable(file, onProgress);
-          } catch (e2) {
-            return await uploadViaCorsFreeCloud(file, onProgress);
-          }
-        }
-      }
-
       try {
-        return await uploadFileViaFirebaseResumable(file, onProgress);
-      } catch (fbErr) {
+        return await uploadViaCloudinaryChunked(file, onProgress);
+      } catch (clErr) {
         try {
-          return await uploadViaCloudinaryChunked(file, onProgress);
-        } catch (clErr) {
+          return await uploadFileViaFirebaseResumable(file, onProgress);
+        } catch (fbErr) {
           return await uploadViaCorsFreeCloud(file, onProgress);
         }
       }
@@ -1512,7 +1504,7 @@
               renderMainView();
               await pushItemToAllClouds(target);
               if (task.kind !== 'poster') {
-                showToast(`"${task.title}" (${totalLabel}) kalıcı buluta kaydedildi!`, 'success');
+                showToast(`"${task.title}" (${totalLabel}) tüm cihazlara gönderildi!`, 'success');
               }
             } else if (failMessage) {
               if (task.kind === 'movie_source') {
@@ -1566,13 +1558,13 @@
         : (item.episodes || []).flatMap(ep => ep.sources || []);
       const hasCloudUrl = srcs.some(s => /^https?:\/\//i.test(s.url || '') || Boolean(s.storagePath));
       if (hasCloudUrl) {
-        return { label: 'Kalıcı Bulut • Her Cihazda Açılır', cls: 'bg-bpEmerald text-white' };
+        return { label: 'Yayında • Tüm Cihazlarda Açılır', cls: 'bg-bpEmerald text-white' };
       }
       const errSrc = srcs.find(s => Boolean(s.lastError));
       if (errSrc) {
         return { label: `Hata: ${errSrc.lastError}`, cls: 'bg-bpRed text-white' };
       }
-      return { label: 'Buluta Yükleniyor...', cls: 'bg-amber-500 text-bpNavy' };
+      return { label: 'Gönderiliyor...', cls: 'bg-amber-500 text-bpNavy' };
     }
 
     /* =====================================================================
@@ -1825,7 +1817,7 @@
         if (s) valid.push(s);
       }
       if (valid.length === 0) {
-        stripEl.innerHTML = `<div class="col-span-6 text-[10px] font-bold text-slate-500 py-1 text-center">Bu video formatı tarayıcıda önizlenemiyor, yükleme sorunsuz devam eder.</div>`;
+        stripEl.innerHTML = `<div class="col-span-6 text-[10px] font-bold text-slate-500 py-1 text-center">Kapak otomatik oluşturulacak, videoyu doğrudan yayınlayabilirsiniz.</div>`;
         return;
       }
 
@@ -2170,7 +2162,7 @@
               <input type="file" id="${prefix}-sub-file" accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_sub', '${prefix}-sub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
             </label>
             <div id="${prefix}-sub-badge" class="hidden px-2 py-1 rounded bg-white border border-blue-200 text-[10px] font-extrabold text-bpRoyal truncate"></div>
-            <input type="url" id="${prefix}-sub-url" placeholder="Veya MP4 / Google Drive / Dropbox URL..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpRoyal" />
+            <input type="url" id="${prefix}-sub-url" placeholder="Veya Video Linki..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpRoyal" />
           </div>
 
           <div class="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-2">
@@ -2183,7 +2175,7 @@
               <input type="file" id="${prefix}-dub-file" accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_dub', '${prefix}-dub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
             </label>
             <div id="${prefix}-dub-badge" class="hidden px-2 py-1 rounded bg-white border border-emerald-200 text-[10px] font-extrabold text-bpEmerald truncate"></div>
-            <input type="url" id="${prefix}-dub-url" placeholder="Veya MP4 / Google Drive / Dropbox URL..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpEmerald" />
+            <input type="url" id="${prefix}-dub-url" placeholder="Veya Video Linki..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpEmerald" />
           </div>
         </div>
       `;
@@ -2304,7 +2296,7 @@
       closeModal();
 
       if (mode === 'movies') {
-        showToast(`${itemsToProcess.length} film buluta aktarılıyor...`, 'success');
+        showToast(`${itemsToProcess.length} film tüm cihazlara gönderiliyor...`, 'success');
         for (const entry of itemsToProcess) {
           const sk = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
           LOCAL_SESSION_BLOBS.set(sk, URL.createObjectURL(entry.file));
@@ -2425,9 +2417,8 @@
     function renderAddModal() {
       const seriesList = state.catalog.filter(i => i.type === 'series');
       const cloudStatusNote = `
-        <div class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-bpEmerald flex items-center justify-between gap-2">
-          <span>Otomatik H.264/MP4 Dönüşümlü Bulut Motoru (iPhone MOV + MP4 Tam Uyumlu)</span>
-          <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="underline shrink-0 cursor-pointer">Ayarlar</button>
+        <div class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-bpEmerald">
+          Doğrudan Bulut Aktarımı: Seçtiğiniz video tüm cihazlarda aynı ekranda açılır.
         </div>
       `;
 
@@ -2449,7 +2440,7 @@
             ${renderSimpleVideoCoverPickerHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow cursor-pointer">Buluta Yükle ve Yayınla</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpNavy hover:bg-bpRoyal text-white text-xs font-extrabold shadow cursor-pointer">Tüm Cihazlara Gönder</button>
             </div>
           </form>
         `;
@@ -2479,7 +2470,7 @@
             ${renderSimpleVideoCoverPickerHtml('draft-poster-preview', CINEMA_FALLBACK_PHOTO)}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Buluta Yükle ve Yayınla</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Tüm Cihazlara Gönder</button>
             </div>
           </form>
         `;
@@ -2502,8 +2493,8 @@
             </div>
 
             <label class="block w-full py-4 px-4 rounded-2xl border-2 border-dashed border-bpRoyal bg-blue-50/70 hover:bg-blue-100/70 text-center cursor-pointer transition">
-              <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin (1 MB – 15 GB)</div>
-              <div class="text-[10px] text-slate-500 mt-0.5">Seçtiğiniz tüm videolar sırayla kalıcı buluta aktarılır</div>
+              <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Seçtiğiniz tüm videolar sırayla buluta aktarılır ve tüm cihazlarda açılır</div>
               <input type="file" multiple accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleBatchFilesSelected(this)" class="hidden" />
             </label>
 
@@ -2511,7 +2502,7 @@
 
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold shadow cursor-pointer">Hepsini Birden Yayınla</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpRoyal hover:bg-bpNavy text-white text-xs font-extrabold shadow cursor-pointer">Hepsini Birden Gönder</button>
             </div>
           </form>
         `;
@@ -2549,7 +2540,7 @@
             ${renderVideoSourceInputs('ep', null)}
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-bpNavy text-xs font-extrabold cursor-pointer">Vazgeç</button>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Bölümü Yayınla</button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold shadow cursor-pointer">Bölümü Gönder</button>
             </div>
           </form>
         `;
@@ -2707,7 +2698,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, buluta aktarılıyor...`, 'success');
 
       await pushItemToAllClouds(movie);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2764,7 +2755,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, buluta aktarılıyor...`, 'success');
 
       await pushItemToAllClouds(series);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2954,11 +2945,11 @@
 
           <div class="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200 space-y-2.5 text-xs">
             <div class="flex items-center justify-between">
-              <span class="font-extrabold text-bpEmerald">Çok Katmanlı Bulut Video Motoru (1 MB – 15 GB)</span>
+              <span class="font-extrabold text-bpEmerald">Evrensel Bulut Video Motoru (1 MB – 15 GB)</span>
               <span class="px-2 py-0.5 rounded bg-bpEmerald text-white text-[10px] font-extrabold">AKTİF</span>
             </div>
             <p class="text-[11px] text-slate-600 leading-relaxed">
-              iPhone (.MOV) ve bilgisayar (.MP4) videoları otomatik olarak tarayıcı uyumlu H.264 MP4 formatına çevrilir.
+              Tüm videolar tek merkezde H.264 MP4 formatında işlenir ve tüm cihazlardan aynı ekranda oynatılır.
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
@@ -3437,7 +3428,7 @@
           <div class="text-sm font-extrabold ${isMovie ? 'text-bpNavy' : 'text-bpEmerald'}">
             ${isMovie ? 'Henüz Film Eklenmemiş' : 'Henüz Dizi Eklenmemiş'}
           </div>
-          <p class="text-xs text-slate-500">1 MB – 15 GB arasındaki videolarınız kalıcı buluta aktarılır ve her cihazdan açılır.</p>
+          <p class="text-xs text-slate-500">Seçtiğiniz videolar buluta aktarılır ve tüm cihazlardan aynı ekranda açılır.</p>
           <div class="pt-1 flex justify-center gap-2">
             <button type="button" onclick="openAddContentModal('${kind}')" class="px-4 py-2 rounded-xl ${isMovie ? 'bg-bpNavy text-white' : 'bg-bpEmerald text-white'} text-xs font-extrabold cursor-pointer">
               ${isMovie ? '+ Film Ekle' : '+ Dizi Ekle'}
@@ -3511,7 +3502,7 @@
     }
 
     /* =====================================================================
-       9. WATCH STUDIO + H.264 MULTI-CANDIDATE STREAM LOADER
+       9. WATCH STUDIO (ZERO EXTERNAL REDIRECTS - IN-APP PLAYBACK ONLY)
     ===================================================================== */
     let hlsController = null;
     let singleTapTimer = null;
@@ -3653,7 +3644,7 @@
         a.click();
         showToast('Kare indirildi.', 'success');
       } catch (e) {
-        showToast('Dış kaynak nedeniyle kare indirilemedi.', 'error');
+        showToast('Kare indirilemedi.', 'error');
       }
     }
 
@@ -4210,9 +4201,7 @@
 
               <div id="player-status-overlay" class="hidden absolute inset-0 bg-slate-950/92 flex flex-col items-center justify-center p-4 text-center z-20">
                 <p id="player-status-text" class="text-xs font-semibold text-slate-200 mb-3 max-w-md leading-relaxed"></p>
-                <div id="player-status-actions" class="flex items-center gap-2 flex-wrap justify-center">
-                  <button type="button" onclick="syncAllFromCloudNow(true)" class="px-3.5 py-1.5 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Buluttan Yenile</button>
-                </div>
+                <div id="player-status-actions" class="flex items-center gap-2 flex-wrap justify-center"></div>
               </div>
 
               ${buildVolumeDockHtml(false)}
@@ -4308,18 +4297,13 @@
       if (!url) {
         if (overlay) overlay.classList.remove('hidden');
         if (statusText) {
-          if (status === 'upload_failed') {
-            statusText.textContent = `Bulut aktarımı başarısız oldu: ${lastError}`;
-          } else if (status === 'not_uploaded_yet') {
-            statusText.textContent = 'Bu video henüz buluta yüklenmemiş veya yükleme yarım kalmış. Yeniden yüklemek için aşağıdaki butona basın.';
-          } else {
-            statusText.textContent = 'Video kaynağı bulunamadı.';
-          }
+          statusText.textContent = status === 'upload_failed'
+            ? `Bulut aktarımı tamamlanamadı: ${lastError}`
+            : 'Video yüklemesi henüz tamamlanmamış. Dosyayı tekrar seçip gönderebilirsiniz.';
         }
         if (statusActions && media) {
           statusActions.innerHTML = `
-            <button type="button" onclick="openEditItemModal('${escapeAttr(media.id)}')" class="px-4 py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Yeniden Yükle</button>
-            <button type="button" onclick="syncAllFromCloudNow(true)" class="px-3.5 py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold cursor-pointer">Buluttan Yenile</button>
+            <button type="button" onclick="openEditItemModal('${escapeAttr(media.id)}')" class="px-4 py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Seç ve Gönder</button>
           `;
         }
         return;
@@ -4356,15 +4340,11 @@
         }
         if (overlay) overlay.classList.remove('hidden');
         if (statusText) {
-          const isHevcMov = /\.mov(\?.*)?$/i.test(url) && !/res\.cloudinary\.com/i.test(url);
-          statusText.textContent = isHevcMov
-            ? 'Bu video iPhone HEVC (.MOV) formatında olduğu için bu tarayıcıda açılamadı. Safari’den izleyebilir veya videoyu MP4 olarak yükleyebilirsiniz.'
-            : 'Bu bağlantı tarayıcı tarafından açılamadı. Videoyu yeniden seçip buluta yükleyin.';
+          statusText.textContent = 'Bu eski kayıt uyumsuz kodek ile yüklenmiş. Aşağıdaki butondan videoyu bir kez yeniden seçip gönderin, tüm cihazlarda anında açılacaktır.';
         }
-        if (statusActions) {
+        if (statusActions && media) {
           statusActions.innerHTML = `
-            ${media ? `<button type="button" onclick="openEditItemModal('${escapeAttr(media.id)}')" class="px-4 py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Yeniden Yükle</button>` : ''}
-            <a href="${escapeAttr(url)}" target="_blank" rel="noopener" class="px-3.5 py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold">Linki Yeni Sekmede Aç</a>
+            <button type="button" onclick="openEditItemModal('${escapeAttr(media.id)}')" class="px-4 py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Yeniden Gönder</button>
           `;
         }
       };
