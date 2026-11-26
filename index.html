@@ -9,7 +9,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BirPerdeTR" />
 
-  <!-- Logo: Sarı (#FACC15) ve Kırmızı (#E11D48) yan yana gelmeyecek şekilde düzenlendi -->
   <link id="bp-favicon-svg" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='2' y='2' width='44' height='44' rx='12' fill='%23071326' stroke='%232563EB' stroke-width='2'/%3E%3Crect x='8' y='10' width='3.5' height='4' rx='1' fill='%23FACC15'/%3E%3Crect x='8' y='18' width='3.5' height='4' rx='1' fill='%2338BDF8'/%3E%3Crect x='8' y='26' width='3.5' height='4' rx='1' fill='%23E11D48'/%3E%3Crect x='8' y='34' width='3.5' height='4' rx='1' fill='%2310B981'/%3E%3Crect x='36.5' y='10' width='3.5' height='4' rx='1' fill='%2310B981'/%3E%3Crect x='36.5' y='18' width='3.5' height='4' rx='1' fill='%23E11D48'/%3E%3Crect x='36.5' y='26' width='3.5' height='4' rx='1' fill='%2338BDF8'/%3E%3Crect x='36.5' y='34' width='3.5' height='4' rx='1' fill='%23FACC15'/%3E%3Crect x='14.5' y='11' width='19' height='26' rx='4' fill='%23059669'/%3E%3Cpolygon points='21,18 30,24 21,30' fill='%23FFFFFF'/%3E%3C/svg%3E" />
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -723,7 +722,7 @@
     }
 
     /* =====================================================================
-       1. BRAND ICON (NO YELLOW & RED ADJACENT) & SPLASH SCREEN
+       1. BRAND ICON & SPLASH SCREEN
     ===================================================================== */
     function getBrandSvg(size = 44) {
       return `
@@ -892,6 +891,18 @@
       }
     }
 
+    function sanitizePlayableUrl(rawUrl) {
+      let u = String(rawUrl || '').trim();
+      if (!u) return '';
+      // Daha önce eklenmiş hatalı f_mp4,vc_h264 dönüşüm parametresi varsa temizle
+      u = u.replace('/upload/f_mp4,vc_h264/', '/upload/');
+      // .mov uzantılı Cloudinary videolarını doğrudan .mp4 olarak sun (hızlı ve kayıpsız)
+      if (/res\.cloudinary\.com/i.test(u) && /\.mov(\?.*)?$/i.test(u)) {
+        u = u.replace(/\.mov(\?.*)?$/i, '.mp4$1');
+      }
+      return u;
+    }
+
     function normalizeItem(raw) {
       if (!raw || typeof raw !== 'object' || !raw.id || !raw.title) return null;
       const id = String(raw.id);
@@ -904,7 +915,7 @@
           id: s.id || (idx === 1 ? 'dub' : 'sub'),
           label: s.label || (s.defaultMode === 'dub' ? 'TR Dublaj' : 'TR Altyazılı'),
           defaultMode: s.defaultMode || (idx === 1 ? 'dub' : 'sub'),
-          url: String(s.url || '').trim(),
+          url: sanitizePlayableUrl(s.url),
           sessionKey: String(s.sessionKey || ''),
           storagePath: String(s.storagePath || '').trim(),
           durationSec: Number(s.durationSec) || 0,
@@ -1141,7 +1152,7 @@
     }
 
     /* =====================================================================
-       3. CLOUDINARY UNIVERSAL MP4 + MULTI-STREAM TURBO CLOUD UPLOADER
+       3. CLOUDINARY + MULTI-STREAM TURBO CLOUD UPLOADER (FIXED URL)
     ===================================================================== */
     function setUploadBanner(show, text = '', pct = 0) {
       const banner = document.getElementById('background-sync-banner');
@@ -1192,7 +1203,12 @@
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(xhr.responseText || '');
           } else {
-            reject(new Error(`HTTP ${xhr.status}`));
+            let errMsg = `HTTP ${xhr.status}`;
+            try {
+              const errJson = JSON.parse(xhr.responseText || '{}');
+              if (errJson?.error?.message) errMsg = errJson.error.message;
+            } catch (e) {}
+            reject(new Error(errMsg));
           }
         };
 
@@ -1202,7 +1218,7 @@
       });
     }
 
-    // Cloudinary kalıcı video yükleme + iPhone (.MOV) ve bilgisayar için evrensel MP4 (H.264) dönüşümü
+    // Cloudinary kalıcı video yükleme: Hata veren f_mp4,vc_h264 dönüşümü kaldırıldı, doğrudan çalışan secure_url kullanılır
     function uploadViaCloudinary(file, onProgress) {
       const cloudName = (state.prefs.cloudinaryCloudName || '').trim();
       const uploadPreset = (state.prefs.cloudinaryUploadPreset || '').trim();
@@ -1213,28 +1229,31 @@
       return uploadBlobSingleXhr(
         `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/video/upload`,
         'file',
-        { upload_preset: uploadPreset, resource_type: 'video' },
+        { upload_preset: uploadPreset },
         file,
         file.name || 'video.mp4',
         onProgress
       ).then(txt => {
         const yanit = JSON.parse(txt || '{}');
         if (!yanit.secure_url) throw new Error('Cloudinary URL yok');
-        // KRİTİK NOKTA: iPhone (.MOV) ve bilgisayar uyumsuzluğunu çözmek için evrensel MP4 linki üretiyoruz
-        const evrenselUrl = yanit.secure_url.replace('/upload/', '/upload/f_mp4,vc_h264/');
-        return { downloadUrl: evrenselUrl, storagePath: '' };
+        const cleanUrl = sanitizePlayableUrl(yanit.secure_url);
+        return { downloadUrl: cleanUrl, storagePath: '' };
       });
     }
 
-    function uploadViaTmpfiles(file, onProgress) {
-      return uploadBlobSingleXhr('https://tmpfiles.org/api/v1/upload', 'file', {}, file, file.name || 'video.mp4', onProgress)
-        .then(txt => {
-          const json = JSON.parse(txt || '{}');
-          const rawUrl = json?.data?.url || '';
-          if (!rawUrl) throw new Error('Tmpfiles URL yok');
-          const directUrl = rawUrl.replace(/^http:\/\//i, 'https://').replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-          return { downloadUrl: directUrl, storagePath: '' };
-        });
+    function uploadViaCatbox(file, onProgress) {
+      return uploadBlobSingleXhr(
+        'https://catbox.moe/user/api.php',
+        'fileToUpload',
+        { reqtype: 'fileupload' },
+        file,
+        file.name || 'video.mp4',
+        onProgress
+      ).then(txt => {
+        const url = (txt || '').trim();
+        if (!/^https?:\/\//i.test(url)) throw new Error('Catbox URL yok');
+        return { downloadUrl: url, storagePath: '' };
+      });
     }
 
     function uploadViaLitterbox(file, onProgress) {
@@ -1294,11 +1313,11 @@
       });
     }
 
-    // Cloudinary ayarlıysa öncelikli olarak kalıcı evrensel MP4 yükler; değilse 3 bulut sunucusunu yarıştırır
     function uploadFileTurboRace(file, onProgress) {
       const hasCloudinary = Boolean((state.prefs.cloudinaryCloudName || '').trim() && (state.prefs.cloudinaryUploadPreset || '').trim());
       if (hasCloudinary) {
-        return uploadViaCloudinary(file, onProgress).catch(() => {
+        return uploadViaCloudinary(file, onProgress).catch((err) => {
+          showToast(`Cloudinary uyarısı: ${err.message}. Yedek buluta aktarılıyor...`, 'info');
           return runFallbackCloudRace(file, onProgress);
         });
       }
@@ -1314,7 +1333,7 @@
         }
       };
 
-      const p1 = uploadViaTmpfiles(file, reportProgress);
+      const p1 = uploadViaCatbox(file, reportProgress);
       const p2 = uploadViaLitterbox(file, reportProgress);
       const p3 = uploadFileViaFirebaseStorage(file, reportProgress);
 
@@ -1348,7 +1367,7 @@
             result = await uploadFileTurboRace(task.file, onProgress);
           } catch (err) {
             if (!cloudUploadCancelFlag) {
-              showToast(`"${task.title}" buluta yüklenemedi. İnternet bağlantısını kontrol edin.`, 'error');
+              showToast(`"${task.title}" buluta yüklenemedi: ${err.message}`, 'error');
             }
           }
 
@@ -1393,7 +1412,7 @@
         return { url: LOCAL_SESSION_BLOBS.get(source.sessionKey), status: 'local_session' };
       }
       if (source.url && /^https?:\/\//i.test(source.url)) {
-        return { url: source.url, status: 'cloud_ready' };
+        return { url: sanitizePlayableUrl(source.url), status: 'cloud_ready' };
       }
       if (source.storagePath) {
         try {
@@ -2054,7 +2073,6 @@
             </div>
           </div>
 
-          <!-- Video İçi Kapak Kesme & Sahne Seçme Alanı -->
           <div id="video-frame-cover-tools" class="${getActiveVideoSourceForCover() ? '' : 'hidden'} p-2.5 rounded-xl bg-blue-50/90 border border-blue-200 space-y-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
               <span class="text-[11px] font-extrabold text-bpRoyal">Video İçinden Kapak Seç ve Kes</span>
@@ -2267,11 +2285,11 @@
       const hasCloudinary = Boolean((state.prefs.cloudinaryCloudName || '').trim() && (state.prefs.cloudinaryUploadPreset || '').trim());
       const cloudStatusNote = hasCloudinary
         ? `<div class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-bpEmerald flex items-center justify-between">
-             <span>Cloudinary Kalıcı Evrensel MP4 (H.264) Aktif</span>
+             <span>Cloudinary Kalıcı Bulut Aktif (${escapeHtml(state.prefs.cloudinaryCloudName)})</span>
              <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="underline cursor-pointer">Değiştir</button>
            </div>`
         : `<div class="px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-800 flex items-center justify-between gap-2">
-             <span>Kalıcı Cloudinary bulut linki için ayar yapın (iPhone .MOV dahil tüm cihazlarda açılır)</span>
+             <span>Kalıcı Cloudinary bulut linki için ayar yapın (tüm cihazlarda açılır)</span>
              <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="px-2 py-1 rounded-lg bg-bpNavy text-white text-[10px] font-extrabold shrink-0 cursor-pointer">Ayarla</button>
            </div>`;
 
@@ -2422,8 +2440,8 @@
     function collectVideoSourcesAndTasks(prefix, title, season = null, episode = null) {
       const subFile = PENDING_FILES.get(`${prefix}_sub`) || document.getElementById(`${prefix}-sub-file`)?.files?.[0];
       const dubFile = PENDING_FILES.get(`${prefix}_dub`) || document.getElementById(`${prefix}-dub-file`)?.files?.[0];
-      const subUrl = document.getElementById(`${prefix}-sub-url`)?.value?.trim() || '';
-      const dubUrl = document.getElementById(`${prefix}-dub-url`)?.value?.trim() || '';
+      const subUrl = sanitizePlayableUrl(document.getElementById(`${prefix}-sub-url`)?.value || '');
+      const dubUrl = sanitizePlayableUrl(document.getElementById(`${prefix}-dub-url`)?.value || '');
 
       const sources = [];
       const tasks = [];
@@ -2737,13 +2755,49 @@
       if (tasks.length > 0) uploadMediaFilesToCloud(item.id, tasks);
     }
 
-    function saveCloudinarySettings() {
+    async function testCloudinaryConnection() {
       const cn = document.getElementById('pref-cloudinary-name')?.value?.trim() || '';
       const pr = document.getElementById('pref-cloudinary-preset')?.value?.trim() || '';
+      if (!cn || !pr) {
+        showToast('Önce Cloud Name ve Upload Preset alanlarını doldurun.', 'error');
+        return;
+      }
       state.prefs.cloudinaryCloudName = cn;
       state.prefs.cloudinaryUploadPreset = pr;
       savePrefs(state.prefs);
-      showToast(cn && pr ? 'Cloudinary kalıcı bulut bilgileri kaydedildi!' : 'Cloudinary ayarları temizlendi.', 'success');
+
+      const statusBox = document.getElementById('cloudinary-test-status');
+      if (statusBox) {
+        statusBox.className = 'text-[11px] font-bold text-bpRoyal';
+        statusBox.textContent = 'Cloudinary bağlantısı test ediliyor...';
+      }
+
+      try {
+        // 1x1 şeffaf test görseli göndererek preset'in Unsigned olarak aktif olup olmadığını doğrula
+        const tinyPng = await (await fetch('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')).blob();
+        const resTxt = await uploadBlobSingleXhr(
+          `https://api.cloudinary.com/v1_1/${encodeURIComponent(cn)}/image/upload`,
+          'file',
+          { upload_preset: pr },
+          tinyPng,
+          'test.png',
+          () => {}
+        );
+        const data = JSON.parse(resTxt || '{}');
+        if (data.secure_url) {
+          if (statusBox) {
+            statusBox.className = 'text-[11px] font-extrabold text-bpEmerald';
+            statusBox.textContent = '✓ Bağlantı başarılı! Artık yüklediğiniz tüm videolar kalıcı olarak açılır.';
+          }
+          showToast('Cloudinary bağlantısı doğrulandı ve kaydedildi!', 'success');
+        }
+      } catch (err) {
+        if (statusBox) {
+          statusBox.className = 'text-[11px] font-extrabold text-bpRed';
+          statusBox.textContent = `✕ Hata: ${err.message} (Cloudinary panelinde Preset modunun "Unsigned" olduğundan emin olun)`;
+        }
+        showToast(`Cloudinary hatası: ${err.message}`, 'error');
+      }
     }
 
     function openPlatformSettingsModal() {
@@ -2758,14 +2812,13 @@
             </button>
           </div>
 
-          <!-- CLOUDINARY KALICI EVRENSEL MP4 AYARLARI -->
           <div class="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200 space-y-2.5 text-xs">
             <div class="flex items-center justify-between">
-              <span class="font-extrabold text-bpEmerald">Cloudinary Kalıcı Video Bulutu (iPhone .MOV → MP4)</span>
+              <span class="font-extrabold text-bpEmerald">Cloudinary Kalıcı Video Bulutu (Tüm Cihazlarda Açılır)</span>
               <span class="px-2 py-0.5 rounded bg-bpEmerald text-white text-[10px] font-extrabold">KALICI LİNK</span>
             </div>
             <p class="text-[11px] text-slate-600 leading-relaxed">
-              Ücretsiz <strong>cloudinary.com</strong> hesabınızdan aldığınız <strong>Cloud Name</strong> ve <strong>Unsigned Upload Preset</strong> bilgilerini girin. Videolarınız cihazdan silinse bile her cihazda evrensel MP4 olarak açılır.
+              Ücretsiz <strong>cloudinary.com</strong> hesabınızdaki <strong>Cloud Name</strong> ve Signing Mode: <strong>Unsigned</strong> olan <strong>Upload Preset</strong> adını girip test edin.
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
@@ -2777,8 +2830,9 @@
                 <input type="text" id="pref-cloudinary-preset" value="${escapeAttr(p.cloudinaryUploadPreset || '')}" placeholder="Örn: birperde_unsigned" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold" />
               </div>
             </div>
-            <div class="flex justify-end">
-              <button type="button" onclick="saveCloudinarySettings()" class="px-3.5 py-1.5 rounded-lg bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">Bulut Ayarını Kaydet</button>
+            <div id="cloudinary-test-status" class="text-[11px] font-semibold text-slate-500"></div>
+            <div class="flex justify-end gap-2">
+              <button type="button" onclick="testCloudinaryConnection()" class="px-3.5 py-1.5 rounded-lg bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">Kaydet ve Bağlantıyı Test Et</button>
             </div>
           </div>
 
@@ -3317,7 +3371,7 @@
     }
 
     /* =====================================================================
-       9. WATCH STUDIO + 5-LEVEL KEYBOARD VOLUME + PC/TABLET SHORTCUTS
+       9. WATCH STUDIO + SMART FALLBACK STREAM LOADER
     ===================================================================== */
     let hlsController = null;
     let singleTapTimer = null;
@@ -4016,7 +4070,7 @@
 
               <div id="player-status-overlay" class="hidden absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center z-20">
                 <p id="player-status-text" class="text-xs font-semibold text-slate-200 mb-3 max-w-md leading-relaxed"></p>
-                <div class="flex items-center gap-2 flex-wrap justify-center">
+                <div id="player-status-actions" class="flex items-center gap-2 flex-wrap justify-center">
                   <button type="button" onclick="syncAllFromCloudNow(true)" class="px-3.5 py-1.5 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Buluttan Yenile</button>
                 </div>
               </div>
@@ -4102,6 +4156,7 @@
       const video = document.getElementById('birperde-video');
       const overlay = document.getElementById('player-status-overlay');
       const statusText = document.getElementById('player-status-text');
+      const statusActions = document.getElementById('player-status-actions');
       if (!video) return;
 
       video.onplay = () => syncPlayPauseButtons(true);
@@ -4122,7 +4177,16 @@
       if (overlay) overlay.classList.add('hidden');
       const minStart = activeCh?.trimStart > 0 ? activeCh.trimStart : 0;
 
+      // Olası URL varyasyonları: Önce temiz URL, hata verirse ham URL veya .mp4 varyantı dene
+      const candidates = Array.from(new Set([
+        url,
+        url.replace(/\.mp4(\?.*)?$/i, '.mov$1'),
+        url.replace('/upload/', '/upload/f_mp4/')
+      ].filter(Boolean)));
+      let attemptIdx = 0;
+
       const onReady = () => {
+        if (overlay) overlay.classList.add('hidden');
         video.playbackRate = state.player.playbackRate || 1;
         video.volume = state.player.volume ?? 1;
         const pos = resumeTime > minStart ? resumeTime : minStart;
@@ -4137,10 +4201,26 @@
         }
       };
 
-      video.onerror = () => {
+      const tryNextCandidate = () => {
+        attemptIdx++;
+        if (attemptIdx < candidates.length) {
+          video.src = candidates[attemptIdx];
+          video.load();
+          return;
+        }
         if (overlay) overlay.classList.remove('hidden');
-        if (statusText) statusText.textContent = 'Video oynatılamadı. İnternet bağlantısını kontrol edin.';
+        if (statusText) {
+          statusText.textContent = 'Bu video bağlantısı tarayıcı tarafından doğrudan açılamadı. Yedek sunucunun süresi dolmuş olabilir veya Cloudinary ayarı eksik.';
+        }
+        if (statusActions) {
+          statusActions.innerHTML = `
+            <a href="${escapeAttr(url)}" target="_blank" rel="noopener" class="px-3.5 py-1.5 rounded-xl bg-bpRoyal text-white text-xs font-extrabold">Videoyu Yeni Sekmede Aç</a>
+            <button type="button" onclick="openPlatformSettingsModal()" class="px-3.5 py-1.5 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Cloudinary Bulut Ayarla</button>
+          `;
+        }
       };
+
+      video.onerror = tryNextCandidate;
 
       if (url.includes('.m3u8') && window.Hls && Hls.isSupported()) {
         hlsController = new Hls({ enableWorker: true });
@@ -4148,7 +4228,7 @@
         hlsController.attachMedia(video);
         hlsController.on(Hls.Events.MANIFEST_PARSED, onReady);
       } else {
-        video.src = url;
+        video.src = candidates[0];
         video.addEventListener('loadedmetadata', onReady, { once: true });
       }
     }
@@ -4188,7 +4268,7 @@
         el.style.opacity = '0';
         el.style.transition = 'opacity 0.25s ease';
         setTimeout(() => el.remove(), 260);
-      }, 3400);
+      }, 3600);
     }
 
     function escapeHtml(str) {
@@ -4209,7 +4289,7 @@
       batchQueueFiles,
       state,
       savePrefs,
-      saveCloudinarySettings,
+      testCloudinaryConnection,
       dismissIntroSplashNow,
       replayIntroSplash,
       openAddContentModal,
