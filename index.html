@@ -468,7 +468,7 @@
         BirPerdeTR
       </h1>
       <p class="intro-brand-pop relative z-10 mt-2 text-xs sm:text-sm font-semibold tracking-widest uppercase text-sky-200/80">
-        Kalıcı Bulut Film &amp; Dizi Platformu
+        Bulut Film &amp; Dizi Platformu
       </p>
     </div>
   </div>
@@ -494,10 +494,10 @@
               <span id="brand-title-text" class="text-base sm:text-xl font-extrabold tracking-tight text-bpNavy">BirPerdeTR</span>
               <span id="cloud-live-dot" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-bpEmerald/15 text-bpEmerald border border-bpEmerald/30">
                 <span class="w-1.5 h-1.5 rounded-full bg-bpEmerald live-indicator"></span>
-                <span>CANLI BULUT</span>
+                <span>YÖNETİCİ</span>
               </span>
             </div>
-            <p class="text-[11px] text-slate-500 hidden sm:block">Evrensel MP4 bulut aktarımı • Tüm cihazlarda kalıcı</p>
+            <p class="text-[11px] text-slate-500 hidden sm:block">1 MB – 15 GB bulut video motoru • Tüm cihazlarda kalıcı</p>
           </div>
         </div>
 
@@ -629,7 +629,7 @@
 
     <!-- FOOTER -->
     <footer class="bg-bpWhite border-t border-slate-200 mt-8 py-4 px-3 sm:px-5 text-center text-[11px] text-slate-500">
-      BirPerdeTR — Evrensel MP4 &amp; Kalıcı Bulut Film / Dizi Platformu
+      BirPerdeTR — Bulut Film &amp; Dizi Platformu
     </footer>
   </div>
 
@@ -659,12 +659,17 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     /* =====================================================================
-       0. CLEAN START & PLATFORM PREFERENCES
+       0. SABİT GÖMÜLÜ BULUT BİLGİLERİ & PLATFORM AYARLARI (1 MB - 15 GB)
     ===================================================================== */
     document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
     document.addEventListener('touchmove', (e) => {
       if (e.touches && e.touches.length > 1) e.preventDefault();
     }, { passive: false });
+
+    const HARDCODED_CLOUD_NAME = 'g7rngbt2';
+    const HARDCODED_UPLOAD_PRESET = 'birperde_video';
+    const CLOUDINARY_SINGLE_MAX_BYTES = 95 * 1024 * 1024;
+    const MAX_ALLOWED_FILE_BYTES = 15 * 1024 * 1024 * 1024;
 
     const CINEMA_FALLBACK_PHOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent(
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 480">
@@ -682,10 +687,10 @@
       </svg>`
     );
 
-    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v5';
-    const MASTER_DELETED_KEY = 'birperde_master_deleted_v5';
-    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v5';
-    const PLATFORM_PREFS_KEY = 'birperde_prefs_v5';
+    const MASTER_CATALOG_KEY = 'birperde_master_catalog_v7';
+    const MASTER_DELETED_KEY = 'birperde_master_deleted_v7';
+    const WATCH_PROGRESS_KEY = 'birperde_watch_progress_v7';
+    const PLATFORM_PREFS_KEY = 'birperde_prefs_v7';
     const FIRESTORE_COLLECTION = 'birperde_master_v2';
     const RTDB_NODE = 'birperde_master_v2';
 
@@ -698,13 +703,19 @@
       preferredLang: 'sub',
       darkTheme: false,
       showCloudBadge: true,
-      cloudinaryCloudName: '',
-      cloudinaryUploadPreset: ''
+      cloudinaryCloudName: HARDCODED_CLOUD_NAME,
+      cloudinaryUploadPreset: HARDCODED_UPLOAD_PRESET
     };
 
     function loadPrefs() {
       try {
-        return { ...DEFAULT_PREFS, ...(JSON.parse(localStorage.getItem(PLATFORM_PREFS_KEY) || '{}') || {}) };
+        const stored = JSON.parse(localStorage.getItem(PLATFORM_PREFS_KEY) || '{}') || {};
+        return {
+          ...DEFAULT_PREFS,
+          ...stored,
+          cloudinaryCloudName: (stored.cloudinaryCloudName || '').trim() || HARDCODED_CLOUD_NAME,
+          cloudinaryUploadPreset: (stored.cloudinaryUploadPreset || '').trim() || HARDCODED_UPLOAD_PRESET
+        };
       } catch (e) {
         return { ...DEFAULT_PREFS };
       }
@@ -719,6 +730,12 @@
 
     function applyThemePrefs() {
       document.body.classList.toggle('bp-dark-theme', Boolean(state.prefs.darkTheme));
+    }
+
+    function formatFileSizeHuman(bytes) {
+      const b = Number(bytes) || 0;
+      if (b >= 1024 * 1024 * 1024) return `${(b / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+      return `${(b / (1024 * 1024)).toFixed(1)} MB`;
     }
 
     /* =====================================================================
@@ -743,8 +760,11 @@
     }
 
     let splashDismissTimer = null;
+    let initialBootDone = false;
+
     function dismissIntroSplashNow() {
       clearTimeout(splashDismissTimer);
+      initialBootDone = true;
       const splash = document.getElementById('intro-splash');
       if (!splash) return;
       splash.classList.add('splash-exit');
@@ -756,17 +776,18 @@
       const splash = document.getElementById('intro-splash');
       if (!splash) return;
       splash.classList.remove('hidden', 'splash-exit');
-      splashDismissTimer = setTimeout(dismissIntroSplashNow, 1200);
+      splashDismissTimer = setTimeout(dismissIntroSplashNow, 1100);
     }
 
     function startInitialIntro() {
+      if (initialBootDone) return;
       const logoMount = document.getElementById('intro-logo-mount');
       if (logoMount) logoMount.innerHTML = getBrandSvg(108);
-      splashDismissTimer = setTimeout(dismissIntroSplashNow, 750);
+      splashDismissTimer = setTimeout(dismissIntroSplashNow, 700);
     }
 
     /* =====================================================================
-       2. FIREBASE + CLOUDINARY UNIVERSAL MP4 SYNC ENGINE
+       2. FIREBASE + CLOUDINARY + CORS-FREE STREAM ENGINE
     ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyB1eT555N2stbzj6x6zkmxHKtMolvCJmeY",
@@ -894,11 +915,16 @@
     function sanitizePlayableUrl(rawUrl) {
       let u = String(rawUrl || '').trim();
       if (!u) return '';
-      // Daha önce eklenmiş hatalı f_mp4,vc_h264 dönüşüm parametresi varsa temizle
       u = u.replace('/upload/f_mp4,vc_h264/', '/upload/');
-      // .mov uzantılı Cloudinary videolarını doğrudan .mp4 olarak sun (hızlı ve kayıpsız)
       if (/res\.cloudinary\.com/i.test(u) && /\.mov(\?.*)?$/i.test(u)) {
         u = u.replace(/\.mov(\?.*)?$/i, '.mp4$1');
+      }
+      const gdriveMatch = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]{15,})/i);
+      if (gdriveMatch && gdriveMatch[1]) {
+        u = `https://drive.usercontent.google.com/download?id=${gdriveMatch[1]}&export=download&confirm=t`;
+      }
+      if (/dropbox\.com/i.test(u)) {
+        u = u.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace(/[?&]dl=[01]/g, '');
       }
       return u;
     }
@@ -918,6 +944,7 @@
           url: sanitizePlayableUrl(s.url),
           sessionKey: String(s.sessionKey || ''),
           storagePath: String(s.storagePath || '').trim(),
+          lastError: String(s.lastError || ''),
           durationSec: Number(s.durationSec) || 0,
           trimStart: Number(s.trimStart) || 0,
           trimEnd: Number(s.trimEnd) || 0
@@ -1002,7 +1029,8 @@
                 ...s,
                 url: s.url || prevS.url || '',
                 storagePath: s.storagePath || prevS.storagePath || '',
-                sessionKey: s.sessionKey || prevS.sessionKey || ''
+                sessionKey: s.sessionKey || prevS.sessionKey || '',
+                lastError: s.lastError || prevS.lastError || ''
               });
             });
             merged.sources = Array.from(sMap.values());
@@ -1026,7 +1054,8 @@
                     ...s,
                     url: s.url || ps.url || '',
                     storagePath: s.storagePath || ps.storagePath || '',
-                    sessionKey: s.sessionKey || ps.sessionKey || ''
+                    sessionKey: s.sessionKey || ps.sessionKey || '',
+                    lastError: s.lastError || ps.lastError || ''
                   });
                 });
                 epMap.set(k, { ...prevE, ...e, sources: Array.from(esMap.values()) });
@@ -1138,7 +1167,7 @@
         if (activeUploadsCount === 0) {
           syncAllFromCloudNow(false);
         }
-      }, 2000);
+      }, 2500);
 
       ensureAuthReady().then(() => {
         onSnapshot(collection(fbDb, FIRESTORE_COLLECTION), (snap) => {
@@ -1152,7 +1181,7 @@
     }
 
     /* =====================================================================
-       3. CLOUDINARY + MULTI-STREAM TURBO CLOUD UPLOADER (FIXED URL)
+       3. 1 MB – 15 GB MULTI-STAGE CLOUD UPLOAD ENGINE (CORS-FREE)
     ===================================================================== */
     function setUploadBanner(show, text = '', pct = 0) {
       const banner = document.getElementById('background-sync-banner');
@@ -1167,7 +1196,7 @@
       banner.classList.remove('hidden');
       if (txt) txt.textContent = text;
       if (pctEl) pctEl.textContent = `%${pct}`;
-      if (barEl) barEl.style.width = `${Math.max(2, Math.min(100, pct))}%`;
+      if (barEl) barEl.style.width = `${Math.max(1, Math.min(100, pct))}%`;
     }
 
     function cancelActiveCloudSync() {
@@ -1183,7 +1212,7 @@
       showToast('Bulut aktarımı iptal edildi.', 'info');
     }
 
-    function uploadBlobSingleXhr(endpoint, fieldName, extraFields, blob, filename, onProgress) {
+    function uploadBlobSingleXhr(endpoint, fieldName, extraFields, blob, filename, onProgress, customHeaders = {}) {
       return new Promise((resolve, reject) => {
         const formData = new FormData();
         Object.entries(extraFields || {}).forEach(([k, v]) => formData.append(k, v));
@@ -1192,13 +1221,29 @@
         const xhr = new XMLHttpRequest();
         activeXhrSet.add(xhr);
         xhr.open('POST', endpoint, true);
+        Object.entries(customHeaders || {}).forEach(([hk, hv]) => xhr.setRequestHeader(hk, hv));
+
+        let lastByteAt = Date.now();
+        const stallGuard = setInterval(() => {
+          if (Date.now() - lastByteAt > 30000) {
+            clearInterval(stallGuard);
+            try { xhr.abort(); } catch (e) {}
+            reject(new Error('Sunucu yanıt vermedi'));
+          }
+        }, 5000);
 
         xhr.upload.onprogress = (ev) => {
-          if (cloudUploadCancelFlag) { try { xhr.abort(); } catch (e) {} return; }
+          lastByteAt = Date.now();
+          if (cloudUploadCancelFlag) {
+            clearInterval(stallGuard);
+            try { xhr.abort(); } catch (e) {}
+            return;
+          }
           if (ev.lengthComputable && ev.total > 0) onProgress(ev.loaded, ev.total);
         };
 
         xhr.onload = () => {
+          clearInterval(stallGuard);
           activeXhrSet.delete(xhr);
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(xhr.responseText || '');
@@ -1212,137 +1257,184 @@
           }
         };
 
-        xhr.onerror = () => { activeXhrSet.delete(xhr); reject(new Error('Ağ hatası')); };
-        xhr.onabort = () => { activeXhrSet.delete(xhr); reject(new Error('İptal')); };
+        xhr.onerror = () => { clearInterval(stallGuard); activeXhrSet.delete(xhr); reject(new Error('Bağlantı kesildi')); };
+        xhr.onabort = () => { clearInterval(stallGuard); activeXhrSet.delete(xhr); reject(new Error('İptal')); };
         xhr.send(formData);
       });
     }
 
-    // Cloudinary kalıcı video yükleme: Hata veren f_mp4,vc_h264 dönüşümü kaldırıldı, doğrudan çalışan secure_url kullanılır
-    function uploadViaCloudinary(file, onProgress) {
-      const cloudName = (state.prefs.cloudinaryCloudName || '').trim();
-      const uploadPreset = (state.prefs.cloudinaryUploadPreset || '').trim();
-      if (!cloudName || !uploadPreset) {
-        return Promise.reject(new Error('Cloudinary ayarlı değil'));
+    // 1 MB - 15 GB arası dosyalar için %0 takılma korumalı Firebase Resumable Storage
+    function uploadFileViaFirebaseResumable(file, onProgress) {
+      return new Promise(async (resolve, reject) => {
+        let settled = false;
+        let hasTransferredAnyByte = false;
+        let stallTimer = null;
+
+        const failOnce = (msg) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(stallTimer);
+          if (activeFbTask) {
+            try { activeFbTask.cancel(); } catch (e) {}
+            activeFbTask = null;
+          }
+          reject(new Error(msg));
+        };
+
+        try {
+          await ensureAuthReady();
+          const safeName = (file.name || 'video.mp4').replace(/[^a-zA-Z0-9._-]/g, '_');
+          const path = `birperde_media/${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${safeName}`;
+          const ref = storageRef(fbStorage, path);
+          const task = uploadBytesResumable(ref, file, {
+            contentType: file.type || 'video/mp4',
+            cacheControl: 'public, max-age=31536000'
+          });
+          activeFbTask = task;
+
+          stallTimer = setTimeout(() => {
+            if (!hasTransferredAnyByte && !settled) {
+              failOnce('Firebase Storage ilk bağlantıyı başlatamadı');
+            }
+          }, 3000);
+
+          task.on(
+            'state_changed',
+            (snap) => {
+              if (cloudUploadCancelFlag) {
+                failOnce('İptal edildi');
+                return;
+              }
+              if (snap.bytesTransferred > 0) {
+                hasTransferredAnyByte = true;
+                clearTimeout(stallTimer);
+              }
+              if (snap.totalBytes > 0) {
+                onProgress(snap.bytesTransferred, snap.totalBytes);
+              }
+            },
+            (err) => failOnce(err?.message || 'Firebase aktarım hatası'),
+            async () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(stallTimer);
+              activeFbTask = null;
+              try {
+                const downloadUrl = await getDownloadURL(task.snapshot.ref);
+                resolve({ downloadUrl, storagePath: path });
+              } catch (e) {
+                reject(e);
+              }
+            }
+          );
+        } catch (err) {
+          failOnce(err?.message || 'Firebase başlatılamadı');
+        }
+      });
+    }
+
+    // Cloudinary Parçalı (Chunked) Yükleme Motoru
+    async function uploadViaCloudinaryChunked(file, onProgress) {
+      const cloudName = (state.prefs.cloudinaryCloudName || '').trim() || HARDCODED_CLOUD_NAME;
+      const uploadPreset = (state.prefs.cloudinaryUploadPreset || '').trim() || HARDCODED_UPLOAD_PRESET;
+      const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/auto/upload`;
+
+      if (file.size <= CLOUDINARY_SINGLE_MAX_BYTES) {
+        const txt = await uploadBlobSingleXhr(
+          endpoint,
+          'file',
+          { upload_preset: uploadPreset },
+          file,
+          file.name || 'video.mp4',
+          onProgress
+        );
+        const yanit = JSON.parse(txt || '{}');
+        if (!yanit.secure_url) throw new Error('Cloudinary URL döndürmedi');
+        return { downloadUrl: sanitizePlayableUrl(yanit.secure_url), storagePath: '' };
       }
 
-      return uploadBlobSingleXhr(
-        `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/video/upload`,
-        'file',
-        { upload_preset: uploadPreset },
-        file,
-        file.name || 'video.mp4',
-        onProgress
-      ).then(txt => {
-        const yanit = JSON.parse(txt || '{}');
-        if (!yanit.secure_url) throw new Error('Cloudinary URL yok');
-        const cleanUrl = sanitizePlayableUrl(yanit.secure_url);
-        return { downloadUrl: cleanUrl, storagePath: '' };
-      });
+      const CHUNK_SIZE = 10 * 1024 * 1024;
+      const totalSize = file.size;
+      const uniqueUploadId = 'bp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+      let start = 0;
+      let lastResponseJson = {};
+
+      while (start < totalSize) {
+        if (cloudUploadCancelFlag) throw new Error('İptal edildi');
+        const end = Math.min(start + CHUNK_SIZE, totalSize);
+        const chunkBlob = file.slice(start, end);
+        const contentRange = `bytes ${start}-${end - 1}/${totalSize}`;
+
+        const txt = await uploadBlobSingleXhr(
+          endpoint,
+          'file',
+          { upload_preset: uploadPreset },
+          chunkBlob,
+          file.name || 'video.mp4',
+          (chunkSent) => {
+            onProgress(Math.min(totalSize, start + chunkSent), totalSize);
+          },
+          {
+            'X-Unique-Upload-Id': uniqueUploadId,
+            'Content-Range': contentRange
+          }
+        );
+
+        lastResponseJson = JSON.parse(txt || '{}');
+        start = end;
+        onProgress(start, totalSize);
+      }
+
+      if (!lastResponseJson.secure_url) {
+        throw new Error('Bulut dosya boyutu sınırını aştı');
+      }
+      return { downloadUrl: sanitizePlayableUrl(lastResponseJson.secure_url), storagePath: '' };
     }
 
-    function uploadViaCatbox(file, onProgress) {
-      return uploadBlobSingleXhr(
-        'https://catbox.moe/user/api.php',
-        'fileToUpload',
-        { reqtype: 'fileupload' },
-        file,
-        file.name || 'video.mp4',
-        onProgress
-      ).then(txt => {
-        const url = (txt || '').trim();
-        if (!/^https?:\/\//i.test(url)) throw new Error('Catbox URL yok');
-        return { downloadUrl: url, storagePath: '' };
-      });
-    }
-
-    function uploadViaLitterbox(file, onProgress) {
-      return uploadBlobSingleXhr(
+    // Tam CORS Destekli Yüksek Kapasiteli Bulut Sunucusu (Litterbox / Catbox)
+    async function uploadViaCorsFreeCloud(file, onProgress) {
+      const txt = await uploadBlobSingleXhr(
         'https://litterbox.catbox.moe/resources/internals/api.php',
         'fileToUpload',
         { reqtype: 'fileupload', time: '72h' },
         file,
         file.name || 'video.mp4',
         onProgress
-      ).then(txt => {
-        const url = (txt || '').trim();
-        if (!/^https?:\/\//i.test(url)) throw new Error('Litterbox URL yok');
-        return { downloadUrl: url, storagePath: '' };
-      });
-    }
-
-    function uploadFileViaFirebaseStorage(file, onProgress) {
-      return new Promise(async (resolve, reject) => {
-        try {
-          await ensureAuthReady();
-          const safeName = (file.name || 'video.mp4').replace(/[^a-zA-Z0-9._-]/g, '_');
-          const path = `birperde_media/${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${safeName}`;
-          const ref = storageRef(fbStorage, path);
-          const task = uploadBytesResumable(ref, file, { contentType: file.type || 'video/mp4' });
-          activeFbTask = task;
-
-          let started = false;
-          const stallTimer = setTimeout(() => {
-            if (!started) {
-              try { task.cancel(); } catch (e) {}
-              reject(new Error('Firebase Rules kapalı'));
-            }
-          }, 2500);
-
-          task.on(
-            'state_changed',
-            (snap) => {
-              if (snap.bytesTransferred > 0) {
-                started = true;
-                clearTimeout(stallTimer);
-              }
-              if (cloudUploadCancelFlag) { try { task.cancel(); } catch (e) {} return; }
-              if (snap.totalBytes > 0) onProgress(snap.bytesTransferred, snap.totalBytes);
-            },
-            (err) => { clearTimeout(stallTimer); activeFbTask = null; reject(err); },
-            async () => {
-              clearTimeout(stallTimer);
-              activeFbTask = null;
-              try {
-                const downloadUrl = await getDownloadURL(task.snapshot.ref);
-                resolve({ downloadUrl, storagePath: path });
-              } catch (e) { reject(e); }
-            }
-          );
-        } catch (err) { reject(err); }
-      });
-    }
-
-    function uploadFileTurboRace(file, onProgress) {
-      const hasCloudinary = Boolean((state.prefs.cloudinaryCloudName || '').trim() && (state.prefs.cloudinaryUploadPreset || '').trim());
-      if (hasCloudinary) {
-        return uploadViaCloudinary(file, onProgress).catch((err) => {
-          showToast(`Cloudinary uyarısı: ${err.message}. Yedek buluta aktarılıyor...`, 'info');
-          return runFallbackCloudRace(file, onProgress);
-        });
+      );
+      const cleanUrl = String(txt || '').trim();
+      if (!/^https?:\/\//i.test(cleanUrl)) {
+        throw new Error('Yedek sunucu geçerli bağlantı döndürmedi');
       }
-      return runFallbackCloudRace(file, onProgress);
+      return { downloadUrl: cleanUrl, storagePath: '' };
     }
 
-    function runFallbackCloudRace(file, onProgress) {
-      let maxSent = 0;
-      const reportProgress = (sent, total) => {
-        if (sent > maxSent) {
-          maxSent = sent;
-          onProgress(sent, total);
+    // 1 MB - 15 GB Akıllı Sıralı Aktarım Motoru
+    async function uploadFileSmartCloud(file, onProgress) {
+      if (file.size > MAX_ALLOWED_FILE_BYTES) {
+        throw new Error(`Dosya boyutu (${formatFileSizeHuman(file.size)}) 15 GB sınırını aşıyor.`);
+      }
+
+      if (file.size <= CLOUDINARY_SINGLE_MAX_BYTES) {
+        try {
+          return await uploadViaCloudinaryChunked(file, onProgress);
+        } catch (e1) {
+          try {
+            return await uploadFileViaFirebaseResumable(file, onProgress);
+          } catch (e2) {
+            return await uploadViaCorsFreeCloud(file, onProgress);
+          }
         }
-      };
+      }
 
-      const p1 = uploadViaCatbox(file, reportProgress);
-      const p2 = uploadViaLitterbox(file, reportProgress);
-      const p3 = uploadFileViaFirebaseStorage(file, reportProgress);
-
-      return Promise.any([p1, p2, p3]).then((winner) => {
-        activeXhrSet.forEach(x => { try { x.abort(); } catch (e) {} });
-        activeXhrSet.clear();
-        if (activeFbTask) { try { activeFbTask.cancel(); } catch (e) {} activeFbTask = null; }
-        return winner;
-      });
+      try {
+        return await uploadFileViaFirebaseResumable(file, onProgress);
+      } catch (fbErr) {
+        try {
+          return await uploadViaCloudinaryChunked(file, onProgress);
+        } catch (clErr) {
+          return await uploadViaCorsFreeCloud(file, onProgress);
+        }
+      }
     }
 
     async function uploadMediaFilesToCloud(itemId, tasks) {
@@ -1353,27 +1445,37 @@
       try {
         for (const task of tasks) {
           if (cloudUploadCancelFlag) break;
-          const totalMb = (task.file.size / 1048576).toFixed(1);
-          setUploadBanner(true, `Buluta Yükleniyor: ${task.title} (${task.label}) • 0.0 / ${totalMb} MB`, 3);
+          const totalLabel = formatFileSizeHuman(task.file.size);
+          const startTs = Date.now();
+
+          setUploadBanner(true, `Buluta Aktarılıyor: ${task.title} (${task.label}) • 0 MB / ${totalLabel}`, 1);
 
           const onProgress = (sent, total) => {
-            const pct = Math.round((sent / total) * 100);
-            const sentMb = (sent / 1048576).toFixed(1);
-            setUploadBanner(true, `Buluta Yükleniyor: ${task.title} (${task.label}) • ${sentMb} / ${totalMb} MB`, pct);
+            const pct = Math.max(1, Math.round((sent / total) * 100));
+            const sentLabel = formatFileSizeHuman(sent);
+            const elapsedSec = Math.max(0.5, (Date.now() - startTs) / 1000);
+            const speedMbps = ((sent / (1024 * 1024)) / elapsedSec).toFixed(1);
+            setUploadBanner(
+              true,
+              `${task.title} • ${sentLabel} / ${totalLabel} (${speedMbps} MB/sn)`,
+              pct
+            );
           };
 
           let result = null;
+          let failMessage = '';
           try {
-            result = await uploadFileTurboRace(task.file, onProgress);
+            result = await uploadFileSmartCloud(task.file, onProgress);
           } catch (err) {
+            failMessage = err.message || 'Yükleme hatası';
             if (!cloudUploadCancelFlag) {
-              showToast(`"${task.title}" buluta yüklenemedi: ${err.message}`, 'error');
+              showToast(`Aktarım Hatası: ${failMessage}`, 'error');
             }
           }
 
-          if (result && result.downloadUrl) {
-            const target = state.catalog.find(m => m.id === itemId);
-            if (target) {
+          const target = state.catalog.find(m => m.id === itemId);
+          if (target) {
+            if (result && result.downloadUrl) {
               if (task.kind === 'poster') {
                 target.posterUrl = result.downloadUrl;
                 target.posterStoragePath = result.storagePath || '';
@@ -1382,6 +1484,7 @@
                 if (srcObj) {
                   srcObj.url = result.downloadUrl;
                   srcObj.storagePath = result.storagePath || '';
+                  srcObj.lastError = '';
                 }
               } else if (task.kind === 'episode_source') {
                 const ep = (target.episodes || []).find(e => Number(e.season) === Number(task.season) && Number(e.number) === Number(task.episode));
@@ -1389,14 +1492,27 @@
                 if (srcObj) {
                   srcObj.url = result.downloadUrl;
                   srcObj.storagePath = result.storagePath || '';
+                  srcObj.lastError = '';
                 }
               }
               writeLocalCatalogCache(state.catalog);
               renderMainView();
               await pushItemToAllClouds(target);
               if (task.kind !== 'poster') {
-                showToast(`"${task.title}" (${task.label}) kalıcı buluta kaydedildi!`, 'success');
+                showToast(`"${task.title}" (${totalLabel}) kalıcı buluta kaydedildi!`, 'success');
               }
+            } else if (failMessage) {
+              if (task.kind === 'movie_source') {
+                const srcObj = (target.sources || []).find(s => s.id === task.sourceId);
+                if (srcObj) srcObj.lastError = failMessage;
+              } else if (task.kind === 'episode_source') {
+                const ep = (target.episodes || []).find(e => Number(e.season) === Number(task.season) && Number(e.number) === Number(task.episode));
+                const srcObj = ep && (ep.sources || []).find(s => s.id === task.sourceId);
+                if (srcObj) srcObj.lastError = failMessage;
+              }
+              writeLocalCatalogCache(state.catalog);
+              renderMainView();
+              await pushItemToAllClouds(target);
             }
           }
         }
@@ -1407,12 +1523,12 @@
     }
 
     async function resolvePlayableVideoUrl(source) {
-      if (!source) return { url: '', status: 'none' };
+      if (!source) return { url: '', status: 'none', lastError: '' };
       if (source.sessionKey && LOCAL_SESSION_BLOBS.has(source.sessionKey)) {
-        return { url: LOCAL_SESSION_BLOBS.get(source.sessionKey), status: 'local_session' };
+        return { url: LOCAL_SESSION_BLOBS.get(source.sessionKey), status: 'local_session', lastError: '' };
       }
       if (source.url && /^https?:\/\//i.test(source.url)) {
-        return { url: sanitizePlayableUrl(source.url), status: 'cloud_ready' };
+        return { url: sanitizePlayableUrl(source.url), status: 'cloud_ready', lastError: '' };
       }
       if (source.storagePath) {
         try {
@@ -1420,11 +1536,15 @@
           const dl = await getDownloadURL(storageRef(fbStorage, source.storagePath));
           if (dl) {
             source.url = dl;
-            return { url: dl, status: 'cloud_ready' };
+            return { url: dl, status: 'cloud_ready', lastError: '' };
           }
         } catch (e) {}
       }
-      return { url: '', status: 'not_uploaded_yet' };
+      return {
+        url: '',
+        status: source.lastError ? 'upload_failed' : 'not_uploaded_yet',
+        lastError: source.lastError || ''
+      };
     }
 
     function getCloudStatusPill(item) {
@@ -1435,11 +1555,15 @@
       if (hasCloudUrl) {
         return { label: 'Kalıcı Bulut • Her Cihazda Açılır', cls: 'bg-bpEmerald text-white' };
       }
+      const errSrc = srcs.find(s => Boolean(s.lastError));
+      if (errSrc) {
+        return { label: `Hata: ${errSrc.lastError}`, cls: 'bg-bpRed text-white' };
+      }
       return { label: 'Buluta Yükleniyor...', cls: 'bg-amber-500 text-bpNavy' };
     }
 
     /* =====================================================================
-       4. VIDEO FRAME CAPTURE & DRAG-TO-CROP PICKER
+       4. REAL FRAME CAPTURE (ZERO BLACK SCREEN) & 6-FRAME PICKER
     ===================================================================== */
     let activeFrameVideoUrl = '';
     let currentFullFrameDataUrl = '';
@@ -1462,7 +1586,7 @@
           sum += lum;
           count++;
         }
-        return count > 0 && (sum / count) < 12;
+        return count > 0 && (sum / count) < 18;
       } catch (e) {
         return false;
       }
@@ -1483,30 +1607,34 @@
         const v = document.createElement('video');
         v.muted = true;
         v.playsInline = true;
+        v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
         v.preload = 'auto';
+        v.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:320px;height:180px;opacity:0.01;pointer-events:none;';
         if (!src.startsWith('blob:') && !src.startsWith('data:')) {
           v.crossOrigin = 'anonymous';
         }
+        document.body.appendChild(v);
         v.src = src;
 
         let done = false;
         const cleanup = (res) => {
           if (done) return;
           done = true;
-          try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {}
+          try { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); } catch (e) {}
           if (rev) setTimeout(() => { try { URL.revokeObjectURL(rev); } catch (e) {} }, 300);
           resolve(res);
         };
 
-        const timer = setTimeout(() => cleanup(null), 6500);
+        const timer = setTimeout(() => cleanup(null), 8000);
 
         const triggerSeek = () => {
           const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 10;
-          const fallbackRatios = [0.22, 0.45, 0.65, 0.80];
-          const ratio = targetRatio !== null
-            ? targetRatio
+          const fallbackRatios = [0.22, 0.45, 0.72];
+          const baseRatio = targetRatio !== null
+            ? Math.min(0.95, targetRatio + retryCount * 0.07)
             : fallbackRatios[Math.min(retryCount, fallbackRatios.length - 1)];
-          const seekTo = Math.max(0.5, Math.min(dur - 0.5, dur * ratio));
+          const seekTo = Math.max(0.8, Math.min(dur - 0.5, dur * baseRatio));
           try {
             v.currentTime = seekTo;
           } catch (e) {
@@ -1515,48 +1643,44 @@
           }
         };
 
-        v.onloadeddata = triggerSeek;
-        v.onloadedmetadata = () => {
-          if (v.readyState >= 2) triggerSeek();
+        v.onloadeddata = () => {
+          triggerSeek();
         };
 
         v.onseeked = () => {
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              clearTimeout(timer);
-              try {
-                const vw = v.videoWidth || 640;
-                const vh = v.videoHeight || 360;
-                const maxW = 720;
-                const scale = Math.min(1, maxW / vw);
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.max(160, Math.round(vw * scale));
-                canvas.height = Math.max(90, Math.round(vh * scale));
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+          // Tarayıcı decoder'ının gerçek video karesini çizmesi için kısa frame beklemesi
+          setTimeout(() => {
+            if (done) return;
+            try {
+              const vw = v.videoWidth || 480;
+              const vh = v.videoHeight || 270;
+              const maxW = 480;
+              const scale = Math.min(1, maxW / vw);
+              const canvas = document.createElement('canvas');
+              canvas.width = Math.max(160, Math.round(vw * scale));
+              canvas.height = Math.max(90, Math.round(vh * scale));
+              const ctx = canvas.getContext('2d', { willReadFrequently: true });
+              ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
 
-                if (targetRatio === null && retryCount < 3 && isCanvasMostlyBlack(ctx, canvas.width, canvas.height)) {
-                  cleanup(null);
-                  captureFrameFromVideoFile(fileOrUrl, null, retryCount + 1).then(resolve);
-                  return;
-                }
-
-                const fullDataUrl = canvas.toDataURL('image/jpeg', 0.86);
-                canvas.toBlob((blob) => {
-                  if (!blob) return cleanup(null);
-                  const posterFile = new File([blob], `kapak_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                  cleanup({
-                    file: posterFile,
-                    previewUrl: fullDataUrl,
-                    fullDataUrl,
-                    durationSec: v.duration || 0
-                  });
-                }, 'image/jpeg', 0.86);
-              } catch (e) {
+              if (retryCount < 2 && isCanvasMostlyBlack(ctx, canvas.width, canvas.height)) {
+                clearTimeout(timer);
                 cleanup(null);
+                captureFrameFromVideoFile(fileOrUrl, targetRatio, retryCount + 1).then(resolve);
+                return;
               }
-            }, 90);
-          });
+
+              clearTimeout(timer);
+              const fullDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+              cleanup({
+                previewUrl: fullDataUrl,
+                fullDataUrl,
+                durationSec: v.duration || 0
+              });
+            } catch (e) {
+              clearTimeout(timer);
+              cleanup(null);
+            }
+          }, 140);
         };
 
         v.onerror = () => { clearTimeout(timer); cleanup(null); };
@@ -1574,20 +1698,15 @@
         const sh = Math.max(40, Math.round((cropBoxState.h / 100) * img.height));
 
         const outCanvas = document.createElement('canvas');
-        outCanvas.width = 400;
-        outCanvas.height = Math.max(200, Math.round(400 * (sh / sw)));
+        outCanvas.width = 360;
+        outCanvas.height = Math.max(180, Math.round(360 * (sh / sw)));
         const ctx = outCanvas.getContext('2d');
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
 
-        const croppedDataUrl = outCanvas.toDataURL('image/jpeg', 0.86);
-        outCanvas.toBlob((blob) => {
-          if (blob) {
-            PENDING_FILES.set('poster', new File([blob], `kapak_kesim_${Date.now()}.jpg`, { type: 'image/jpeg' }));
-          }
-          PENDING_FILES.set('posterDataUrl', croppedDataUrl);
-          const prevImg = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
-          if (prevImg) prevImg.src = croppedDataUrl;
-        }, 'image/jpeg', 0.86);
+        const croppedDataUrl = outCanvas.toDataURL('image/jpeg', 0.84);
+        PENDING_FILES.set('posterDataUrl', croppedDataUrl);
+        const prevImg = document.getElementById('draft-poster-preview') || document.getElementById('edit-poster-img');
+        if (prevImg) prevImg.src = croppedDataUrl;
       };
       img.src = fullDataUrl;
     }
@@ -1674,7 +1793,7 @@
     async function scrubFrameForCover(ratioPct) {
       const source = getActiveVideoSourceForCover();
       if (!source) return;
-      const ratio = Math.max(0.02, Math.min(0.98, Number(ratioPct) / 100));
+      const ratio = Math.max(0.04, Math.min(0.96, Number(ratioPct) / 100));
       const snap = await captureFrameFromVideoFile(source, ratio);
       if (snap) loadSnapshotIntoCropEditor(snap);
     }
@@ -1685,13 +1804,16 @@
       if (!source || !stripEl) return;
 
       stripEl.classList.remove('hidden');
-      stripEl.innerHTML = `<div class="col-span-6 text-[10px] font-bold text-bpRoyal py-1 text-center">Videodan 6 sahne çıkarılıyor...</div>`;
+      stripEl.innerHTML = `<div class="col-span-6 text-[10px] font-bold text-bpRoyal py-2 text-center">Videodan 6 sahne çıkarılıyor...</div>`;
 
-      const ratios = [0.12, 0.28, 0.44, 0.60, 0.75, 0.88];
-      const snaps = await Promise.all(ratios.map(r => captureFrameFromVideoFile(source, r)));
-      const valid = snaps.filter(Boolean);
+      const ratios = [0.10, 0.25, 0.42, 0.58, 0.75, 0.90];
+      const valid = [];
+      for (const r of ratios) {
+        const s = await captureFrameFromVideoFile(source, r);
+        if (s) valid.push(s);
+      }
       if (valid.length === 0) {
-        stripEl.classList.add('hidden');
+        stripEl.innerHTML = `<div class="col-span-6 text-[10px] font-bold text-slate-500 py-1 text-center">Bu video formatı tarayıcıda önizlenemiyor, yükleme sorunsuz devam eder.</div>`;
         return;
       }
 
@@ -1701,6 +1823,10 @@
           <img src="${s.previewUrl}" class="w-full h-full object-cover" />
         </button>
       `).join('');
+
+      if (valid[0]) {
+        loadSnapshotIntoCropEditor(valid[0]);
+      }
     }
 
     function selectFrameFromStrip(idx) {
@@ -1758,7 +1884,7 @@
           resolve(res);
         };
 
-        const t = setTimeout(() => end({ durationSec: 0, durationLabel: '' }), 2200);
+        const t = setTimeout(() => end({ durationSec: 0, durationLabel: '' }), 2500);
         v.onloadedmetadata = () => {
           clearTimeout(t);
           const d = isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
@@ -1980,10 +2106,17 @@
       const file = inputEl?.files?.[0];
       const badge = document.getElementById(badgeId);
       if (!file) return;
+
+      if (file.size > MAX_ALLOWED_FILE_BYTES) {
+        showToast(`Dosya (${formatFileSizeHuman(file.size)}) 15 GB sınırını aşıyor.`, 'error');
+        return;
+      }
+
       PENDING_FILES.set(slotKey, file);
 
+      const sizeTxt = formatFileSizeHuman(file.size);
       if (badge) {
-        badge.textContent = `${file.name} (${(file.size / 1048576).toFixed(1)} MB)`;
+        badge.textContent = `${file.name} (${sizeTxt})`;
         badge.classList.remove('hidden');
       }
 
@@ -2009,12 +2142,7 @@
       }
 
       document.getElementById('video-frame-cover-tools')?.classList.remove('hidden');
-
-      const snap = await captureFrameFromVideoFile(file, null);
-      if (snap) {
-        loadSnapshotIntoCropEditor(snap);
-      }
-      generateSixFrameStrip();
+      await generateSixFrameStrip();
     }
 
     function renderVideoSourceInputs(prefix, titleInputId) {
@@ -2030,7 +2158,7 @@
               <input type="file" id="${prefix}-sub-file" accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_sub', '${prefix}-sub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
             </label>
             <div id="${prefix}-sub-badge" class="hidden px-2 py-1 rounded bg-white border border-blue-200 text-[10px] font-extrabold text-bpRoyal truncate"></div>
-            <input type="url" id="${prefix}-sub-url" placeholder="Veya kalıcı video URL (.mp4 / .m3u8)..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpRoyal" />
+            <input type="url" id="${prefix}-sub-url" placeholder="Veya MP4 / Google Drive / Dropbox URL..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpRoyal" />
           </div>
 
           <div class="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-2">
@@ -2043,7 +2171,7 @@
               <input type="file" id="${prefix}-dub-file" accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="onVideoFilePicked(this, '${prefix}_dub', '${prefix}-dub-badge', ${titleInputId ? `'${titleInputId}'` : 'null'})" class="hidden" />
             </label>
             <div id="${prefix}-dub-badge" class="hidden px-2 py-1 rounded bg-white border border-emerald-200 text-[10px] font-extrabold text-bpEmerald truncate"></div>
-            <input type="url" id="${prefix}-dub-url" placeholder="Veya kalıcı video URL (.mp4 / .m3u8)..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpEmerald" />
+            <input type="url" id="${prefix}-dub-url" placeholder="Veya MP4 / Google Drive / Dropbox URL..." class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] focus:outline-none focus:border-bpEmerald" />
           </div>
         </div>
       `;
@@ -2077,10 +2205,12 @@
             <div class="flex items-center justify-between gap-2 flex-wrap">
               <span class="text-[11px] font-extrabold text-bpRoyal">Video İçinden Kapak Seç ve Kes</span>
               <div class="flex items-center gap-1.5">
-                <button type="button" onclick="generateSixFrameStrip()" class="px-2 py-1 rounded-lg bg-bpNavy text-white text-[10px] font-extrabold cursor-pointer">6 Sahne Getir</button>
+                <button type="button" onclick="generateSixFrameStrip()" class="px-2 py-1 rounded-lg bg-bpNavy text-white text-[10px] font-extrabold cursor-pointer">6 Sahne Yenile</button>
                 <button type="button" onclick="pickRandomFrameForCover()" class="px-2 py-1 rounded-lg bg-bpRoyal text-white text-[10px] font-extrabold cursor-pointer">Rastgele Sahne</button>
               </div>
             </div>
+
+            <div id="video-6frame-strip" class="grid grid-cols-6 gap-1.5"></div>
 
             <div id="video-crop-stage" class="relative w-full aspect-video rounded-lg overflow-hidden bg-bpNavy border border-slate-300 select-none">
               <img id="video-crop-base-img" src="${escapeAttr(initialSrc)}" class="w-full h-full object-contain pointer-events-none" />
@@ -2101,11 +2231,9 @@
               </div>
             </div>
 
-            <div id="video-6frame-strip" class="hidden grid grid-cols-6 gap-1.5"></div>
-
             <div class="flex items-center gap-2">
               <span class="text-[10px] font-extrabold text-bpNavy shrink-0">Saniye Kaydır:</span>
-              <input type="range" min="2" max="98" value="35" oninput="scrubFrameForCover(this.value)" class="bp-scrubber flex-1" title="Videodan sahne seçin" />
+              <input type="range" min="4" max="96" value="35" oninput="scrubFrameForCover(this.value)" class="bp-scrubber flex-1" title="Videodan sahne seçin" />
             </div>
           </div>
         </div>
@@ -2146,7 +2274,7 @@
             <option value="sub" ${!item.isDub ? 'selected' : ''}>Altyazı</option>
             <option value="dub" ${item.isDub ? 'selected' : ''}>Dublaj</option>
           </select>
-          <span class="text-[10px] font-mono text-slate-500">${(item.file.size / 1048576).toFixed(1)} MB</span>
+          <span class="text-[10px] font-mono text-slate-500">${formatFileSizeHuman(item.file.size)}</span>
           <button type="button" onclick="batchQueueFiles.splice(${idx}, 1); renderBatchQueueList();" class="w-6 h-6 rounded bg-bpRed/15 text-bpRed font-extrabold text-xs cursor-pointer">✕</button>
         </div>
       `).join('');
@@ -2164,12 +2292,12 @@
       closeModal();
 
       if (mode === 'movies') {
-        showToast(`${itemsToProcess.length} film kalıcı buluta aktarılıyor...`, 'success');
+        showToast(`${itemsToProcess.length} film buluta aktarılıyor...`, 'success');
         for (const entry of itemsToProcess) {
           const sk = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
           LOCAL_SESSION_BLOBS.set(sk, URL.createObjectURL(entry.file));
           const meta = await readVideoMetadataQuick(entry.file);
-          const snap = await captureFrameFromVideoFile(entry.file, null);
+          const snap = await captureFrameFromVideoFile(entry.file, 0.25);
 
           const id = 'mov-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
           const movie = {
@@ -2190,6 +2318,7 @@
               url: '',
               sessionKey: sk,
               storagePath: '',
+              lastError: '',
               durationSec: meta.durationSec || 0,
               trimStart: 0,
               trimEnd: meta.durationSec || 0
@@ -2213,7 +2342,7 @@
         }
       } else {
         showToast(`${itemsToProcess.length} bölüm "${sharedSeriesTitle}" dizisine ekleniyor...`, 'success');
-        const firstSnap = await captureFrameFromVideoFile(itemsToProcess[0].file, null);
+        const firstSnap = await captureFrameFromVideoFile(itemsToProcess[0].file, 0.25);
         const seriesId = 'ser-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
         const episodes = [];
         const allTasks = [];
@@ -2240,6 +2369,7 @@
               url: '',
               sessionKey: sk,
               storagePath: '',
+              lastError: '',
               durationSec: meta.durationSec || 0,
               trimStart: 0,
               trimEnd: meta.durationSec || 0
@@ -2282,16 +2412,12 @@
 
     function renderAddModal() {
       const seriesList = state.catalog.filter(i => i.type === 'series');
-      const hasCloudinary = Boolean((state.prefs.cloudinaryCloudName || '').trim() && (state.prefs.cloudinaryUploadPreset || '').trim());
-      const cloudStatusNote = hasCloudinary
-        ? `<div class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-bpEmerald flex items-center justify-between">
-             <span>Cloudinary Kalıcı Bulut Aktif (${escapeHtml(state.prefs.cloudinaryCloudName)})</span>
-             <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="underline cursor-pointer">Değiştir</button>
-           </div>`
-        : `<div class="px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-800 flex items-center justify-between gap-2">
-             <span>Kalıcı Cloudinary bulut linki için ayar yapın (tüm cihazlarda açılır)</span>
-             <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="px-2 py-1 rounded-lg bg-bpNavy text-white text-[10px] font-extrabold shrink-0 cursor-pointer">Ayarla</button>
-           </div>`;
+      const cloudStatusNote = `
+        <div class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-bpEmerald flex items-center justify-between gap-2">
+          <span>Bulut Aktarım Kapasitesi: 1 MB – 15 GB (Tüm cihazlarda kalıcı)</span>
+          <button type="button" onclick="closeModal(); openPlatformSettingsModal();" class="underline shrink-0 cursor-pointer">Ayarlar</button>
+        </div>
+      `;
 
       let body = '';
 
@@ -2364,8 +2490,8 @@
             </div>
 
             <label class="block w-full py-4 px-4 rounded-2xl border-2 border-dashed border-bpRoyal bg-blue-50/70 hover:bg-blue-100/70 text-center cursor-pointer transition">
-              <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin</div>
-              <div class="text-[10px] text-slate-500 mt-0.5">Seçtiğiniz tüm videoların kapakları içlerinden otomatik oluşturulur</div>
+              <div class="text-xs font-extrabold text-bpRoyal">Birden Fazla Film veya Dizi Bölümü Seçin (1 MB – 15 GB)</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Seçtiğiniz tüm videolar sırayla kalıcı buluta aktarılır</div>
               <input type="file" multiple accept="video/mp4,video/quicktime,video/*,.mp4,.mov,.m4v,.mkv,.webm" onchange="handleBatchFilesSelected(this)" class="hidden" />
             </label>
 
@@ -2456,6 +2582,7 @@
           url: '',
           sessionKey: sk,
           storagePath: '',
+          lastError: '',
           durationSec: formDraft.durationSec || 0,
           trimStart: 0,
           trimEnd: formDraft.durationSec || 0
@@ -2477,6 +2604,7 @@
           url: subUrl,
           sessionKey: '',
           storagePath: '',
+          lastError: '',
           durationSec: formDraft.durationSec || 0,
           trimStart: 0,
           trimEnd: formDraft.durationSec || 0
@@ -2493,6 +2621,7 @@
           url: '',
           sessionKey: sk,
           storagePath: '',
+          lastError: '',
           durationSec: formDraft.durationSec || 0,
           trimStart: 0,
           trimEnd: formDraft.durationSec || 0
@@ -2514,6 +2643,7 @@
           url: dubUrl,
           sessionKey: '',
           storagePath: '',
+          lastError: '',
           durationSec: formDraft.durationSec || 0,
           trimStart: 0,
           trimEnd: formDraft.durationSec || 0
@@ -2565,7 +2695,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, kalıcı bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(movie);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2622,7 +2752,7 @@
       populateGenreSelect();
       renderMainView();
       closeModal();
-      showToast(`"${title}" eklendi, kalıcı bulut aktarımı başladı...`, 'success');
+      showToast(`"${title}" eklendi, bulut aktarımı başladı...`, 'success');
 
       await pushItemToAllClouds(series);
       if (tasks.length > 0) uploadMediaFilesToCloud(id, tasks);
@@ -2716,6 +2846,10 @@
           </form>
         </div>
       `);
+
+      if (activeFrameVideoUrl) {
+        generateSixFrameStrip();
+      }
     }
 
     async function saveEditedItem(e, itemId) {
@@ -2756,12 +2890,8 @@
     }
 
     async function testCloudinaryConnection() {
-      const cn = document.getElementById('pref-cloudinary-name')?.value?.trim() || '';
-      const pr = document.getElementById('pref-cloudinary-preset')?.value?.trim() || '';
-      if (!cn || !pr) {
-        showToast('Önce Cloud Name ve Upload Preset alanlarını doldurun.', 'error');
-        return;
-      }
+      const cn = document.getElementById('pref-cloudinary-name')?.value?.trim() || HARDCODED_CLOUD_NAME;
+      const pr = document.getElementById('pref-cloudinary-preset')?.value?.trim() || HARDCODED_UPLOAD_PRESET;
       state.prefs.cloudinaryCloudName = cn;
       state.prefs.cloudinaryUploadPreset = pr;
       savePrefs(state.prefs);
@@ -2769,11 +2899,10 @@
       const statusBox = document.getElementById('cloudinary-test-status');
       if (statusBox) {
         statusBox.className = 'text-[11px] font-bold text-bpRoyal';
-        statusBox.textContent = 'Cloudinary bağlantısı test ediliyor...';
+        statusBox.textContent = 'Bulut bağlantıları test ediliyor...';
       }
 
       try {
-        // 1x1 şeffaf test görseli göndererek preset'in Unsigned olarak aktif olup olmadığını doğrula
         const tinyPng = await (await fetch('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')).blob();
         const resTxt = await uploadBlobSingleXhr(
           `https://api.cloudinary.com/v1_1/${encodeURIComponent(cn)}/image/upload`,
@@ -2787,16 +2916,15 @@
         if (data.secure_url) {
           if (statusBox) {
             statusBox.className = 'text-[11px] font-extrabold text-bpEmerald';
-            statusBox.textContent = '✓ Bağlantı başarılı! Artık yüklediğiniz tüm videolar kalıcı olarak açılır.';
+            statusBox.textContent = `✓ Bağlantı aktif! (${cn} / ${pr}) • 1 MB – 15 GB motor hazır.`;
           }
-          showToast('Cloudinary bağlantısı doğrulandı ve kaydedildi!', 'success');
+          showToast('Bulut bağlantısı doğrulandı!', 'success');
         }
       } catch (err) {
         if (statusBox) {
           statusBox.className = 'text-[11px] font-extrabold text-bpRed';
-          statusBox.textContent = `✕ Hata: ${err.message} (Cloudinary panelinde Preset modunun "Unsigned" olduğundan emin olun)`;
+          statusBox.textContent = `✕ Hata: ${err.message}`;
         }
-        showToast(`Cloudinary hatası: ${err.message}`, 'error');
       }
     }
 
@@ -2814,25 +2942,25 @@
 
           <div class="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200 space-y-2.5 text-xs">
             <div class="flex items-center justify-between">
-              <span class="font-extrabold text-bpEmerald">Cloudinary Kalıcı Video Bulutu (Tüm Cihazlarda Açılır)</span>
-              <span class="px-2 py-0.5 rounded bg-bpEmerald text-white text-[10px] font-extrabold">KALICI LİNK</span>
+              <span class="font-extrabold text-bpEmerald">Çok Katmanlı Bulut Video Motoru (1 MB – 15 GB)</span>
+              <span class="px-2 py-0.5 rounded bg-bpEmerald text-white text-[10px] font-extrabold">AKTİF</span>
             </div>
             <p class="text-[11px] text-slate-600 leading-relaxed">
-              Ücretsiz <strong>cloudinary.com</strong> hesabınızdaki <strong>Cloud Name</strong> ve Signing Mode: <strong>Unsigned</strong> olan <strong>Upload Preset</strong> adını girip test edin.
+              1 MB ile 15 GB arasındaki tüm dosyalar otomatik olarak parçalı bulut motorundan aktarılır. Dilerseniz Google Drive veya doğrudan MP4 akış linki de kullanabilirsiniz.
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Cloud Name</label>
-                <input type="text" id="pref-cloudinary-name" value="${escapeAttr(p.cloudinaryCloudName || '')}" placeholder="Örn: dxyz123abc" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold" />
+                <input type="text" id="pref-cloudinary-name" value="${escapeAttr(p.cloudinaryCloudName || HARDCODED_CLOUD_NAME)}" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold" />
               </div>
               <div>
                 <label class="block text-[10px] font-extrabold text-bpNavy mb-0.5">Unsigned Upload Preset</label>
-                <input type="text" id="pref-cloudinary-preset" value="${escapeAttr(p.cloudinaryUploadPreset || '')}" placeholder="Örn: birperde_unsigned" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold" />
+                <input type="text" id="pref-cloudinary-preset" value="${escapeAttr(p.cloudinaryUploadPreset || HARDCODED_UPLOAD_PRESET)}" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold" />
               </div>
             </div>
             <div id="cloudinary-test-status" class="text-[11px] font-semibold text-slate-500"></div>
             <div class="flex justify-end gap-2">
-              <button type="button" onclick="testCloudinaryConnection()" class="px-3.5 py-1.5 rounded-lg bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">Kaydet ve Bağlantıyı Test Et</button>
+              <button type="button" onclick="testCloudinaryConnection()" class="px-3.5 py-1.5 rounded-lg bg-bpEmerald hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">Bağlantıyı Test Et</button>
             </div>
           </div>
 
@@ -2977,7 +3105,7 @@
           </div>
 
           <div class="relative aspect-video rounded-xl overflow-hidden bg-black">
-            <video id="trim-editor-video" src="${escapeAttr(resolved.url)}" playsinline preload="auto" onloadedmetadata="onTrimMeta()" class="w-full h-full object-contain bg-black"></video>
+            <video id="trim-editor-video" src="${escapeAttr(resolved.url)}" playsinline preload="metadata" onloadedmetadata="onTrimMeta()" class="w-full h-full object-contain bg-black"></video>
           </div>
 
           <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
@@ -3254,7 +3382,7 @@
                 ${isMovie ? escapeHtml(item.duration || 'Sinema') : `${epCount} Bölüm`}
               </span>
               <span class="px-1.5 py-0.5 rounded text-[8px] font-extrabold truncate ${pill.cls}">
-                ${pill.label}
+                ${escapeHtml(pill.label)}
               </span>
             </div>
           </div>
@@ -3297,7 +3425,7 @@
           <div class="text-sm font-extrabold ${isMovie ? 'text-bpNavy' : 'text-bpEmerald'}">
             ${isMovie ? 'Henüz Film Eklenmemiş' : 'Henüz Dizi Eklenmemiş'}
           </div>
-          <p class="text-xs text-slate-500">Eklediğiniz videolar kalıcı buluta kaydedilir ve cihazdan silseniz bile her yerden açılır.</p>
+          <p class="text-xs text-slate-500">1 MB – 15 GB arasındaki videolarınız kalıcı buluta aktarılır ve her cihazdan açılır.</p>
           <div class="pt-1 flex justify-center gap-2">
             <button type="button" onclick="openAddContentModal('${kind}')" class="px-4 py-2 rounded-xl ${isMovie ? 'bg-bpNavy text-white' : 'bg-bpEmerald text-white'} text-xs font-extrabold cursor-pointer">
               ${isMovie ? '+ Film Ekle' : '+ Dizi Ekle'}
@@ -3371,7 +3499,7 @@
     }
 
     /* =====================================================================
-       9. WATCH STUDIO + SMART FALLBACK STREAM LOADER
+       9. WATCH STUDIO + DIAGNOSTIC FALLBACK STREAM LOADER
     ===================================================================== */
     let hlsController = null;
     let singleTapTimer = null;
@@ -3390,7 +3518,7 @@
         list = media.sources;
       }
       if (list.length === 0) {
-        return [{ id: 'sub', label: 'TR Altyazılı', defaultMode: 'sub', url: '', sessionKey: '', storagePath: '', trimStart: 0, trimEnd: 0 }];
+        return [{ id: 'sub', label: 'TR Altyazılı', defaultMode: 'sub', url: '', sessionKey: '', storagePath: '', lastError: '', trimStart: 0, trimEnd: 0 }];
       }
       return list;
     }
@@ -4068,7 +4196,7 @@
               <video id="birperde-video" playsinline webkit-playsinline preload="metadata" ${state.player.loopMode ? 'loop' : ''} class="w-full h-full object-contain bg-black"></video>
               <div id="seek-feedback-layer" class="pointer-events-none absolute inset-0 z-10"></div>
 
-              <div id="player-status-overlay" class="hidden absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center z-20">
+              <div id="player-status-overlay" class="hidden absolute inset-0 bg-slate-950/92 flex flex-col items-center justify-center p-4 text-center z-20">
                 <p id="player-status-text" class="text-xs font-semibold text-slate-200 mb-3 max-w-md leading-relaxed"></p>
                 <div id="player-status-actions" class="flex items-center gap-2 flex-wrap justify-center">
                   <button type="button" onclick="syncAllFromCloudNow(true)" class="px-3.5 py-1.5 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Buluttan Yenile</button>
@@ -4149,14 +4277,15 @@
       }
 
       const resolved = await resolvePlayableVideoUrl(activeCh);
-      attachVideoStream(resolved.url, resolved.status, resumeTime, autoPlay, activeCh);
+      attachVideoStream(resolved.url, resolved.status, resumeTime, autoPlay, activeCh, resolved.lastError);
     }
 
-    function attachVideoStream(url, status, resumeTime, autoPlay, activeCh) {
+    function attachVideoStream(url, status, resumeTime, autoPlay, activeCh, lastError = '') {
       const video = document.getElementById('birperde-video');
       const overlay = document.getElementById('player-status-overlay');
       const statusText = document.getElementById('player-status-text');
       const statusActions = document.getElementById('player-status-actions');
+      const media = state.player.media;
       if (!video) return;
 
       video.onplay = () => syncPlayPauseButtons(true);
@@ -4167,9 +4296,19 @@
       if (!url) {
         if (overlay) overlay.classList.remove('hidden');
         if (statusText) {
-          statusText.textContent = status === 'not_uploaded_yet'
-            ? 'Bu video buluta yükleniyor. Tamamlandığında her cihazdan otomatik açılacaktır.'
-            : 'Video kaynağı bulunamadı.';
+          if (status === 'upload_failed') {
+            statusText.textContent = `Bulut aktarımı başarısız oldu: ${lastError}`;
+          } else if (status === 'not_uploaded_yet') {
+            statusText.textContent = 'Bu video henüz buluta yüklenmemiş veya yükleme yarım kalmış. Yeniden yüklemek için aşağıdaki butona basın.';
+          } else {
+            statusText.textContent = 'Video kaynağı bulunamadı.';
+          }
+        }
+        if (statusActions && media) {
+          statusActions.innerHTML = `
+            <button type="button" onclick="openEditItemModal('${escapeAttr(media.id)}')" class="px-4 py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Yeniden Yükle</button>
+            <button type="button" onclick="syncAllFromCloudNow(true)" class="px-3.5 py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold cursor-pointer">Buluttan Yenile</button>
+          `;
         }
         return;
       }
@@ -4177,7 +4316,6 @@
       if (overlay) overlay.classList.add('hidden');
       const minStart = activeCh?.trimStart > 0 ? activeCh.trimStart : 0;
 
-      // Olası URL varyasyonları: Önce temiz URL, hata verirse ham URL veya .mp4 varyantı dene
       const candidates = Array.from(new Set([
         url,
         url.replace(/\.mp4(\?.*)?$/i, '.mov$1'),
@@ -4210,12 +4348,12 @@
         }
         if (overlay) overlay.classList.remove('hidden');
         if (statusText) {
-          statusText.textContent = 'Bu video bağlantısı tarayıcı tarafından doğrudan açılamadı. Yedek sunucunun süresi dolmuş olabilir veya Cloudinary ayarı eksik.';
+          statusText.textContent = `Bu bağlantı tarayıcı tarafından açılamadı. Videoyu yeniden seçip buluta yükleyin.`;
         }
         if (statusActions) {
           statusActions.innerHTML = `
-            <a href="${escapeAttr(url)}" target="_blank" rel="noopener" class="px-3.5 py-1.5 rounded-xl bg-bpRoyal text-white text-xs font-extrabold">Videoyu Yeni Sekmede Aç</a>
-            <button type="button" onclick="openPlatformSettingsModal()" class="px-3.5 py-1.5 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Cloudinary Bulut Ayarla</button>
+            ${media ? `<button type="button" onclick="openEditItemModal('${escapeAttr(media.id)}')" class="px-4 py-2 rounded-xl bg-bpEmerald text-white text-xs font-extrabold cursor-pointer">Videoyu Yeniden Yükle</button>` : ''}
+            <a href="${escapeAttr(url)}" target="_blank" rel="noopener" class="px-3.5 py-2 rounded-xl bg-bpRoyal text-white text-xs font-extrabold">Linki Yeni Sekmede Aç</a>
           `;
         }
       };
@@ -4268,7 +4406,7 @@
         el.style.opacity = '0';
         el.style.transition = 'opacity 0.25s ease';
         setTimeout(() => el.remove(), 260);
-      }, 3600);
+      }, 4500);
     }
 
     function escapeHtml(str) {
